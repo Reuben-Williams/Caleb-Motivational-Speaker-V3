@@ -1,0 +1,61 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  evidenceRegistry,
+  faqs,
+  navigation,
+  routeMetadata,
+  siteFacts,
+} from "@/content/site";
+
+const requiredRoutes = [
+  "/",
+  "/about",
+  "/speaking",
+  "/schools-colleges",
+  "/faith-events",
+  "/conferences-workshops",
+  "/book-media",
+  "/faq",
+  "/book-caleb",
+  "/privacy",
+  "/thank-you",
+];
+
+describe("approved site content", () => {
+  it("defines metadata for every approved route with unique titles", () => {
+    expect(Object.keys(routeMetadata).sort()).toEqual(
+      [...requiredRoutes].sort(),
+    );
+    expect(new Set(Object.values(routeMetadata).map(({ title }) => title)).size)
+      .toBe(requiredRoutes.length);
+  });
+
+  it("keeps every factual site record attached to frozen evidence", () => {
+    for (const fact of siteFacts) {
+      expect(fact.evidenceIds.length).toBeGreaterThan(0);
+      for (const evidenceId of fact.evidenceIds) {
+        expect(evidenceRegistry[evidenceId]).toBeDefined();
+      }
+    }
+  });
+
+  it("uses only the approved global navigation destinations", () => {
+    expect(navigation.map(({ href }) => href)).toEqual([
+      "/",
+      "/about",
+      "/speaking",
+      "/book-media",
+      "/faq",
+      "/book-caleb",
+    ]);
+  });
+
+  it("publishes the eleven frozen FAQ entries verbatim", () => {
+    expect(faqs).toHaveLength(11);
+    expect(faqs[0]?.question).toBe("What audiences does Caleb speak to?");
+    expect(faqs.at(-1)?.question).toBe(
+      "Is a speaker one-sheet or media kit available?",
+    );
+  });
+});

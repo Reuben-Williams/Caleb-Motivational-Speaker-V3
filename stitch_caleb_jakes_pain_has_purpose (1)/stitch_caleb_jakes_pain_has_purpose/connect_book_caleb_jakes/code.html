@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Contact &amp; Booking - Caleb Jakes</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Inter:wght@400;700&amp;family=Source+Serif+4&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "inverse-on-surface": "#313030",
+                      "emotional-burgundy": "#630D16",
+                      "tertiary-fixed": "#ffdad8",
+                      "surface-variant": "#353534",
+                      "secondary": "#b8c3ff",
+                      "error-container": "#93000a",
+                      "surface": "#131313",
+                      "inverse-surface": "#e5e2e1",
+                      "surface-container-highest": "#353534",
+                      "secondary-container": "#0043eb",
+                      "outline-variant": "#4d4635",
+                      "primary-fixed": "#ffe088",
+                      "primary-container": "#d4af37",
+                      "surface-bright": "#3a3939",
+                      "on-primary-container": "#554300",
+                      "secondary-fixed-dim": "#b8c3ff",
+                      "error": "#ffb4ab",
+                      "background": "#131313",
+                      "surface-dim": "#131313",
+                      "on-surface": "#e5e2e1",
+                      "electric-cobalt": "#2E5BFF",
+                      "secondary-fixed": "#dde1ff",
+                      "tertiary": "#ffbebc",
+                      "surface-container-high": "#2a2a2a",
+                      "body-text": "#FDFCF8",
+                      "on-background": "#e5e2e1",
+                      "on-surface-variant": "#d0c5af",
+                      "on-tertiary": "#630d16",
+                      "on-tertiary-fixed": "#410007",
+                      "outline": "#99907c",
+                      "on-error": "#690005",
+                      "on-error-container": "#ffdad6",
+                      "surface-tint": "#e9c349",
+                      "on-secondary-container": "#c6ceff",
+                      "inverse-primary": "#735c00",
+                      "surface-container": "#201f1f",
+                      "ink-black": "#050505",
+                      "joy-gold": "#D4AF37",
+                      "surface-container-low": "#1c1b1b",
+                      "on-tertiary-container": "#802328",
+                      "on-primary": "#3c2f00",
+                      "on-secondary-fixed": "#001356",
+                      "tertiary-container": "#ff9594",
+                      "tertiary-fixed-dim": "#ffb3b1",
+                      "surface-container-lowest": "#0e0e0e",
+                      "on-secondary": "#002388",
+                      "primary-fixed-dim": "#e9c349",
+                      "on-primary-fixed": "#241a00",
+                      "on-primary-fixed-variant": "#574500",
+                      "primary": "#f2ca50",
+                      "on-tertiary-fixed-variant": "#82252a",
+                      "on-secondary-fixed-variant": "#0035be"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "section-gap": "160px",
+                      "gutter": "32px",
+                      "margin-mobile": "24px",
+                      "margin-desktop": "64px",
+                      "unit": "8px",
+                      "container-max": "1280px"
+              },
+              "fontFamily": {
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Bebas Neue"
+                      ],
+                      "headline-md": [
+                              "Bebas Neue"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "testimonial-quote": [
+                              "\"Source Serif 4\""
+                      ],
+                      "headline-lg-mobile": [
+                              "Bebas Neue"
+                      ],
+                      "display-hero": [
+                              "Bebas Neue"
+                      ]
+              },
+              "fontSize": {
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "160%",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "100%",
+                                      "letterSpacing": "0.1em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg": [
+                              "64px",
+                              {
+                                      "lineHeight": "100%",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "32px",
+                              {
+                                      "lineHeight": "110%",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "160%",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "testimonial-quote": [
+                              "24px",
+                              {
+                                      "lineHeight": "150%",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "48px",
+                              {
+                                      "lineHeight": "100%",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-hero": [
+                              "120px",
+                              {
+                                      "lineHeight": "110%",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: #050505; /* ink-black */
+            color: #e5e2e1; /* on-surface */
+            overflow-x: hidden;
+            position: relative;
+        }
+        /* Film grain overlay */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        /* Continuous Line Animation */
+        .mic-cable {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawLine 5s linear forwards;
+        }
+        @keyframes drawLine {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+        
+        .ghost-card {
+            background: transparent;
+            border: 1px solid rgba(229, 226, 225, 0.15); /* Ivory 15% */
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .ghost-card:hover {
+            border-color: rgba(229, 226, 225, 0.4);
+        }
+        .ghost-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #D4AF37, transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .ghost-card:hover::before {
+            opacity: 1;
+        }
+
+        .input-field {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(229, 226, 225, 0.4);
+            color: #FDFCF8;
+            transition: border-color 0.3s ease;
+            border-radius: 0;
+        }
+        .input-field:focus {
+            outline: none;
+            border-bottom-color: #D4AF37;
+            box-shadow: none;
+        }
+
+        .btn-primary {
+            background-color: #D4AF37;
+            color: #050505;
+            position: relative;
+            overflow: hidden;
+            transition: color 0.3s ease;
+            z-index: 1;
+        }
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background-color: #f2ca50; /* Lighter gold for reveal */
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+        .btn-primary:hover::before {
+            left: 0;
+        }
+    </style>
+</head>
+<body class="antialiased font-body-md text-body-md flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-transparent backdrop-blur-xl dark:bg-transparent bg-surface/10">
+<nav class="flex justify-between items-center px-margin-desktop py-6 max-w-container-max mx-auto">
+<a class="font-headline-md text-headline-md text-joy-gold tracking-tight hover:opacity-80 transition-opacity" href="#">
+                Caleb Jakes
+            </a>
+<div class="hidden md:flex items-center space-x-8">
+<a class="text-on-surface hover:text-joy-gold transition-colors duration-300" href="#">Home</a>
+<a class="text-on-surface hover:text-joy-gold transition-colors duration-300" href="#">About</a>
+<a class="text-on-surface hover:text-joy-gold transition-colors duration-300" href="#">Keynotes</a>
+<a class="text-on-surface hover:text-joy-gold transition-colors duration-300" href="#">Podcast</a>
+<a class="text-joy-gold font-bold border-b-2 border-joy-gold pb-1 hover:opacity-80 transition-opacity" href="#">Connect</a>
+</div>
+<a class="hidden md:inline-block px-6 py-3 font-label-caps text-label-caps uppercase btn-primary font-bold" href="#">
+                BOOK CALEB
+            </a>
+<!-- Mobile Menu Toggle (Visual only for layout) -->
+<button class="md:hidden text-joy-gold">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+</nav>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-[120px] pb-section-gap relative">
+<!-- Continuous Line Graphic -->
+<svg class="absolute top-0 left-10 w-full h-full pointer-events-none z-0 hidden md:block" preserveaspectratio="none" viewbox="0 0 100 1000">
+<path class="mic-cable" d="M 50 0 C 50 200, 20 300, 20 500 C 20 700, 80 800, 80 1000" fill="none" stroke="rgba(229, 226, 225, 0.15)" stroke-width="1.5"></path>
+</svg>
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter items-start">
+<!-- Left Column: Context & Imagery -->
+<div class="md:col-span-5 relative flex flex-col justify-between h-full min-h-[400px] md:min-h-[600px] rounded-lg overflow-hidden ghost-card p-6 md:p-8">
+<!-- Background Image (Spotlight) -->
+<div class="absolute inset-0 z-0 bg-cover bg-center" data-alt="A cinematic, high-contrast photograph of an empty, dark theater stage. A single, dramatic spotlight shines down from above, illuminating a small section of the wooden floor. Dust motes dance in the strong beam of light, creating an atmospheric, moody scene. The surrounding seats are lost in deep shadows, emphasizing a sense of anticipation and raw emotional intensity. The overall lighting follows a chiaroscuro style, with deep ink blacks and a stark, almost ethereal white light." style="background-image: url('https://lh3.googleusercontent.com/aida/AP1WRLthnKgqC9Qi2kkHH8qoONaMxYggXH4JQIxqkIImFOJC3w9eoYXJU_d7FjEUUBpcQYxcN43PsyjBEtpZLBxpn5ADy3v0P-T6ay1SRe9hrmR6LoPMKy2msQH8dGSXh6VdqtXZ52N4Vg2ru0nlIe9Vbm57WDRImfJzeq9RfgmnQWCdHIFbVla4MAE-NW-zcXb56AH_az_KUipIopwpMruXdOEgU1OHBOVYQ0Gpl2lQ7rOsz-PM6D-Yo8TWRA')">
+<!-- Tonal Overlay -->
+<div class="absolute inset-0 bg-ink-black/60 mix-blend-multiply"></div>
+</div>
+<div class="relative z-10">
+<h1 class="font-display-hero text-headline-lg-mobile md:text-headline-lg text-body-text mb-4 uppercase leading-none">
+                            LET'S START THE CONVERSATION
+                        </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-md">
+                            Every great transformation begins with a single connection. Share the details of your upcoming event, and let's craft an unforgettable experience.
+                        </p>
+</div>
+<div class="relative z-10 mt-12 space-y-6">
+<div class="flex items-start space-x-4">
+<span class="material-symbols-outlined text-joy-gold mt-1" style="font-variation-settings: 'FILL' 1;">phone_iphone</span>
+<div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Direct Line</h3>
+<a class="font-body-lg text-body-lg text-body-text hover:text-joy-gold transition-colors" href="tel:4049415670">(404) 941-5670</a>
+</div>
+</div>
+<div class="flex items-start space-x-4">
+<span class="material-symbols-outlined text-joy-gold mt-1" style="font-variation-settings: 'FILL' 1;">mail</span>
+<div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Inquiries</h3>
+<a class="font-body-lg text-body-lg text-body-text hover:text-joy-gold transition-colors" href="mailto:info@calebjakes.com">info@calebjakes.com</a>
+</div>
+</div>
+<div class="flex items-start space-x-4">
+<span class="material-symbols-outlined text-joy-gold mt-1" style="font-variation-settings: 'FILL' 1;">location_on</span>
+<div>
+<h3 class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-1">Base of Operations</h3>
+<p class="font-body-lg text-body-lg text-body-text">Rochester, NY</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Form -->
+<div class="md:col-span-7 bg-surface/30 backdrop-blur-md p-8 md:p-12 rounded-lg border border-white/5 relative mt-8 md:mt-0">
+<!-- Subtle Volumetric Glow behind form -->
+<div class="absolute top-0 right-0 w-64 h-64 bg-joy-gold/5 rounded-full blur-[100px] pointer-events-none"></div>
+<form action="#" class="space-y-8 relative z-10" method="POST">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="flex flex-col">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-2" for="name">Full Name</label>
+<input class="input-field w-full py-3 px-0 focus:ring-0" id="name" name="name" required="" type="text"/>
+</div>
+<div class="flex flex-col">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-2" for="organization">Organization</label>
+<input class="input-field w-full py-3 px-0 focus:ring-0" id="organization" name="organization" type="text"/>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="flex flex-col">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-2" for="event_date">Event Date</label>
+<input class="input-field w-full py-3 px-0 focus:ring-0 bg-transparent" id="event_date" name="event_date" style="color-scheme: dark;" type="date"/>
+</div>
+<div class="flex flex-col">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-2" for="audience">Audience Type / Size</label>
+<input class="input-field w-full py-3 px-0 focus:ring-0" id="audience" name="audience" type="text"/>
+</div>
+</div>
+<div class="flex flex-col">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-2" for="message">Your Message / Vision</label>
+<textarea class="input-field w-full py-3 px-0 focus:ring-0 resize-none" id="message" name="message" required="" rows="4"></textarea>
+</div>
+<div class="pt-4">
+<button class="w-full md:w-auto px-10 py-4 font-label-caps text-label-caps uppercase btn-primary font-bold tracking-widest flex items-center justify-center space-x-2" type="submit">
+<span>Submit Inquiry</span>
+<span class="material-symbols-outlined" style="font-size: 18px;">arrow_forward</span>
+</button>
+</div>
+</form>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-section-gap bg-ink-black border-t border-white/5 relative z-10">
+<div class="grid grid-cols-12 gap-gutter px-margin-desktop max-w-container-max mx-auto">
+<div class="col-span-12 md:col-span-6 flex flex-col justify-center">
+<span class="font-headline-lg text-headline-lg text-joy-gold uppercase mb-4">Caleb Jakes</span>
+<p class="font-body-md text-body-md text-on-surface-variant">© 2024 Joyionaire™ - Caleb Jakes. All Rights Reserved.</p>
+</div>
+<div class="col-span-12 md:col-span-6 flex flex-wrap gap-6 items-center justify-start md:justify-end mt-8 md:mt-0">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-joy-gold transition-colors duration-300" href="#">Privacy Policy</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-joy-gold transition-colors duration-300" href="#">Terms of Service</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-joy-gold transition-colors duration-300" href="#">Speaker Kit</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-joy-gold transition-colors duration-300" href="#">Media Assets</a>
+</div>
+</div>
+</footer>
+</body></html>

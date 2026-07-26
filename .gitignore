@@ -1,0 +1,15 @@
+node_modules/
+.next/
+.next-pages/
+out/
+.pages-staging/
+.media-tools/
+coverage/
+.env
+.env.local
+.env.*.local
+npm-debug.log*
+*.tsbuildinfo
+.DS_Store
+public/media/video/caleb-speaker-reel-1080.mp4
+artifacts/edge-profile/

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Caleb Jakes - Keynotes</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;700&family=Source+Serif+4:ital,opsz,wght@1,8..60,400&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue:wght@100..900&family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        /* Film grain overlay */
+        .film-grain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* Subtle glow effects */
+        .glow-gold {
+            box-shadow: 0 0 40px -10px rgba(212, 175, 55, 0.3);
+        }
+        
+        .bg-spotlight {
+            background: radial-gradient(circle at center, rgba(212, 175, 55, 0.05) 0%, transparent 60%);
+        }
+
+        /* Hover animation for ghost cards */
+        .ghost-card {
+            border: 1px solid rgba(229, 226, 225, 0.15); /* Ivory / 15% */
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .ghost-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--color-joy-gold), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .ghost-card:hover {
+            border-color: rgba(229, 226, 225, 0.40);
+        }
+        .ghost-card:hover::before {
+            opacity: 1;
+        }
+
+        /* Button reveal effect */
+        .btn-reveal {
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            transition: color 0.3s ease;
+        }
+        .btn-reveal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background-color: #D4AF37; /* joy-gold */
+            transition: transform 0.4s cubic-bezier(0.77, 0, 0.175, 1);
+            z-index: -1;
+        }
+        .btn-reveal:hover::before {
+            transform: translateX(100%);
+        }
+        
+        /* Infinite line animation */
+        .mic-cable {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawLine 10s linear infinite;
+        }
+        @keyframes drawLine {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-on-surface": "#313030",
+                        "emotional-burgundy": "#630D16",
+                        "tertiary-fixed": "#ffdad8",
+                        "surface-variant": "#353534",
+                        "secondary": "#b8c3ff",
+                        "error-container": "#93000a",
+                        "surface": "#131313",
+                        "inverse-surface": "#e5e2e1",
+                        "surface-container-highest": "#353534",
+                        "secondary-container": "#0043eb",
+                        "outline-variant": "#4d4635",
+                        "primary-fixed": "#ffe088",
+                        "primary-container": "#d4af37",
+                        "surface-bright": "#3a3939",
+                        "on-primary-container": "#554300",
+                        "secondary-fixed-dim": "#b8c3ff",
+                        "error": "#ffb4ab",
+                        "background": "#131313",
+                        "surface-dim": "#131313",
+                        "on-surface": "#e5e2e1",
+                        "electric-cobalt": "#2E5BFF",
+                        "secondary-fixed": "#dde1ff",
+                        "tertiary": "#ffbebc",
+                        "surface-container-high": "#2a2a2a",
+                        "body-text": "#FDFCF8",
+                        "on-background": "#e5e2e1",
+                        "on-surface-variant": "#d0c5af",
+                        "on-tertiary": "#630d16",
+                        "on-tertiary-fixed": "#410007",
+                        "outline": "#99907c",
+                        "on-error": "#690005",
+                        "on-error-container": "#ffdad6",
+                        "surface-tint": "#e9c349",
+                        "on-secondary-container": "#c6ceff",
+                        "inverse-primary": "#735c00",
+                        "surface-container": "#201f1f",
+                        "ink-black": "#050505",
+                        "joy-gold": "#D4AF37",
+                        "surface-container-low": "#1c1b1b",
+                        "on-tertiary-container": "#802328",
+                        "on-primary": "#3c2f00",
+                        "on-secondary-fixed": "#001356",
+                        "tertiary-container": "#ff9594",
+                        "tertiary-fixed-dim": "#ffb3b1",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-secondary": "#002388",
+                        "primary-fixed-dim": "#e9c349",
+                        "on-primary-fixed": "#241a00",
+                        "on-primary-fixed-variant": "#574500",
+                        "primary": "#f2ca50",
+                        "on-tertiary-fixed-variant": "#82252a",
+                        "on-secondary-fixed-variant": "#0035be"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-gap": "160px",
+                        "gutter": "32px",
+                        "margin-mobile": "24px",
+                        "margin-desktop": "64px",
+                        "unit": "8px",
+                        "container-max": "1280px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-lg": ["Bebas Neue"],
+                        "headline-md": ["Bebas Neue"],
+                        "body-lg": ["Inter"],
+                        "testimonial-quote": ["\"Source Serif 4\""],
+                        "headline-lg-mobile": ["Bebas Neue"],
+                        "display-hero": ["Bebas Neue"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "160%", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "100%", "letterSpacing": "0.1em", "fontWeight": "700" }],
+                        "headline-lg": ["64px", { "lineHeight": "100%", "fontWeight": "400" }],
+                        "headline-md": ["32px", { "lineHeight": "110%", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "160%", "fontWeight": "400" }],
+                        "testimonial-quote": ["24px", { "lineHeight": "150%", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["48px", { "lineHeight": "100%", "fontWeight": "400" }],
+                        "display-hero": ["120px", { "lineHeight": "110%", "letterSpacing": "0.02em", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-ink-black text-body-text font-body-md antialiased selection:bg-joy-gold selection:text-ink-black relative overflow-x-hidden">
+<!-- Film Grain Overlay -->
+<div class="film-grain"></div>
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-transparent backdrop-blur-xl dark:bg-transparent border-none shadow-none">
+<div class="flex justify-between items-center px-margin-desktop py-6 max-w-container-max mx-auto md:px-margin-desktop px-margin-mobile">
+<!-- Brand -->
+<a class="font-headline-md text-headline-md text-joy-gold tracking-tight hover:opacity-80 transition-opacity" href="#">
+                Caleb Jakes
+            </a>
+<!-- Desktop Links -->
+<div class="hidden md:flex items-center gap-8">
+<a class="text-on-surface hover:text-joy-gold transition-colors duration-300 font-label-caps uppercase text-label-caps" href="#">Home</a>
+<a class="text-on-surface hover:text-joy-gold transition-colors duration-300 font-label-caps uppercase text-label-caps" href="#">About</a>
+<!-- Active State for Keynotes -->
+<a class="text-joy-gold font-bold border-b-2 border-joy-gold pb-1 font-label-caps uppercase text-label-caps Active: scale-95 duration-200 transition-transform" href="#">Keynotes</a>
+<a class="text-on-surface hover:text-joy-gold transition-colors duration-300 font-label-caps uppercase text-label-caps" href="#">Podcast</a>
+<a class="text-on-surface hover:text-joy-gold transition-colors duration-300 font-label-caps uppercase text-label-caps" href="#">Connect</a>
+</div>
+<!-- Trailing Action -->
+<div class="hidden md:block">
+<a class="inline-flex items-center justify-center px-6 py-3 bg-joy-gold text-ink-black font-label-caps uppercase tracking-widest text-label-caps btn-reveal hover:opacity-90" href="#">
+                    BOOK CALEB
+                </a>
+</div>
+<!-- Mobile Menu Toggle (Visual only for design) -->
+<button class="md:hidden text-joy-gold">
+<span class="material-symbols-outlined" style="font-size: 32px;">menu</span>
+</button>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="pt-32 pb-section-gap">
+<!-- Hero Section -->
+<section class="relative min-h-[80vh] flex items-center justify-center px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+<!-- Volumetric Lighting Background -->
+<div class="absolute inset-0 bg-spotlight pointer-events-none z-0"></div>
+<div class="relative z-10 w-full grid grid-cols-1 md:grid-cols-12 gap-gutter items-center">
+<!-- Text Content -->
+<div class="col-span-1 md:col-span-6 flex flex-col items-start gap-8">
+<div class="inline-block border border-electric-cobalt text-electric-cobalt px-4 py-1 font-label-caps uppercase tracking-widest text-label-caps rounded-full">
+                        MOTIVATIONAL SPEAKING & EVENTS
+                    </div>
+<h1 class="font-display-hero text-headline-lg-mobile md:text-display-hero text-body-text uppercase leading-none">
+                        TRANSFORMATIONAL <br/><span class="text-joy-gold">EXPERIENCES</span> <br/>FOR EVERY STAGE
+                    </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-lg">
+                        Caleb delivers raw, authentic narratives that challenge audiences to reframe their struggles as the foundation for their ultimate strength.
+                    </p>
+<a class="inline-flex items-center justify-center px-8 py-4 bg-joy-gold text-ink-black font-label-caps uppercase tracking-widest text-label-caps btn-reveal hover:opacity-90 mt-4" href="#booking">
+                        BOOK CALEB
+                        <span class="material-symbols-outlined ml-2" style="font-size: 16px;">arrow_forward</span>
+</a>
+</div>
+<!-- Featured Visual -->
+<div class="col-span-1 md:col-span-6 relative mt-12 md:mt-0">
+<div class="relative aspect-[4/5] md:aspect-square w-full glow-gold overflow-hidden rounded-sm">
+<img alt="Stage presence" class="w-full h-full object-cover filter contrast-125 saturate-50 mix-blend-luminosity opacity-80" data-alt="A cinematic, high-contrast photograph of a single spotlight illuminating an empty, classic theater stage. Deep shadows surround the beam of light. Atmospheric film grain. Color palette relies on deep ink blacks, subtle ivory reflections, and a warm golden hue from the spotlight. Mood is dramatic and anticipatory." src="https://lh3.googleusercontent.com/aida/AP1WRLt3zsVff2d8lHqAj40uAXHAP_xKQDlvomvRm9PFVNhgq6ksyYTmkTGiV0FvBA5r9c9zN7nxsa4FmyxrBmwunQ43hfOpR3zghy4OP0P09BDev_4Jaf8_JkvHWPfX-jMIYXseYuwrA1w5z2-qDQn4jAKWM9Lk-Z5lBBf7LI-hDauaPCFj4h9R7xju3eX9cTv7HX0lEgfnT5UmHXnAQx6K25B_69TohIMSA47H7DgLTS4bZi02vXWlORM0"/>
+<!-- Decorative Frame -->
+<div class="absolute inset-0 border border-joy-gold opacity-30 pointer-events-none m-4"></div>
+</div>
+</div>
+</div>
+<!-- Continuous Line Motif Downwards -->
+<svg class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-8 h-32 md:h-64 z-0 pointer-events-none" preserveaspectratio="none" viewbox="0 0 10 100">
+<path class="mic-cable" d="M5,0 L5,100" fill="none" stroke="#e5e2e1" stroke-opacity="0.15" stroke-width="1.5"></path>
+</svg>
+</section>
+<!-- Section 1: Audience Overview (Bento Grid) -->
+<section class="relative py-section-gap px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+<div class="text-center mb-16 relative z-10">
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-body-text uppercase">TAILORED FOR <span class="text-joy-gold">YOUR AUDIENCE</span></h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mx-auto mt-4">Delivering impactful messages calibrated for specific environments.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+<!-- Card 1 -->
+<div class="ghost-card p-8 flex flex-col items-start bg-surface-container-highest/20 backdrop-blur-sm h-full">
+<span class="material-symbols-outlined text-joy-gold mb-6" style="font-size: 32px;">school</span>
+<h3 class="font-headline-md text-headline-md text-body-text uppercase mb-4">Schools & Universities</h3>
+<p class="font-body-md text-body-md text-on-surface-variant flex-grow">Inspiring the next generation to overcome academic and personal adversity, fostering resilience and a growth mindset.</p>
+</div>
+<!-- Card 2 -->
+<div class="ghost-card p-8 flex flex-col items-start bg-surface-container-highest/20 backdrop-blur-sm h-full">
+<span class="material-symbols-outlined text-joy-gold mb-6" style="font-size: 32px;">church</span>
+<h3 class="font-headline-md text-headline-md text-body-text uppercase mb-4">Faith Communities</h3>
+<p class="font-body-md text-body-md text-on-surface-variant flex-grow">Connecting spiritual principles with practical life strategies to navigate seasons of profound pain and uncertainty.</p>
+</div>
+<!-- Card 3 -->
+<div class="ghost-card p-8 flex flex-col items-start bg-surface-container-highest/20 backdrop-blur-sm h-full">
+<span class="material-symbols-outlined text-joy-gold mb-6" style="font-size: 32px;">groups</span>
+<h3 class="font-headline-md text-headline-md text-body-text uppercase mb-4">Conferences & Corporate</h3>
+<p class="font-body-md text-body-md text-on-surface-variant flex-grow">Equipping teams with the mental fortitude to lead through crisis, transform setbacks into innovation, and build robust cultures.</p>
+</div>
+</div>
+<!-- Continuous Line Motif Downwards -->
+<svg class="absolute -bottom-16 left-1/4 w-8 h-32 md:h-64 z-0 pointer-events-none" preserveaspectratio="none" viewbox="0 0 10 100">
+<path class="mic-cable" d="M5,0 L5,100" fill="none" stroke="#e5e2e1" stroke-opacity="0.15" stroke-width="1.5"></path>
+</svg>
+</section>
+<!-- Section 2: Speaking Topics (Asymmetric Layout) -->
+<section class="relative py-section-gap px-margin-mobile md:px-margin-desktop bg-surface-container-lowest border-y border-surface-variant/20">
+<div class="max-w-container-max mx-auto">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-center">
+<!-- Title area -->
+<div class="lg:col-span-4 flex flex-col gap-6 relative z-10">
+<div class="w-12 h-1 bg-joy-gold"></div>
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-body-text uppercase leading-none">SIGNATURE<br/><span class="text-joy-gold">TOPICS</span></h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Each keynote is an architectural framework designed to dismantle limiting beliefs and construct a foundation of enduring strength.</p>
+</div>
+<!-- Topics List -->
+<div class="lg:col-span-8 flex flex-col gap-4 relative z-10 mt-12 lg:mt-0">
+<!-- Topic 1 -->
+<div class="ghost-card p-6 md:p-8 flex flex-col md:flex-row gap-6 items-start md:items-center bg-surface/50 group">
+<div class="font-headline-md text-headline-md text-outline-variant opacity-50 group-hover:text-joy-gold transition-colors">01</div>
+<div class="flex-grow">
+<h3 class="font-headline-md text-headline-md text-body-text uppercase mb-2 group-hover:text-joy-gold transition-colors">Pain Has Purpose</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Uncovering the hidden utility in our deepest struggles and learning to harness adversity as a catalyst for profound personal evolution.</p>
+</div>
+</div>
+<!-- Topic 2 -->
+<div class="ghost-card p-6 md:p-8 flex flex-col md:flex-row gap-6 items-start md:items-center bg-surface/50 group">
+<div class="font-headline-md text-headline-md text-outline-variant opacity-50 group-hover:text-joy-gold transition-colors">02</div>
+<div class="flex-grow">
+<h3 class="font-headline-md text-headline-md text-body-text uppercase mb-2 group-hover:text-joy-gold transition-colors">Turning Struggles into Strength</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Actionable methodologies for cognitive reframing, emotional regulation, and building an unbreakable mindset in the face of relentless pressure.</p>
+</div>
+</div>
+<!-- Topic 3 -->
+<div class="ghost-card p-6 md:p-8 flex flex-col md:flex-row gap-6 items-start md:items-center bg-surface/50 group">
+<div class="font-headline-md text-headline-md text-outline-variant opacity-50 group-hover:text-joy-gold transition-colors">03</div>
+<div class="flex-grow">
+<h3 class="font-headline-md text-headline-md text-body-text uppercase mb-2 group-hover:text-joy-gold transition-colors">Male Empowerment & Identity</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Redefining modern masculinity through vulnerability, accountability, and purpose-driven leadership in an increasingly complex world.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Background radial spotlight -->
+<div class="absolute top-1/2 left-3/4 -translate-y-1/2 bg-spotlight w-[600px] h-[600px] pointer-events-none z-0 rounded-full"></div>
+</section>
+<!-- Section 3: Professional Logistics / Speaker Kit -->
+<section class="relative py-section-gap px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto text-center" id="booking">
+<div class="inline-block border border-outline/30 px-12 py-16 ghost-card bg-surface-container-highest/10 max-w-3xl mx-auto w-full relative z-10">
+<span class="material-symbols-outlined text-joy-gold mb-6 block mx-auto" style="font-size: 48px;">mic_external_on</span>
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-body-text uppercase mb-6">READY TO BRING <span class="text-joy-gold">THE MESSAGE?</span></h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xl mx-auto mb-10">
+                    Download the comprehensive Speaker Kit for detailed technical requirements, booking logistics, and A/V specifications to ensure a flawless event execution.
+                </p>
+<div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
+<a class="inline-flex items-center justify-center px-8 py-4 bg-joy-gold text-ink-black font-label-caps uppercase tracking-widest text-label-caps btn-reveal hover:opacity-90 w-full sm:w-auto" href="#">
+                        BOOK CALEB NOW
+                    </a>
+<a class="inline-flex items-center justify-center px-8 py-4 border border-inverse-surface/30 text-body-text font-label-caps uppercase tracking-widest text-label-caps hover:bg-inverse-surface/5 transition-colors w-full sm:w-auto" href="#">
+                        DOWNLOAD SPEAKER KIT
+                        <span class="material-symbols-outlined ml-2" style="font-size: 16px;">download</span>
+</a>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-section-gap bg-ink-black border-t border-surface-variant/10">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter px-margin-desktop max-w-container-max mx-auto md:px-margin-desktop px-margin-mobile">
+<!-- Brand / Logo -->
+<div class="col-span-1 md:col-span-6 flex flex-col gap-4">
+<div class="font-headline-lg text-headline-lg text-joy-gold uppercase">
+                    Caleb Jakes
+                </div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-sm">
+                    Cinematic Authority. Purpose-driven narratives designed to elevate and transform.
+                </p>
+</div>
+<!-- Links -->
+<div class="col-span-1 md:col-span-6 flex flex-col md:flex-row md:justify-end gap-6 md:gap-12 mt-8 md:mt-0">
+<div class="flex flex-col gap-4">
+<a class="text-on-surface-variant hover:text-joy-gold transition-colors font-body-md text-body-md transition-all duration-300" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-joy-gold transition-colors font-body-md text-body-md transition-all duration-300" href="#">Terms of Service</a>
+</div>
+<div class="flex flex-col gap-4">
+<a class="text-on-surface-variant hover:text-joy-gold transition-colors font-body-md text-body-md transition-all duration-300" href="#">Speaker Kit</a>
+<a class="text-on-surface-variant hover:text-joy-gold transition-colors font-body-md text-body-md transition-all duration-300" href="#">Media Assets</a>
+</div>
+</div>
+<!-- Copyright -->
+<div class="col-span-1 md:col-span-12 mt-12 pt-8 border-t border-surface-variant/20 flex justify-between items-center flex-col md:flex-row">
+<p class="font-body-md text-body-md text-on-surface-variant text-sm">
+                    © 2024 Joyionaire™ - Caleb Jakes. All Rights Reserved.
+                </p>
+</div>
+</div>
+</footer>
+</body></html>
