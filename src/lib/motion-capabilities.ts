@@ -7,6 +7,12 @@ export type MotionCapabilities = {
   coarsePointer: boolean;
 };
 
+export type MotionRuntimePolicy = {
+  enhancedEffects: boolean;
+  lenis: boolean;
+  syncTouch: boolean;
+};
+
 export function resolveMotionMode({
   reducedMotion,
   mobile,
@@ -19,3 +25,12 @@ export function resolveMotionMode({
   return "enhanced";
 }
 
+export function resolveMotionRuntimePolicy(
+  mode: MotionMode,
+): MotionRuntimePolicy {
+  return {
+    enhancedEffects: mode === "enhanced",
+    lenis: mode !== "reduced",
+    syncTouch: mode === "mobile" || mode === "tablet",
+  };
+}

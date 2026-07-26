@@ -45,6 +45,14 @@ describe("SiteHeader", () => {
     ).toBeGreaterThan(0);
   });
 
+  it("keeps mobile-menu scrolling independent from Lenis", () => {
+    render(<SiteHeader />);
+
+    expect(document.getElementById("mobile-navigation")).toHaveAttribute(
+      "data-lenis-prevent",
+    );
+  });
+
   it("marks the header compact after the page scrolls", () => {
     render(<SiteHeader />);
     Object.defineProperty(window, "scrollY", {

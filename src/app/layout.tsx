@@ -12,6 +12,7 @@ import { withBasePath } from "@/lib/base-path";
 import { COLOR_SCHEME_BOOTSTRAP_SCRIPT } from "@/lib/color-scheme";
 import { getSiteOrigin } from "@/lib/metadata";
 
+import "lenis/dist/lenis.css";
 import "./globals.css";
 
 const display = Bebas_Neue({
@@ -79,7 +80,7 @@ export default function RootLayout({
         <StructuredData />
         <MotionRuntime />
         <SiteHeader />
-        <main id="main-content">{children}</main>
+        <main id="main-content" tabIndex={-1}>{children}</main>
         <SiteFooter />
         <MobileBookingBar />
       </body>

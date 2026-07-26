@@ -54,12 +54,14 @@ Control `matchMedia` values and the root `--header-height`, then require:
 - no Lenis or GSAP instance in reduced mode;
 - exact Lenis options: `autoRaf: true`, `smoothWheel: true`, `lerp: 0.075`,
   touch-mode `syncTouch: true` and `syncTouchLerp: 0.075`, enhanced-mode
-  `syncTouch: false`, and the negative computed header offset;
+  `syncTouch: false`, and `anchors: true`;
 - mobile/tablet never register the enhanced GSAP effects;
 - enhanced mode registers the existing effects and synchronizes
   ScrollTrigger from Lenis scroll events;
-- unmount, pathname changes, motion-mode changes, and the independent `900px`
-  header breakpoint destroy the previous instance and detach listeners;
+- unmount, pathname changes, and motion-mode changes destroy the previous
+  instance and detach listeners;
+- the independent `900px` header breakpoint does not recreate Lenis because
+  Lenis reads the responsive root scroll padding at anchor time;
 - live reduced-motion changes leave the native fallback;
 - stale imports cannot create another instance;
 - Lenis failure skips GSAP without disabling native scroll;
@@ -79,7 +81,6 @@ Split Lenis setup from the enhanced GSAP setup inside the existing
 
 - dynamically load Lenis for every non-reduced mode;
 - use `autoRaf` instead of the GSAP ticker;
-- add the `900px` header query to the existing reconfiguration listeners;
 - keep generation/disposal guards around both import stages;
 - destroy Lenis and GSAP independently;
 - keep native scrolling when either optional module stage fails.
@@ -175,7 +176,8 @@ Verify:
   the 72px header offset, mobile navigation scrolls without moving the
   underlying page, and no horizontal overflow appears;
 - tablet widths on both sides of `900px`: Lenis stays active, GSAP stays absent,
-  and the anchor offset refreshes from 72px to 84px;
+  the anchor offset changes from 72px to 84px, and no motion-mode
+  reconfiguration occurs;
 - reduced-motion emulation: no Lenis class, computed `scroll-behavior: auto`,
   and immediate anchor movement;
 - same-page hashes, the skip link, a direct initial hash, a cross-route hash,

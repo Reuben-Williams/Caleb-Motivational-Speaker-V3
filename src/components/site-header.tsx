@@ -123,6 +123,7 @@ export function SiteHeader() {
       <nav
         aria-label="Mobile navigation"
         className="mobile-nav"
+        data-lenis-prevent
         data-open={mobileOpen}
         hidden={!mobileOpen}
         id="mobile-navigation"

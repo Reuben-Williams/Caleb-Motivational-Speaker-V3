@@ -3,7 +3,10 @@
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
-import { resolveMotionMode } from "@/lib/motion-capabilities";
+import {
+  resolveMotionMode,
+  resolveMotionRuntimePolicy,
+} from "@/lib/motion-capabilities";
 
 export function MotionRuntime() {
   const pathname = usePathname();
@@ -19,13 +22,13 @@ export function MotionRuntime() {
     };
     let disposed = false;
     let generation = 0;
-    let teardownEnhanced: (() => void) | undefined;
+    let teardownRuntime: (() => void) | undefined;
 
     const configure = async () => {
       generation += 1;
       const currentGeneration = generation;
-      teardownEnhanced?.();
-      teardownEnhanced = undefined;
+      teardownRuntime?.();
+      teardownRuntime = undefined;
 
       const mode = resolveMotionMode({
         reducedMotion: queries.reducedMotion.matches,
@@ -37,152 +40,181 @@ export function MotionRuntime() {
       window.dispatchEvent(
         new CustomEvent("caleb:motion-mode", { detail: mode }),
       );
-      if (mode !== "enhanced") return;
+      const policy = resolveMotionRuntimePolicy(mode);
+      if (!policy.lenis) return;
 
-      const [{ gsap }, { ScrollTrigger }, { default: Lenis }] =
-        await Promise.all([
+      let lenis: InstanceType<(typeof import("lenis"))["default"]>;
+      try {
+        const { default: Lenis } = await import("lenis");
+        if (disposed || currentGeneration !== generation) return;
+
+        lenis = new Lenis({
+          anchors: true,
+          autoRaf: true,
+          lerp: 0.075,
+          smoothWheel: true,
+          syncTouch: policy.syncTouch,
+          syncTouchLerp: 0.075,
+        });
+      } catch {
+        return;
+      }
+      teardownRuntime = () => lenis.destroy();
+      if (!policy.enhancedEffects) return;
+
+      let updateScroll: (() => void) | undefined;
+      try {
+        const [{ gsap }, { ScrollTrigger }] = await Promise.all([
           import("gsap"),
           import("gsap/ScrollTrigger"),
-          import("lenis"),
         ]);
-      if (disposed || currentGeneration !== generation) return;
+        if (disposed || currentGeneration !== generation) return;
 
-      gsap.registerPlugin(ScrollTrigger);
-      const lenis = new Lenis({
-        lerp: 0.075,
-        smoothWheel: true,
-        anchors: true,
-      });
-      const updateScroll = () => ScrollTrigger.update();
-      const tick = (time: number) => lenis.raf(time * 1_000);
-      lenis.on("scroll", updateScroll);
-      gsap.ticker.add(tick);
-      gsap.ticker.lagSmoothing(0);
+        gsap.registerPlugin(ScrollTrigger);
+        updateScroll = () => ScrollTrigger.update();
+        lenis.on("scroll", updateScroll);
 
-      const context = gsap.context(() => {
-        const homeHero = document.querySelector(".home-hero");
-        const heroPortrait = document.querySelector(
-          ".home-hero__portrait img",
-        );
-        const heroBackdrop = document.querySelector(
-          ".home-hero__backdrop",
-        );
-        if (homeHero && heroPortrait) {
-          gsap.to(heroPortrait, {
-            yPercent: 7,
-            ease: "none",
-            scrollTrigger: {
-              trigger: homeHero,
-              start: "top top",
-              end: "bottom top",
-              scrub: 1,
-            },
-          });
+        let context;
+        try {
+          context = gsap.context(() => {
+            const homeHero = document.querySelector(".home-hero");
+            const heroPortrait = document.querySelector(
+              ".home-hero__portrait img",
+            );
+            const heroBackdrop = document.querySelector(
+              ".home-hero__backdrop",
+            );
+            if (homeHero && heroPortrait) {
+              gsap.to(heroPortrait, {
+                yPercent: 7,
+                ease: "none",
+                scrollTrigger: {
+                  trigger: homeHero,
+                  start: "top top",
+                  end: "bottom top",
+                  scrub: 1,
+                },
+              });
+            }
+            if (homeHero && heroBackdrop) {
+              gsap.to(heroBackdrop, {
+                backgroundPosition: "50% 62%",
+                ease: "none",
+                scrollTrigger: {
+                  trigger: homeHero,
+                  start: "top top",
+                  end: "bottom top",
+                  scrub: 1,
+                },
+              });
+            }
+
+            const storySection =
+              document.querySelector(".story-section");
+            const storyImage = document.querySelector(
+              ".story-image--primary img",
+            );
+            if (storySection && storyImage) {
+              gsap.fromTo(
+                storyImage,
+                { scale: 1.06 },
+                {
+                  scale: 1,
+                  ease: "none",
+                  scrollTrigger: {
+                    trigger: storySection,
+                    start: "top bottom",
+                    end: "bottom top",
+                    scrub: 1,
+                  },
+                },
+              );
+            }
+
+            const audienceGrid =
+              document.querySelector(".audience-grid");
+            const audienceHeadings = document.querySelectorAll(
+              ".audience-card h3",
+            );
+            if (audienceGrid && audienceHeadings.length > 0) {
+              gsap.fromTo(
+                audienceHeadings,
+                { clipPath: "inset(0 100% 0 0)" },
+                {
+                  clipPath: "inset(0 0% 0 0)",
+                  duration: 0.8,
+                  stagger: 0.08,
+                  ease: "power3.out",
+                  scrollTrigger: {
+                    trigger: audienceGrid,
+                    start: "top 72%",
+                    once: true,
+                  },
+                },
+              );
+            }
+
+            const reelSection =
+              document.querySelector(".reel-section");
+            const reelFrame = document.querySelector(
+              ".reel-section__frame",
+            );
+            if (reelSection && reelFrame) {
+              gsap.fromTo(
+                reelFrame,
+                { clipPath: "inset(5% 7%)" },
+                {
+                  clipPath: "inset(0% 0%)",
+                  ease: "none",
+                  scrollTrigger: {
+                    trigger: reelSection,
+                    start: "top 80%",
+                    end: "center 42%",
+                    scrub: 1,
+                  },
+                },
+              );
+            }
+
+            const processSection =
+              document.querySelector(".process-section");
+            const processCable = document.querySelector(
+              ".process-section .cable-line path",
+            );
+            if (processSection && processCable) {
+              gsap.fromTo(
+                processCable,
+                { strokeDasharray: 1600, strokeDashoffset: 1600 },
+                {
+                  strokeDashoffset: 0,
+                  ease: "none",
+                  scrollTrigger: {
+                    trigger: processSection,
+                    start: "top 70%",
+                    end: "bottom 75%",
+                    scrub: 1,
+                  },
+                },
+              );
+            }
+          }, document.body);
+        } catch {
+          lenis.off("scroll", updateScroll);
+          return;
         }
-        if (homeHero && heroBackdrop) {
-          gsap.to(heroBackdrop, {
-            backgroundPosition: "50% 62%",
-            ease: "none",
-            scrollTrigger: {
-              trigger: homeHero,
-              start: "top top",
-              end: "bottom top",
-              scrub: 1,
-            },
-          });
-        }
 
-        const storySection = document.querySelector(".story-section");
-        const storyImage = document.querySelector(
-          ".story-image--primary img",
-        );
-        if (storySection && storyImage) {
-          gsap.fromTo(
-            storyImage,
-            { scale: 1.06 },
-            {
-              scale: 1,
-              ease: "none",
-              scrollTrigger: {
-                trigger: storySection,
-                start: "top bottom",
-                end: "bottom top",
-                scrub: 1,
-              },
-            },
-          );
+        ScrollTrigger.refresh();
+        teardownRuntime = () => {
+          context.revert();
+          lenis.off("scroll", updateScroll!);
+          lenis.destroy();
+        };
+      } catch {
+        if (updateScroll) {
+          lenis.off("scroll", updateScroll);
         }
-
-        const audienceGrid = document.querySelector(".audience-grid");
-        const audienceHeadings = document.querySelectorAll(
-          ".audience-card h3",
-        );
-        if (audienceGrid && audienceHeadings.length > 0) {
-          gsap.fromTo(
-            audienceHeadings,
-            { clipPath: "inset(0 100% 0 0)" },
-            {
-              clipPath: "inset(0 0% 0 0)",
-              duration: 0.8,
-              stagger: 0.08,
-              ease: "power3.out",
-              scrollTrigger: {
-                trigger: audienceGrid,
-                start: "top 72%",
-                once: true,
-              },
-            },
-          );
-        }
-
-        const reelSection = document.querySelector(".reel-section");
-        const reelFrame = document.querySelector(".reel-section__frame");
-        if (reelSection && reelFrame) {
-          gsap.fromTo(
-            reelFrame,
-            { clipPath: "inset(5% 7%)" },
-            {
-              clipPath: "inset(0% 0%)",
-              ease: "none",
-              scrollTrigger: {
-                trigger: reelSection,
-                start: "top 80%",
-                end: "center 42%",
-                scrub: 1,
-              },
-            },
-          );
-        }
-
-        const processSection = document.querySelector(".process-section");
-        const processCable = document.querySelector(
-          ".process-section .cable-line path",
-        );
-        if (processSection && processCable) {
-          gsap.fromTo(
-            processCable,
-            { strokeDasharray: 1600, strokeDashoffset: 1600 },
-            {
-              strokeDashoffset: 0,
-              ease: "none",
-              scrollTrigger: {
-                trigger: processSection,
-                start: "top 70%",
-                end: "bottom 75%",
-                scrub: 1,
-              },
-            },
-          );
-        }
-      }, document.body);
-
-      ScrollTrigger.refresh();
-      teardownEnhanced = () => {
-        context.revert();
-        lenis.off("scroll", updateScroll);
-        lenis.destroy();
-        gsap.ticker.remove(tick);
-      };
+        return;
+      }
     };
 
     const handleChange = () => void configure();
@@ -194,7 +226,7 @@ export function MotionRuntime() {
     return () => {
       disposed = true;
       generation += 1;
-      teardownEnhanced?.();
+      teardownRuntime?.();
       for (const query of Object.values(queries)) {
         query.removeEventListener("change", handleChange);
       }

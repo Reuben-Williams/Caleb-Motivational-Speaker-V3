@@ -6,6 +6,10 @@ const css = readFileSync(
   resolve(process.cwd(), "src/app/globals.css"),
   "utf8",
 ).toLowerCase();
+const layoutSource = readFileSync(
+  resolve(process.cwd(), "src/app/layout.tsx"),
+  "utf8",
+);
 
 function blockFor(selector: string) {
   const start = css.indexOf(`${selector.toLowerCase()} {`);
@@ -122,6 +126,21 @@ describe("global theme contract", () => {
   it("keeps the animated stage atmosphere legible on the original navy", () => {
     expect(css).toMatch(
       /html\[data-color-scheme="original"\]\s+\.hero-atmosphere\[data-enabled="true"\]\s*\{[^}]*mix-blend-mode:\s*screen;/s,
+    );
+  });
+
+  it("integrates Lenis without removing native or reduced-motion fallbacks", () => {
+    const lenisImport = layoutSource.indexOf(
+      'import "lenis/dist/lenis.css";',
+    );
+    const projectStyles = layoutSource.indexOf('import "./globals.css";');
+
+    expect(lenisImport).toBeGreaterThanOrEqual(0);
+    expect(lenisImport).toBeLessThan(projectStyles);
+    expect(blockFor("html")).toContain("scroll-behavior: smooth;");
+    expect(blockFor("html.lenis")).toContain("scroll-behavior: auto;");
+    expect(css).toMatch(
+      /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?html\s*\{[^}]*scroll-behavior:\s*auto;/,
     );
   });
 });

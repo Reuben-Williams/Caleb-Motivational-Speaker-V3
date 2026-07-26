@@ -40,9 +40,8 @@ tablet, mobile, and coarse-pointer devices receive native browser scrolling.
 - Keep the existing GSAP parallax and scroll-linked effects desktop-only.
 - Reconfigure and clean up the runtime when the route or motion capability
   changes.
-- Reconfigure the anchor offset when the fixed header changes size at the
-  `900px` navigation breakpoint, even when the resolved motion mode does not
-  change.
+- Honor the responsive fixed-header offset at anchor time without recreating
+  the runtime when only the `900px` navigation breakpoint changes.
 - Preserve compatibility with the normal Next.js build and GitHub Pages static
   export.
 
@@ -116,15 +115,15 @@ instance with:
 - `syncTouch: false` in `enhanced` mode.
 - `lerp: 0.075` in every enabled mode.
 - `syncTouchLerp: 0.075` in mobile and tablet modes.
-- `anchors` enabled with a negative offset equal to the current
-  `--header-height`.
+- `anchors: true` so Lenis handles same-page links and reads the root
+  `scroll-padding-top`.
 
-The header offset is read when the instance is configured. The existing CSS
-variable already resolves to `84px` on desktop and `72px` at the mobile
-navigation breakpoint. In addition to the motion capability queries, the
-runtime observes `(max-width: 900px)`. Crossing that breakpoint starts a new
-configuration generation so the numeric Lenis anchor offset cannot become
-stale while the mode remains `tablet`.
+Lenis 1.3.25 reads the root element's computed `scroll-padding-top` each time it
+resolves an element target. The existing CSS variable resolves to `84px` on
+desktop and `72px` at the mobile navigation breakpoint. No numeric Lenis
+`offset` is supplied: combining one with `scroll-padding-top` would double the
+visible gap. Crossing `900px` therefore updates the next anchor target without
+recreating a still-valid `tablet` runtime.
 
 The runtime destroys the active Lenis instance before replacing it, on
 component unmount, when a media query changes the mode, and when the pathname
@@ -236,7 +235,6 @@ recreate the runtime.
 - Scroll listeners are removed before their owning instance is destroyed.
 - GSAP contexts and ScrollTrigger integration are reverted independently.
 - Media-query listeners are removed on component unmount.
-- The `900px` header-breakpoint listener is removed on component unmount.
 - The native CSS fallback remains active until Lenis has initialized.
 - A Lenis import or initialization failure leaves native scrolling active and
   skips GSAP for that generation.
@@ -258,7 +256,8 @@ behavior before production code changes.
    - tablet initializes Lenis with synchronized touch and no GSAP effects;
    - enhanced initializes Lenis and the existing GSAP effects;
    - reduced motion initializes neither runtime;
-   - anchors receive the negative computed header offset;
+   - `anchors: true` delegates the responsive offset to computed
+     `scroll-padding-top`;
    - exact options include `autoRaf: true`, `smoothWheel: true`,
      `lerp: 0.075`, touch-mode `syncTouch: true` and
      `syncTouchLerp: 0.075`, and enhanced-mode `syncTouch: false`;
@@ -266,8 +265,8 @@ behavior before production code changes.
    - pathname changes destroy the old instance without forcing a scroll
      position;
    - live reduced-motion changes replace Lenis with the native fallback;
-   - crossing `900px` refreshes the numeric anchor offset even when the motion
-     mode remains `tablet`;
+   - crossing `900px` does not recreate the runtime and the next anchor uses
+     the updated computed scroll padding;
    - scroll listeners are detached before Lenis destruction;
    - a stale dynamic import cannot create an additional instance;
    - Lenis import or construction failure falls back to native scrolling and
@@ -303,7 +302,8 @@ unavailable.
   anchor eases to the correctly offset target, the mobile menu remains
   independently scrollable, and no horizontal overflow appears.
 - Tablet or coarse-pointer emulation: confirm Lenis is active without the
-  desktop GSAP effects.
+  desktop GSAP effects and anchors use 72px below `900px` and 84px above it
+  without a mode reconfiguration.
 - Reduced-motion emulation: confirm Lenis is absent, computed
   `scroll-behavior` is `auto`, and anchor navigation is immediate.
 - Route/history loop: navigate normally, use back and forward restoration, load
@@ -324,7 +324,8 @@ this local implementation acceptance gate.
   mobile or tablet mode.
 - Reduced-motion mode initializes neither Lenis nor GSAP.
 - In-page anchors land below the current fixed-header height.
-- Crossing the `900px` header breakpoint refreshes the anchor offset.
+- Crossing the `900px` header breakpoint updates the next anchor offset through
+  computed scroll padding without recreating Lenis.
 - The expanded mobile navigation scrolls independently.
 - Route, breakpoint, preference, and unmount transitions clean up their prior
   runtime.
