@@ -200,6 +200,9 @@ The required token interface and exact scheme mappings are:
 | `--theme-border` | `rgb(253 252 248 / 0.18)` | `rgb(255 255 255 / 0.24)` | Default rule and control border |
 | `--theme-focus` | `#2E5BFF` | `#F1DD18` | Visible keyboard focus |
 | `--theme-shadow-rgb` | `0 0 0` | `0 0 0` | Shadow and depth treatments |
+| `--theme-media-surface` | `#0A0A0A` | `#0B0A68` | Speaker-reel section surface |
+| `--theme-media-placeholder` | `#BBB` | `#FFFFFF` | Image placeholder shown before media resolves |
+| `--theme-video-background` | `#000` | `#000` | Functional video letterbox background |
 
 The original surface variants are deliberate darker values derived from the
 source navy; they preserve V3's dark cinematic composition while moving it into

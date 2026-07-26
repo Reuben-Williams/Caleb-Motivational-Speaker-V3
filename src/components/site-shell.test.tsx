@@ -31,6 +31,20 @@ describe("SiteHeader", () => {
     ).toBeGreaterThan(0);
   });
 
+  it("exposes the original color scheme control in both responsive headers", () => {
+    render(<SiteHeader />);
+
+    expect(
+      screen.getAllByRole("button", {
+        name: "Original colors",
+        hidden: true,
+      }),
+    ).toHaveLength(2);
+    expect(
+      screen.getAllByRole("link", { name: "Book Caleb" }).length,
+    ).toBeGreaterThan(0);
+  });
+
   it("marks the header compact after the page scrolls", () => {
     render(<SiteHeader />);
     Object.defineProperty(window, "scrollY", {

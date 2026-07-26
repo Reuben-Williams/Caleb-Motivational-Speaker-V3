@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { ColorSchemeToggle } from "@/components/color-scheme-toggle";
 import { audienceMenu, navigation } from "@/content/site";
 
 function Chevron({ open }: { open: boolean }) {
@@ -98,6 +99,8 @@ export function SiteHeader() {
           ))}
         </nav>
 
+        <ColorSchemeToggle className="color-scheme-toggle--desktop" />
+
         <Link className="header-booking-link" href="/book-caleb">
           Book Caleb
         </Link>
@@ -153,6 +156,7 @@ export function SiteHeader() {
             {item.label}
           </Link>
         ))}
+        <ColorSchemeToggle className="color-scheme-toggle--mobile" />
       </nav>
     </header>
   );
