@@ -173,26 +173,46 @@ into semantic custom properties for:
 - image overlays, gradients, shadows, and highlight glows;
 - form controls, notices, and status treatments.
 
-The required token interface is:
+The required token interface and exact scheme mappings are:
 
-| Token | Purpose |
-| --- | --- |
-| `--theme-page`, `--theme-page-rgb` | Root and deepest backgrounds, including alpha overlays |
-| `--theme-surface`, `--theme-surface-rgb` | Elevated panels and menus |
-| `--theme-surface-soft`, `--theme-surface-soft-rgb` | Secondary panels and controls |
-| `--theme-text`, `--theme-text-rgb` | Strong text and alpha text treatments |
-| `--theme-muted`, `--theme-muted-rgb` | Secondary text |
-| `--theme-accent`, `--theme-accent-rgb` | Brand accents and primary calls to action |
-| `--theme-accent-contrast`, `--theme-accent-contrast-rgb` | Text placed on the accent |
-| `--theme-border` | Default rule and control border |
-| `--theme-focus` | Visible keyboard focus |
-| `--theme-shadow-rgb` | Shadow and depth treatments |
+| Token | Cinematic value | Original value | Purpose |
+| --- | --- | --- | --- |
+| `--theme-page` | `#050505` | `#02017D` | Root and deepest backgrounds |
+| `--theme-page-rgb` | `5 5 5` | `2 1 125` | Page color used in alpha overlays |
+| `--theme-surface` | `#131313` | `#0B0A68` | Elevated panels and menus |
+| `--theme-surface-rgb` | `19 19 19` | `11 10 104` | Surface color used with alpha |
+| `--theme-surface-soft` | `#201F1F` | `#17165A` | Secondary panels and controls |
+| `--theme-surface-soft-rgb` | `32 31 31` | `23 22 90` | Soft-surface color used with alpha |
+| `--theme-text` | `#FDFCF8` | `#FFFFFF` | Strong text on dark surfaces |
+| `--theme-text-rgb` | `253 252 248` | `255 255 255` | Strong text used with alpha |
+| `--theme-muted` | `#D0C5AF` | `#FFFFFF` | Secondary text; original-scheme consumers use existing alpha treatments for hierarchy |
+| `--theme-muted-rgb` | `208 197 175` | `255 255 255` | Secondary text used with alpha |
+| `--theme-accent` | `#D4AF37` | `#F1DD18` | Brand accents and primary calls to action |
+| `--theme-accent-rgb` | `212 175 55` | `241 221 24` | Accent used with alpha |
+| `--theme-accent-contrast` | `#050505` | `#1F2937` | Text and icons placed on the accent |
+| `--theme-accent-contrast-rgb` | `5 5 5` | `31 41 55` | Accent contrast used with alpha |
+| `--theme-inverse-text` | `#050505` | `#1F2937` | Text on intentional white or light surfaces |
+| `--theme-inverse-text-rgb` | `5 5 5` | `31 41 55` | Inverse text used with alpha |
+| `--theme-secondary-accent` | `#2E5BFF` | `#FFFFFF` | Existing cool decorative accent |
+| `--theme-secondary-accent-rgb` | `46 91 255` | `255 255 255` | Secondary accent used with alpha |
+| `--theme-tertiary-accent` | `#630D16` | `#F1DD18` | Existing warm decorative accent |
+| `--theme-tertiary-accent-rgb` | `99 13 22` | `241 221 24` | Tertiary accent used with alpha |
+| `--theme-border` | `rgb(253 252 248 / 0.18)` | `rgb(255 255 255 / 0.24)` | Default rule and control border |
+| `--theme-focus` | `#2E5BFF` | `#F1DD18` | Visible keyboard focus |
+| `--theme-shadow-rgb` | `0 0 0` | `0 0 0` | Shadow and depth treatments |
+
+The original surface variants are deliberate darker values derived from the
+source navy; they preserve V3's dark cinematic composition while moving it into
+the original site's hue. White is the original scheme's primary text color, and
+slate is reserved for text/icons on yellow or intentional light surfaces. This
+mapping prevents slate from being placed directly on navy at insufficient
+contrast.
 
 Alpha variations use modern CSS color syntax such as
 `rgb(var(--theme-page-rgb) / 0.78)` instead of separate opacity-specific tokens.
 The existing short aliases (`--ink`, `--surface`, `--surface-soft`, `--ivory`,
-`--muted`, `--gold`, `--line`) may remain only as mappings to this required
-interface while components are migrated.
+`--muted`, `--gold`, `--cobalt`, `--burgundy`, `--line`) may remain only as
+mappings to this required interface while components are migrated.
 
 The cinematic values preserve the current rendered appearance. A root selector
 for `html[data-color-scheme="original"]` overrides those semantic properties
@@ -205,12 +225,17 @@ schemes.
 
 The migration boundary is every rule in `src/app/globals.css`. Outside the
 `:root` cinematic declarations, the original-scheme override, data-URI artwork,
-and an explicit allowlist of semantic status colors (`#ff786f` error and
-`#ffb14a` warning), rules may not contain raw occurrences of the current palette
-or its alpha forms: `#050505`, `#131313`, `#201f1f`, `#fdfcf8`, `#d0c5af`,
-`#d4af37`, `rgba(5, ...)`, `rgba(19, ...)`, `rgba(32, ...)`,
-`rgba(253, ...)`, or `rgba(212, ...)`. They must consume the token interface.
-The CSS contract test enforces this boundary and allowlist.
+and an explicit allowlist of semantic status colors (`#ff786f` and `#ff9c94`
+for errors; `#ffb14a` for warnings), rules may not contain raw occurrences of
+the current theme colors or their alpha forms. The forbidden solid list is
+`#000`, `#050505`, `#0a0a0a`, `#131313`, `#201f1f`, `#2e5bff`, `#630d16`,
+`#bbb`, `#d0c5af`, `#d4af37`, and `#fdfcf8`. The forbidden `rgb()`/`rgba()`
+channel prefixes are `0 0 0`, `5 5 5`, `10 10 10`, `19 19 19`, `32 31 31`,
+`46 91 255`, `99 13 22`, `187 187 187`, `208 197 175`, `212 175 55`, and
+`253 252 248`, accepting either comma or modern space syntax in the audit.
+Consumers must use the named token interface, including
+`rgb(var(--theme-*-rgb) / <alpha>)` for translucent forms. The CSS contract test
+enforces this boundary and allowlist.
 
 ## State and Data Flow
 
@@ -271,6 +296,11 @@ Implementation follows a red-green-refactor sequence.
   successful or failed storage write, and remove subscriptions on unmount.
 - Header tests prove both responsive placements exist and preserve the primary
   booking action.
+- A responsive browser assertion checks control visibility and focusability at
+  `899px`, `900px`, and `901px`.
+- A component assertion verifies the pre-mount control is disabled and
+  `visibility: hidden`, then becomes enabled with the correct pressed state
+  after mounting.
 - A CSS contract test verifies that both root schemes define the complete named
   token interface, that the original palette values are present, and that
   disallowed raw cinematic literals do not remain outside the declared
