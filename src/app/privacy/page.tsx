@@ -27,10 +27,12 @@ export default function PrivacyPage() {
         <section>
           <h2>Service providers</h2>
           <p>
-            Form-security, rate-limiting, and email-delivery providers may
-            process limited information required to protect and deliver an
-            inquiry. This release does not add an application database for
-            complete inquiry payloads.
+            Form-security and rate-limiting providers process limited
+            information needed to protect the form. Submitted inquiry details
+            are sent to Caleb&apos;s customer relationship management system
+            to create or update contact and speaking-opportunity records and
+            support follow-up workflows. This release does not add an
+            application database for complete inquiry payloads.
           </p>
         </section>
         <section>
@@ -45,4 +47,3 @@ export default function PrivacyPage() {
     </article>
   );
 }
-

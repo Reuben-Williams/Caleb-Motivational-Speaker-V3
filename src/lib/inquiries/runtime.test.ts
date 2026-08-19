@@ -4,15 +4,20 @@ import {
   createInquiryRuntime,
   trustedClientIpFromRequest,
 } from "@/lib/inquiries/runtime";
+import manifestFixture from "@/lib/inquiries/__fixtures__/highlevel/field-manifest.json";
 
 const completeEnv = {
-  RESEND_API_KEY: "re_test",
-  RESEND_FROM_EMAIL: "Caleb Jakes <speaking@example.com>",
-  INQUIRY_NOTIFICATION_EMAIL: "booking@example.com",
+  HIGHLEVEL_PRIVATE_INTEGRATION_TOKEN: "highlevel-token",
+  HIGHLEVEL_LOCATION_ID: "location-a",
+  HIGHLEVEL_PIPELINE_ID: "pipeline-a",
+  HIGHLEVEL_NEW_INQUIRY_STAGE_ID: "stage-a",
+  HIGHLEVEL_FIELD_MAP_JSON: JSON.stringify(manifestFixture),
   TURNSTILE_SECRET_KEY: "turnstile-secret",
   UPSTASH_REDIS_REST_URL: "https://example.upstash.io",
   UPSTASH_REDIS_REST_TOKEN: "upstash-token",
+  INQUIRY_HMAC_ACTIVE_KEY_ID: "v1",
   INQUIRY_HMAC_SECRET: "hmac-secret-with-sufficient-entropy",
+  INQUIRY_HMAC_PREVIOUS_KEYS_JSON: "{}",
 };
 
 describe("inquiry production runtime", () => {
@@ -21,7 +26,22 @@ describe("inquiry production runtime", () => {
     expect(
       createInquiryRuntime({
         ...completeEnv,
-        RESEND_API_KEY: "",
+        HIGHLEVEL_PRIVATE_INTEGRATION_TOKEN: "",
+      }),
+    ).toBeNull();
+  });
+
+  it("fails closed for an invalid identity keyring or field manifest", () => {
+    expect(
+      createInquiryRuntime({
+        ...completeEnv,
+        INQUIRY_HMAC_ACTIVE_KEY_ID: "",
+      }),
+    ).toBeNull();
+    expect(
+      createInquiryRuntime({
+        ...completeEnv,
+        HIGHLEVEL_FIELD_MAP_JSON: '{"version":2}',
       }),
     ).toBeNull();
   });

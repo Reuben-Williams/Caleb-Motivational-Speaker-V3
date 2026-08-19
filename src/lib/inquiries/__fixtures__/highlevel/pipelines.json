@@ -1,0 +1,17 @@
+{
+  "pipelines": [
+    {
+      "id": "pipeline_fixture",
+      "name": "Synthetic Pipeline",
+      "locationId": "loc_fixture",
+      "stages": [
+        {
+          "id": "stage_fixture",
+          "name": "Synthetic Stage",
+          "position": 0
+        }
+      ]
+    }
+  ],
+  "traceId": "trace_fixture"
+}

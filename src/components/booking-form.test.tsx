@@ -93,7 +93,7 @@ describe("BookingForm", () => {
           code: "accepted",
           message: "received",
           inquiryId: "CJ-ABCDEF123456",
-          confirmationEmailSent: true,
+          acceptedAt: "2026-08-18T20:00:00.000Z",
         },
         { status: 202 },
       ),
@@ -122,6 +122,12 @@ describe("BookingForm", () => {
     });
     expect(sessionStorage.getItem("caleb-booking-receipt:v1")).toContain(
       "CJ-ABCDEF123456",
+    );
+    expect(sessionStorage.getItem("caleb-booking-receipt:v1")).toContain(
+      "2026-08-18T20:00:00.000Z",
+    );
+    expect(sessionStorage.getItem("caleb-booking-receipt:v1")).not.toContain(
+      "confirmationEmailSent",
     );
   });
 

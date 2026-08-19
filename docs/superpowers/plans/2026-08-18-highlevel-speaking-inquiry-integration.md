@@ -43,11 +43,14 @@ client.
 
 ### Gate H3: Duplicate-opportunity behavior
 
-HighLevel currently reports `allowDuplicateOpportunity: false`. Prove with a
-controlled, labeled test that direct API creation can create two distinct
-Speaking Engagements opportunities for one contact without changing that global
-setting. If it cannot, stop and return to design approval. Do not enable the
-global setting because it may alter existing book-funnel behavior.
+The initial controlled test proved that direct API creation could not create two
+distinct Speaking Engagements opportunities for one contact while the global
+setting was disabled. The complete `BOOK FUNNEL` workflow was then audited and
+contained no opportunity actions. Caleb approved the account-wide behavior, the
+user enabled `Allow Multiple Opportunities per Contact`, and a second controlled
+test created exactly two distinctly labeled opportunities for the same
+synthetic contact in the isolated pipeline. Gate H3 is passed; the Website
+Inquiry ID remains the integration's 400-day duplicate business key.
 
 ### Gate H4: Operational timezone
 

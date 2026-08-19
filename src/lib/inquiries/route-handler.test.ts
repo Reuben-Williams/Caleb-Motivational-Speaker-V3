@@ -9,7 +9,7 @@ const accepted: InquiryResult = {
     code: "accepted",
     message: "received",
     inquiryId: "CJ-ABCDEF123456",
-    confirmationEmailSent: true,
+    acceptedAt: "2026-08-18T20:00:00.000Z",
   },
 };
 
@@ -89,4 +89,3 @@ describe("inquiry route handler", () => {
     expect((await response.json()).code).toBe("rate_limited");
   });
 });
-

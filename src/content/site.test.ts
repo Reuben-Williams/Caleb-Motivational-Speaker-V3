@@ -4,6 +4,7 @@ import {
   evidenceRegistry,
   faqs,
   navigation,
+  privacyDisclosure,
   routeMetadata,
   siteFacts,
 } from "@/content/site";
@@ -57,5 +58,11 @@ describe("approved site content", () => {
     expect(faqs.at(-1)?.question).toBe(
       "Is a speaker one-sheet or media kit available?",
     );
+  });
+
+  it("accurately discloses CRM processing for speaking inquiries", () => {
+    expect(privacyDisclosure).toMatch(/customer relationship management/i);
+    expect(privacyDisclosure).toMatch(/contact and opportunity records/i);
+    expect(privacyDisclosure).not.toMatch(/email-delivery providers/i);
   });
 });

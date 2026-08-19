@@ -3,45 +3,39 @@ import {
   type BookingData,
   type BookingInput,
 } from "@/lib/booking-schema";
-import { inquiryDigest, rateDigest } from "@/lib/inquiries/canonical";
-
-export type InquiryRecord = {
-  inquiryId: string;
-  state: "processing" | "accepted" | "business_failed";
-  confirmationEmailSent: boolean;
-};
-
-export interface InquiryStore {
-  incrementRateKey(
-    key: string,
-    windowSeconds: number,
-    limit: number,
-  ): Promise<{ allowed: boolean; retryAfter: number }>;
-  reserveInquiry(
-    key: string,
-    inquiryId: string,
-    ttlSeconds: number,
-  ): Promise<boolean>;
-  readInquiry(key: string): Promise<InquiryRecord | null>;
-  markBusinessDelivered(key: string): Promise<void>;
-  markBusinessFailed(key: string): Promise<void>;
-  acquireConfirmationRetry(key: string, ttlSeconds: number): Promise<boolean>;
-  markConfirmationSent(key: string): Promise<void>;
-}
+import { rateDigest } from "@/lib/inquiries/canonical";
+import {
+  inquiryIdentityCandidates,
+  type InquiryIdentityCandidate,
+  type InquiryIdentityKeyring,
+} from "@/lib/inquiries/identity";
+import {
+  CONTACT_LEASE_ACQUIRE_BUDGET_MS,
+  CONTACT_LEASE_RENEW_INTERVAL_MS,
+  CONTACT_LEASE_TTL_SECONDS,
+  CONTACT_RESOLUTION_BUDGET_MS,
+  createLeaseOwnerToken,
+  type InquiryRecord,
+} from "@/lib/inquiries/state";
+import type {
+  InquiryStore,
+  StoredInquiry,
+} from "@/lib/inquiries/upstash-store";
 
 export interface SpamVerifier {
   verify(token: string, trustedClientIp?: string): Promise<boolean>;
 }
 
-export type DeliveryMessage = {
-  inquiryId: string;
-  data: BookingData;
-  idempotencyKey: string;
-};
-
-export interface InquiryDelivery {
-  sendBusiness(message: DeliveryMessage): Promise<void>;
-  sendConfirmation(message: DeliveryMessage): Promise<void>;
+export interface InquiryGateway {
+  resolveContact(
+    data: BookingData,
+    context: { signal: AbortSignal },
+  ): Promise<{ contactId: string }>;
+  findOrCreateOpportunity(input: {
+    inquiryId: string;
+    contactId: string;
+    data: BookingData;
+  }): Promise<{ opportunityId: string }>;
 }
 
 type ServiceBody = {
@@ -57,7 +51,7 @@ type ServiceBody = {
     | "unexpected_error";
   message: string;
   inquiryId?: string;
-  confirmationEmailSent?: boolean;
+  acceptedAt?: string;
   fieldErrors?: Record<string, string[]>;
   correlationId?: string;
 };
@@ -69,12 +63,18 @@ export type InquiryResult = {
 };
 
 type InquiryServiceDependencies = {
-  hmacSecret: string;
+  identityKeyring: InquiryIdentityKeyring;
   store: InquiryStore;
-  delivery: InquiryDelivery;
+  gateway: InquiryGateway;
   spam: SpamVerifier;
+  now?: () => Date;
+  monotonicNow?: () => number;
+  ownerToken?: () => string;
+  sleep?: (milliseconds: number) => Promise<void>;
 };
 
+const INQUIRY_RESERVATION_TTL_SECONDS = 15 * 60;
+const CONTACT_LEASE_RETRY_MS = 250;
 const acceptedMessage =
   "Your speaking inquiry was received. Keep the inquiry ID for your records.";
 const alternativeMessage =
@@ -83,7 +83,7 @@ const alternativeMessage =
 function acceptedResult(
   status: 200 | 202,
   code: "accepted" | "duplicate_accepted",
-  record: InquiryRecord,
+  record: Extract<InquiryRecord, { state: "accepted" }>,
 ): InquiryResult {
   return {
     status,
@@ -91,17 +91,109 @@ function acceptedResult(
       code,
       message: acceptedMessage,
       inquiryId: record.inquiryId,
-      confirmationEmailSent: record.confirmationEmailSent,
+      acceptedAt: record.acceptedAt,
     },
   };
 }
 
+function candidateForStoredInquiry(
+  stored: StoredInquiry | null,
+  candidates: readonly InquiryIdentityCandidate[],
+) {
+  if (!stored) return candidates[0];
+  return candidates.find(({ ledgerKey }) => ledgerKey === stored.ledgerKey);
+}
+
+function activeRecordIsOwned(stored: StoredInquiry, now: Date) {
+  const { record } = stored;
+  return (
+    (record.state === "processing" || record.state === "contact_resolved") &&
+    new Date(record.leaseExpiresAt).getTime() > now.getTime()
+  );
+}
+
 export function createInquiryService({
-  hmacSecret,
+  identityKeyring,
   store,
-  delivery,
+  gateway,
   spam,
+  now = () => new Date(),
+  monotonicNow = () => Date.now(),
+  ownerToken = createLeaseOwnerToken,
+  sleep = (milliseconds) =>
+    new Promise((resolve) => setTimeout(resolve, milliseconds)),
 }: InquiryServiceDependencies) {
+  async function acquireContactLease(
+    key: string,
+    owner: string,
+  ): Promise<boolean> {
+    const deadline = monotonicNow() + CONTACT_LEASE_ACQUIRE_BUDGET_MS;
+    do {
+      if (
+        await store.acquireContactLease(
+          key,
+          owner,
+          CONTACT_LEASE_TTL_SECONDS,
+        )
+      ) {
+        return true;
+      }
+      const remaining = deadline - monotonicNow();
+      if (remaining <= 0) return false;
+      await sleep(Math.min(CONTACT_LEASE_RETRY_MS, remaining));
+    } while (monotonicNow() <= deadline);
+    return false;
+  }
+
+  async function resolveContactWithLease(
+    data: BookingData,
+    leaseKey: string,
+    owner: string,
+  ): Promise<{ contactId: string }> {
+    const controller = new AbortController();
+    let renewalRunning = false;
+    const aborted = new Promise<never>((_resolve, reject) => {
+      controller.signal.addEventListener(
+        "abort",
+        () => reject(new Error("Contact resolution lease was lost.")),
+        { once: true },
+      );
+    });
+    const timeout = setTimeout(
+      () => controller.abort(),
+      CONTACT_RESOLUTION_BUDGET_MS,
+    );
+    const renewal = setInterval(async () => {
+      if (renewalRunning || controller.signal.aborted) return;
+      renewalRunning = true;
+      try {
+        if (
+          !(await store.renewContactLease(
+            leaseKey,
+            owner,
+            CONTACT_LEASE_TTL_SECONDS,
+          ))
+        ) {
+          controller.abort();
+        }
+      } catch {
+        controller.abort();
+      } finally {
+        renewalRunning = false;
+      }
+    }, CONTACT_LEASE_RENEW_INTERVAL_MS);
+
+    try {
+      return await Promise.race([
+        gateway.resolveContact(data, { signal: controller.signal }),
+        aborted,
+      ]);
+    } finally {
+      clearTimeout(timeout);
+      clearInterval(renewal);
+    }
+  }
+
   return {
     async submit(
       input: BookingInput,
@@ -133,7 +225,7 @@ export function createInquiryService({
       const rateKey = rateDigest(
         data.workEmail,
         context.trustedClientIp,
-        hmacSecret,
+        identityKeyring.activeSecret,
       );
       const shortWindow = await store.incrementRateKey(
         `rate:15m:${rateKey}`,
@@ -166,112 +258,187 @@ export function createInquiryService({
         };
       }
 
-      const digest = inquiryDigest(data, hmacSecret);
-      const key = `inquiry:${digest}`;
-      const inquiryId = `CJ-${digest.slice(0, 12).toUpperCase()}`;
-      const businessIdempotencyKey = `business-inquiry/${digest.slice(0, 48)}`;
-      const confirmationIdempotencyKey =
-        `organizer-confirmation/${digest.slice(0, 48)}`;
+      const candidates = inquiryIdentityCandidates(data, identityKeyring);
+      const stored = await store.readInquiry(candidates);
+      if (stored?.record.state === "accepted") {
+        return acceptedResult(200, "duplicate_accepted", stored.record);
+      }
 
-      const existing = await store.readInquiry(key);
-      if (existing?.state === "accepted") {
-        let accepted = existing;
-        if (
-          !existing.confirmationEmailSent &&
-          (await store.acquireConfirmationRetry(key, 5 * 60))
-        ) {
-          try {
-            await delivery.sendConfirmation({
-              inquiryId,
-              data,
-              idempotencyKey: confirmationIdempotencyKey,
-            });
-            await store.markConfirmationSent(key);
-            accepted = {
-              ...existing,
-              confirmationEmailSent: true,
-            };
-          } catch {
-            // The accepted inquiry remains valid even if confirmation fails.
-          }
+      const requestTime = now();
+      if (stored && activeRecordIsOwned(stored, requestTime)) {
+        return {
+          status: 409,
+          retryAfter: 5,
+          body: {
+            code: "inquiry_processing",
+            message: "An identical inquiry is already being processed.",
+            inquiryId: stored.record.inquiryId,
+          },
+        };
+      }
+
+      const candidate = candidateForStoredInquiry(stored, candidates);
+      if (!candidate) {
+        return {
+          status: 500,
+          body: {
+            code: "unexpected_error",
+            message: `The inquiry identity could not be confirmed. ${alternativeMessage}`,
+          },
+        };
+      }
+
+      const existingContactId =
+        stored?.record.state === "contact_resolved" ||
+        stored?.record.state === "business_failed"
+          ? stored.record.contactId
+          : undefined;
+      const reservation = await store.reserveInquiry(
+        candidate,
+        ownerToken(),
+        requestTime,
+        INQUIRY_RESERVATION_TTL_SECONDS,
+      );
+      if (!reservation) {
+        return {
+          status: 409,
+          retryAfter: 5,
+          body: {
+            code: "inquiry_processing",
+            message: "An identical inquiry is already being processed.",
+            inquiryId: stored?.record.inquiryId ?? candidate.inquiryId,
+          },
+        };
+      }
+
+      let contactId = existingContactId;
+      if (contactId) {
+        try {
+          await store.recordContact(reservation, contactId, now());
+        } catch {
+          return {
+            status: 500,
+            body: {
+              code: "unexpected_error",
+              message: `The contact state could not be confirmed. ${alternativeMessage}`,
+              inquiryId: reservation.inquiryId,
+            },
+          };
         }
-        return acceptedResult(200, "duplicate_accepted", accepted);
-      }
-      if (existing?.state === "processing") {
-        return {
-          status: 409,
-          retryAfter: 5,
-          body: {
-            code: "inquiry_processing",
-            message: "An identical inquiry is already being processed.",
-            inquiryId: existing.inquiryId,
-          },
-        };
+      } else {
+        const contactLeaseKey = `contact-lease:${rateDigest(
+          data.workEmail,
+          undefined,
+          identityKeyring.activeSecret,
+        )}`;
+        const leaseAcquired = await acquireContactLease(
+          contactLeaseKey,
+          reservation.ownerToken,
+        );
+        if (!leaseAcquired) {
+          await store.recordFailure(reservation, "contact_lease");
+          return {
+            status: 409,
+            retryAfter: 5,
+            body: {
+              code: "inquiry_processing",
+              message: "A contact with this email is already being processed.",
+              inquiryId: reservation.inquiryId,
+            },
+          };
+        }
+
+        try {
+          const resolved = await resolveContactWithLease(
+            data,
+            contactLeaseKey,
+            reservation.ownerToken,
+          );
+          contactId = resolved.contactId;
+          if (
+            !(await store.releaseContactLease(
+              contactLeaseKey,
+              reservation.ownerToken,
+            ))
+          ) {
+            throw new Error("Contact lease release failed.");
+          }
+        } catch {
+          await store.releaseContactLease(
+            contactLeaseKey,
+            reservation.ownerToken,
+          );
+          await store.recordFailure(reservation, "contact_resolution");
+          return {
+            status: 502,
+            body: {
+              code: "delivery_failed",
+              message: `We couldn't process the inquiry. ${alternativeMessage}`,
+              inquiryId: reservation.inquiryId,
+            },
+          };
+        }
+
+        try {
+          await store.recordContact(reservation, contactId, now());
+        } catch {
+          return {
+            status: 500,
+            body: {
+              code: "unexpected_error",
+              message: `The contact state could not be confirmed. ${alternativeMessage}`,
+              inquiryId: reservation.inquiryId,
+            },
+          };
+        }
       }
 
-      const reserved = await store.reserveInquiry(key, inquiryId, 15 * 60);
-      if (!reserved) {
-        return {
-          status: 409,
-          retryAfter: 5,
-          body: {
-            code: "inquiry_processing",
-            message: "An identical inquiry is already being processed.",
-            inquiryId,
-          },
-        };
-      }
-
+      let opportunityId: string;
       try {
-        await delivery.sendBusiness({
-          inquiryId,
+        ({ opportunityId } = await gateway.findOrCreateOpportunity({
+          inquiryId: reservation.inquiryId,
+          contactId,
           data,
-          idempotencyKey: businessIdempotencyKey,
-        });
+        }));
       } catch {
-        await store.markBusinessFailed(key);
+        await store.recordFailure(reservation, "opportunity_resolution");
         return {
           status: 502,
           body: {
             code: "delivery_failed",
-            message: `We couldn't deliver the inquiry. ${alternativeMessage}`,
-            inquiryId,
+            message: `We couldn't process the inquiry. ${alternativeMessage}`,
+            inquiryId: reservation.inquiryId,
           },
         };
       }
 
+      const acceptedAt = now();
       try {
-        await store.markBusinessDelivered(key);
+        await store.acceptInquiry(
+          reservation,
+          contactId,
+          opportunityId,
+          acceptedAt,
+        );
       } catch {
         return {
           status: 500,
           body: {
             code: "unexpected_error",
-            message: `The delivery state could not be confirmed. ${alternativeMessage}`,
-            inquiryId,
+            message: `The inquiry state could not be confirmed. ${alternativeMessage}`,
+            inquiryId: reservation.inquiryId,
           },
         };
       }
 
-      let confirmationEmailSent = false;
-      try {
-        await delivery.sendConfirmation({
-          inquiryId,
-          data,
-          idempotencyKey: confirmationIdempotencyKey,
-        });
-        await store.markConfirmationSent(key);
-        confirmationEmailSent = true;
-      } catch {
-        // Business delivery is the success boundary.
-      }
-
       return acceptedResult(202, "accepted", {
-        inquiryId,
         state: "accepted",
-        confirmationEmailSent,
+        inquiryId: reservation.inquiryId,
+        keyId: reservation.keyId,
+        contactId,
+        opportunityId,
+        acceptedAt: acceptedAt.toISOString(),
       });
     },
   };
 }
-

@@ -334,7 +334,7 @@ export const routeMetadata = {
 } as const;
 
 export const privacyDisclosure =
-  "When you submit a speaking inquiry, Joyionaire™ Enterprises uses the information to evaluate and respond to your request. The website does not store inquiry details in its own application database in this release. Information is transmitted through form-security, rate-limiting, and email-delivery providers and may remain in Caleb's business email system or those providers' operational records under their respective policies. Do not include sensitive personal, medical, financial, or student information. Inquiry information is not sold through this website. To ask about an inquiry or the information you submitted, contact info@calebjakes.com or call (404) 941-5670.";
+  "When you submit a speaking inquiry, Joyionaire™ Enterprises uses the information to evaluate and respond to your request. The website does not store the complete inquiry in its own application database in this release. Form-security and rate-limiting providers process limited information needed to protect the form, and the submitted inquiry is transmitted to Caleb's customer relationship management system to create or update contact and opportunity records and support follow-up workflows. Do not include sensitive personal, medical, financial, or student information. Inquiry information is not sold through this website. To ask about an inquiry or the information you submitted, contact info@calebjakes.com or call (404) 941-5670.";
 
 export const routeCopy = {
   about: {

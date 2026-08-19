@@ -20,13 +20,12 @@ describe("ThankYouState", () => {
     expect(screen.queryByText(/has been received/i)).not.toBeInTheDocument();
   });
 
-  it("shows the accepted inquiry ID and confirmation warning", async () => {
+  it("shows the accepted inquiry ID without claiming email delivery", async () => {
     sessionStorage.setItem(
       BOOKING_RECEIPT_KEY,
       JSON.stringify({
         inquiryId: "CJ-ABCDEF123456",
-        confirmationEmailSent: false,
-        acceptedAt: Date.now(),
+        acceptedAt: "2026-08-18T20:00:00.000Z",
       }),
     );
 
@@ -38,9 +37,7 @@ describe("ThankYouState", () => {
       }),
     ).toBeVisible();
     expect(screen.getByText("CJ-ABCDEF123456")).toBeVisible();
-    expect(
-      screen.getByText(/could not send a confirmation email/i),
-    ).toBeVisible();
+    expect(screen.queryByText(/confirmation email/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/will review the event details/i)).toBeVisible();
   });
 });
-

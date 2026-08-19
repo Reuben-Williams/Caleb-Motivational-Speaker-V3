@@ -1,0 +1,25 @@
+{
+  "customFields": [
+    {
+      "id": "contact_field_fixture",
+      "name": "Synthetic Contact Field",
+      "model": "contact",
+      "fieldKey": "contact.synthetic_field",
+      "dataType": "TEXT",
+      "position": 0,
+      "picklistOptions": [],
+      "locationId": "loc_fixture"
+    },
+    {
+      "id": "opportunity_field_fixture",
+      "name": "Synthetic Opportunity Field",
+      "model": "opportunity",
+      "fieldKey": "opportunity.synthetic_field",
+      "dataType": "SINGLE_OPTIONS",
+      "position": 0,
+      "picklistOptions": ["fixture-a", "fixture-b"],
+      "locationId": "loc_fixture"
+    }
+  ],
+  "traceId": "trace_fixture"
+}

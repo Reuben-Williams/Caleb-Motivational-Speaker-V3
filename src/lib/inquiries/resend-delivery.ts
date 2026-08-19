@@ -4,12 +4,20 @@ import {
   renderBusinessEmail,
   renderConfirmationEmail,
 } from "@/lib/inquiries/email-renderer";
-import type {
-  DeliveryMessage,
-  InquiryDelivery,
-} from "@/lib/inquiries/service";
+import type { BookingData } from "@/lib/booking-schema";
 
-export class ResendInquiryDelivery implements InquiryDelivery {
+type DeliveryMessage = {
+  inquiryId: string;
+  data: BookingData;
+  idempotencyKey: string;
+};
+
+interface LegacyInquiryDelivery {
+  sendBusiness(message: DeliveryMessage): Promise<void>;
+  sendConfirmation(message: DeliveryMessage): Promise<void>;
+}
+
+export class ResendInquiryDelivery implements LegacyInquiryDelivery {
   private readonly resend: Resend;
 
   constructor(
@@ -55,4 +63,3 @@ export class ResendInquiryDelivery implements InquiryDelivery {
     }
   }
 }
-

@@ -1,0 +1,12 @@
+{
+  "contacts": [
+    {
+      "id": "contact_fixture",
+      "locationId": "loc_fixture",
+      "tags": ["source:fixture"],
+      "customFields": []
+    }
+  ],
+  "total": 1,
+  "traceId": "trace_fixture"
+}

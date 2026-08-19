@@ -264,7 +264,7 @@ export function BookingForm({
         code?: string;
         message?: string;
         inquiryId?: string;
-        confirmationEmailSent?: boolean;
+        acceptedAt?: string;
         fieldErrors?: FieldErrors;
       };
 
@@ -276,7 +276,11 @@ export function BookingForm({
         );
         return;
       }
-      if (!result.inquiryId) {
+      if (
+        !result.inquiryId ||
+        !result.acceptedAt ||
+        !Number.isFinite(Date.parse(result.acceptedAt))
+      ) {
         setFormMessage(
           "The inquiry response was incomplete. Call (404) 941-5670 or email info@calebjakes.com.",
         );
@@ -287,8 +291,7 @@ export function BookingForm({
         BOOKING_RECEIPT_KEY,
         JSON.stringify({
           inquiryId: result.inquiryId,
-          confirmationEmailSent: result.confirmationEmailSent === true,
-          acceptedAt: Date.now(),
+          acceptedAt: result.acceptedAt,
         }),
       );
       clearBookingDraft(window.sessionStorage);

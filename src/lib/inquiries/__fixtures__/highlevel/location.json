@@ -1,0 +1,10 @@
+{
+  "location": {
+    "id": "loc_fixture",
+    "settings": {
+      "allowDuplicateContact": false,
+      "allowDuplicateOpportunity": true
+    }
+  },
+  "traceId": "trace_fixture"
+}

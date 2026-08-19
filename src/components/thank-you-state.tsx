@@ -10,8 +10,7 @@ import { contact } from "@/content/site";
 
 type Receipt = {
   inquiryId: string;
-  confirmationEmailSent: boolean;
-  acceptedAt: number;
+  acceptedAt: string;
 };
 
 function parseReceipt(raw: string | null): Receipt | false {
@@ -21,8 +20,8 @@ function parseReceipt(raw: string | null): Receipt | false {
     if (
       typeof value.inquiryId === "string" &&
       /^CJ-[A-F0-9]{12}$/.test(value.inquiryId) &&
-      typeof value.confirmationEmailSent === "boolean" &&
-      typeof value.acceptedAt === "number"
+      typeof value.acceptedAt === "string" &&
+      Number.isFinite(Date.parse(value.acceptedAt))
     ) {
       return value as Receipt;
     }
@@ -66,18 +65,10 @@ export function ThankYouState() {
       <p className="inquiry-id">
         Inquiry ID <strong>{receipt.inquiryId}</strong>
       </p>
-      {!receipt.confirmationEmailSent ? (
-        <p className="confirmation-warning">
-          Your inquiry was received, but we could not send a confirmation
-          email. Save the inquiry ID or contact{" "}
-          <a href={contact.emailHref}>{contact.email}</a> if you need
-          assistance.
-        </p>
-      ) : (
-        <p className="confirmation-sent">
-          A confirmation email was sent to the address you provided.
-        </p>
-      )}
+      <p>
+        Save the inquiry ID for your records. If you need assistance, email{" "}
+        <a href={contact.emailHref}>{contact.email}</a>.
+      </p>
       <LinkButton href="/">Return Home</LinkButton>
     </section>
   );

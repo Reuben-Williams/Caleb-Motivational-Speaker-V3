@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import type { BookingInput } from "@/lib/booking-schema";
+import { logInquiryEvent } from "@/lib/inquiries/inquiry-log";
 import type { InquiryResult } from "@/lib/inquiries/service";
 
 const MAX_BODY_BYTES = 32 * 1024;
@@ -97,11 +98,14 @@ export function createInquiryPostHandler({
           ? undefined
           : { "Retry-After": String(result.retryAfter) };
       return json(result.body, result.status, headers);
-    } catch (error) {
+    } catch {
       const correlationId = randomUUID();
-      console.error("Inquiry request failed", {
+      logInquiryEvent({
         correlationId,
-        error: error instanceof Error ? error.message : "Unknown error",
+        operation: "inquiry_route",
+        httpClass: "5xx",
+        attempt: 1,
+        code: "unexpected_error",
       });
       return json(
         {
@@ -114,4 +118,3 @@ export function createInquiryPostHandler({
     }
   };
 }
-

@@ -1,239 +1,405 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { bookingSchema } from "@/lib/booking-schema";
+import {
+  createInquiryIdentityKeyring,
+  inquiryIdentityCandidates,
+  type InquiryIdentityCandidate,
+} from "@/lib/inquiries/identity";
 import {
   createInquiryService,
-  type InquiryDelivery,
-  type InquiryRecord,
-  type InquiryStore,
+  type InquiryGateway,
   type SpamVerifier,
 } from "@/lib/inquiries/service";
+import type { InquiryRecord } from "@/lib/inquiries/state";
+import type {
+  InquiryReservation,
+  InquiryStore,
+  StoredInquiry,
+} from "@/lib/inquiries/upstash-store";
 import { validBooking } from "../../../tests/booking-fixture";
+
+const keyring = createInquiryIdentityKeyring({
+  activeKeyId: "v2",
+  activeSecret: "active-test-secret-with-enough-entropy",
+  previousKeysJson: JSON.stringify({
+    v1: "previous-test-secret-with-enough-entropy",
+  }),
+});
+const parsedBooking = bookingSchema.parse(validBooking);
 
 class TestStore implements InquiryStore {
   records = new Map<string, InquiryRecord>();
   rateAllowed = true;
   rateRetryAfter = 0;
-  confirmationLock = true;
-  failBusinessTransition = false;
+  leaseResults: boolean[] = [true];
+  failContactCheckpoint = false;
+  failAcceptanceCheckpoint = false;
 
   async incrementRateKey() {
+    return { allowed: this.rateAllowed, retryAfter: this.rateRetryAfter };
+  }
+
+  async readInquiry(
+    candidates: readonly InquiryIdentityCandidate[],
+  ): Promise<StoredInquiry | null> {
+    for (const candidate of candidates) {
+      const record = this.records.get(candidate.ledgerKey);
+      if (record) return { ledgerKey: candidate.ledgerKey, record };
+    }
+    return null;
+  }
+
+  async reserveInquiry(
+    candidate: InquiryIdentityCandidate,
+    ownerToken: string,
+    now: Date,
+    ttlSeconds: number,
+  ): Promise<InquiryReservation | null> {
+    const current = this.records.get(candidate.ledgerKey);
+    if (
+      current &&
+      (current.state === "processing" ||
+        current.state === "contact_resolved") &&
+      new Date(current.leaseExpiresAt).getTime() > now.getTime()
+    ) {
+      return null;
+    }
+    this.records.set(candidate.ledgerKey, {
+      state: "processing",
+      inquiryId: current?.inquiryId ?? candidate.inquiryId,
+      keyId: current?.keyId ?? candidate.keyId,
+      ownerToken,
+      leaseExpiresAt: new Date(now.getTime() + ttlSeconds * 1_000).toISOString(),
+    });
     return {
-      allowed: this.rateAllowed,
-      retryAfter: this.rateRetryAfter,
+      ledgerKey: candidate.ledgerKey,
+      inquiryId: current?.inquiryId ?? candidate.inquiryId,
+      keyId: current?.keyId ?? candidate.keyId,
+      ownerToken,
     };
   }
 
-  async reserveInquiry(key: string, inquiryId: string) {
-    const current = this.records.get(key);
-    if (current && current.state !== "business_failed") {
-      return false;
-    }
-    this.records.set(key, {
-      inquiryId,
-      state: "processing",
-      confirmationEmailSent: false,
+  async recordContact(
+    reservation: InquiryReservation,
+    contactId: string,
+    now: Date,
+  ) {
+    if (this.failContactCheckpoint) throw new Error("checkpoint failed");
+    this.records.set(reservation.ledgerKey, {
+      state: "contact_resolved",
+      inquiryId: reservation.inquiryId,
+      keyId: reservation.keyId,
+      ownerToken: reservation.ownerToken,
+      leaseExpiresAt: new Date(now.getTime() + 86_400_000).toISOString(),
+      contactId,
     });
+  }
+
+  async recordFailure(
+    reservation: InquiryReservation,
+    operation: string,
+  ) {
+    const current = this.records.get(reservation.ledgerKey);
+    this.records.set(reservation.ledgerKey, {
+      state: "business_failed",
+      inquiryId: reservation.inquiryId,
+      keyId: reservation.keyId,
+      contactId:
+        current?.state === "contact_resolved" ? current.contactId : undefined,
+      failedOperation: operation,
+    });
+  }
+
+  async acceptInquiry(
+    reservation: InquiryReservation,
+    contactId: string,
+    opportunityId: string,
+    acceptedAt: Date,
+  ) {
+    if (this.failAcceptanceCheckpoint) throw new Error("checkpoint failed");
+    this.records.set(reservation.ledgerKey, {
+      state: "accepted",
+      inquiryId: reservation.inquiryId,
+      keyId: reservation.keyId,
+      contactId,
+      opportunityId,
+      acceptedAt: acceptedAt.toISOString(),
+    });
+  }
+
+  async acquireContactLease() {
+    return this.leaseResults.length > 0
+      ? (this.leaseResults.shift() ?? false)
+      : true;
+  }
+
+  async renewContactLease() {
     return true;
   }
 
-  async readInquiry(key: string) {
-    return this.records.get(key) ?? null;
-  }
-
-  async markBusinessDelivered(key: string) {
-    if (this.failBusinessTransition) {
-      throw new Error("transition unavailable");
-    }
-    const record = this.records.get(key);
-    if (!record || record.state !== "processing") {
-      throw new Error("invalid state");
-    }
-    this.records.set(key, { ...record, state: "accepted" });
-  }
-
-  async markBusinessFailed(key: string) {
-    const record = this.records.get(key);
-    if (record) {
-      this.records.set(key, { ...record, state: "business_failed" });
-    }
-  }
-
-  async acquireConfirmationRetry() {
-    return this.confirmationLock;
-  }
-
-  async markConfirmationSent(key: string) {
-    const record = this.records.get(key);
-    if (record) {
-      this.records.set(key, {
-        ...record,
-        state: "accepted",
-        confirmationEmailSent: true,
-      });
-    }
+  async releaseContactLease() {
+    return true;
   }
 }
 
-class TestDelivery implements InquiryDelivery {
-  businessSends = 0;
-  confirmationSends = 0;
-  businessFailure: Error | null = null;
-  confirmationFailure: Error | null = null;
+class TestGateway implements InquiryGateway {
+  contactCalls = 0;
+  opportunityCalls = 0;
+  contactFailure: Error | null = null;
+  opportunityFailure: Error | null = null;
 
-  async sendBusiness() {
-    this.businessSends += 1;
-    if (this.businessFailure) throw this.businessFailure;
+  async resolveContact() {
+    this.contactCalls += 1;
+    if (this.contactFailure) throw this.contactFailure;
+    return { contactId: "contact-a" };
   }
 
-  async sendConfirmation() {
-    this.confirmationSends += 1;
-    if (this.confirmationFailure) throw this.confirmationFailure;
+  async findOrCreateOpportunity() {
+    this.opportunityCalls += 1;
+    if (this.opportunityFailure) throw this.opportunityFailure;
+    return { opportunityId: `opportunity-${this.opportunityCalls}` };
   }
 }
 
-const passingSpam: SpamVerifier = {
-  verify: async () => true,
-};
+const passingSpam: SpamVerifier = { verify: async () => true };
 
 function setup() {
   const store = new TestStore();
-  const delivery = new TestDelivery();
+  const gateway = new TestGateway();
   const service = createInquiryService({
-    hmacSecret: "test-secret-with-enough-entropy",
+    identityKeyring: keyring,
     store,
-    delivery,
+    gateway,
     spam: passingSpam,
+    now: () => new Date("2026-08-18T20:00:00.000Z"),
+    ownerToken: () => "owner-a",
+    sleep: async () => {},
   });
-  return { service, store, delivery };
+  return { store, gateway, service };
 }
 
 describe("inquiry service", () => {
-  it("accepts a valid inquiry and sends both messages once", async () => {
-    const { service, delivery } = setup();
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("accepts only after contact and opportunity checkpoints complete", async () => {
+    const { service, store, gateway } = setup();
 
     const result = await service.submit(validBooking, {
       trustedClientIp: "203.0.113.10",
     });
 
-    expect(result.status).toBe(202);
-    expect(result.body.code).toBe("accepted");
-    expect(result.body.inquiryId).toMatch(/^CJ-[A-F0-9]{12}$/);
-    expect(result.body.confirmationEmailSent).toBe(true);
-    expect(delivery.businessSends).toBe(1);
-    expect(delivery.confirmationSends).toBe(1);
+    expect(result).toEqual({
+      status: 202,
+      body: {
+        code: "accepted",
+        message:
+          "Your speaking inquiry was received. Keep the inquiry ID for your records.",
+        inquiryId: expect.stringMatching(/^CJ-[A-F0-9]{12}$/),
+        acceptedAt: "2026-08-18T20:00:00.000Z",
+      },
+    });
+    expect(result.body).not.toHaveProperty("confirmationEmailSent");
+    expect(gateway.contactCalls).toBe(1);
+    expect(gateway.opportunityCalls).toBe(1);
+    expect([...store.records.values()][0]?.state).toBe("accepted");
   });
 
-  it("returns an accepted duplicate without repeating business delivery", async () => {
-    const { service, delivery } = setup();
+  it("returns the original accepted inquiry found under a previous key", async () => {
+    const { service, store, gateway } = setup();
+    const previous = inquiryIdentityCandidates(parsedBooking, keyring)[1]!;
+    store.records.set(previous.ledgerKey, {
+      state: "accepted",
+      inquiryId: "CJ-ORIGINAL0001",
+      keyId: "v1",
+      contactId: "contact-a",
+      opportunityId: "opportunity-a",
+      acceptedAt: "2026-08-17T20:00:00.000Z",
+    });
+
+    const result = await service.submit(validBooking, {});
+
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({
+      code: "duplicate_accepted",
+      inquiryId: "CJ-ORIGINAL0001",
+      acceptedAt: "2026-08-17T20:00:00.000Z",
+    });
+    expect(gateway.contactCalls).toBe(0);
+    expect(gateway.opportunityCalls).toBe(0);
+  });
+
+  it("creates another opportunity when a canonical event field changes", async () => {
+    const { service, gateway } = setup();
+
     const first = await service.submit(validBooking, {});
-    const duplicate = await service.submit(validBooking, {});
+    const second = await service.submit(
+      { ...validBooking, additionalDetails: "A distinct event requirement." },
+      {},
+    );
 
-    expect(first.status).toBe(202);
-    expect(duplicate.status).toBe(200);
-    expect(duplicate.body.code).toBe("duplicate_accepted");
-    expect(delivery.businessSends).toBe(1);
-    expect(delivery.confirmationSends).toBe(1);
+    expect(first.body.inquiryId).not.toBe(second.body.inquiryId);
+    expect(gateway.contactCalls).toBe(2);
+    expect(gateway.opportunityCalls).toBe(2);
   });
 
-  it("reports an identical active inquiry as processing", async () => {
-    const { service, store, delivery } = setup();
-    delivery.businessFailure = new Error("hold");
-    store.markBusinessFailed = async () => {};
+  it("reports an identical actively owned inquiry as processing", async () => {
+    const { service, store } = setup();
+    const active = inquiryIdentityCandidates(parsedBooking, keyring)[0]!;
+    store.records.set(active.ledgerKey, {
+      state: "processing",
+      inquiryId: active.inquiryId,
+      keyId: active.keyId,
+      ownerToken: "another-owner",
+      leaseExpiresAt: "2026-08-18T20:10:00.000Z",
+    });
 
-    await service.submit(validBooking, {});
     const result = await service.submit(validBooking, {});
 
     expect(result.status).toBe(409);
     expect(result.body.code).toBe("inquiry_processing");
-    expect(result.retryAfter).toBe(5);
   });
 
-  it("allows immediate retry after business delivery fails", async () => {
-    const { service, store, delivery } = setup();
-    delivery.businessFailure = new Error("provider down");
+  it("records a provider failure and resumes from the contact checkpoint", async () => {
+    const { service, store, gateway } = setup();
+    gateway.opportunityFailure = new Error("provider unavailable");
 
     const failed = await service.submit(validBooking, {});
     expect(failed.status).toBe(502);
-    expect([...store.records.values()][0]?.state).toBe("business_failed");
+    expect([...store.records.values()][0]).toMatchObject({
+      state: "business_failed",
+      contactId: "contact-a",
+    });
 
-    delivery.businessFailure = null;
+    gateway.opportunityFailure = null;
     const retry = await service.submit(validBooking, {});
+
     expect(retry.status).toBe(202);
-    expect(delivery.businessSends).toBe(2);
+    expect(gateway.contactCalls).toBe(1);
+    expect(gateway.opportunityCalls).toBe(2);
   });
 
-  it("accepts business delivery when confirmation delivery fails", async () => {
-    const { service, delivery } = setup();
-    delivery.confirmationFailure = new Error("confirmation down");
+  it("does not create an opportunity when the contact checkpoint fails", async () => {
+    const { service, store, gateway } = setup();
+    store.failContactCheckpoint = true;
 
     const result = await service.submit(validBooking, {});
 
-    expect(result.status).toBe(202);
-    expect(result.body.confirmationEmailSent).toBe(false);
+    expect(result.status).toBe(500);
+    expect(gateway.contactCalls).toBe(1);
+    expect(gateway.opportunityCalls).toBe(0);
   });
 
-  it("retries a missing confirmation once on an accepted duplicate", async () => {
-    const { service, delivery } = setup();
-    delivery.confirmationFailure = new Error("confirmation down");
-    await service.submit(validBooking, {});
-
-    delivery.confirmationFailure = null;
-    const duplicate = await service.submit(validBooking, {});
-
-    expect(duplicate.status).toBe(200);
-    expect(duplicate.body.confirmationEmailSent).toBe(true);
-    expect(delivery.businessSends).toBe(1);
-    expect(delivery.confirmationSends).toBe(2);
-  });
-
-  it("rejects spam and rate-limited requests before delivery", async () => {
-    const { store, delivery } = setup();
-    const spamService = createInquiryService({
-      hmacSecret: "test-secret-with-enough-entropy",
-      store,
-      delivery,
-      spam: { verify: async () => false },
-    });
-    const spam = await spamService.submit(validBooking, {});
-    expect(spam.status).toBe(400);
-    expect(spam.body.code).toBe("spam_failed");
-
-    const { service, store: limitedStore, delivery: limitedDelivery } = setup();
-    limitedStore.rateAllowed = false;
-    limitedStore.rateRetryAfter = 420;
-    const limited = await service.submit(validBooking, {});
-    expect(limited.status).toBe(429);
-    expect(limited.retryAfter).toBe(420);
-    expect(limitedDelivery.businessSends).toBe(0);
-  });
-
-  it("keeps stable IDs and provider idempotency keys for the same payload", async () => {
-    const captures: Array<{ inquiryId: string; idempotencyKey: string }> = [];
+  it("stops contact lease acquisition after the five-second budget", async () => {
     const store = new TestStore();
-    const delivery: InquiryDelivery = {
-      async sendBusiness(message) {
-        captures.push({
-          inquiryId: message.inquiryId,
-          idempotencyKey: message.idempotencyKey,
-        });
+    store.leaseResults = Array.from({ length: 25 }, () => false);
+    const gateway = new TestGateway();
+    let elapsed = 0;
+    const service = createInquiryService({
+      identityKeyring: keyring,
+      store,
+      gateway,
+      spam: passingSpam,
+      now: () => new Date("2026-08-18T20:00:00.000Z"),
+      monotonicNow: () => elapsed,
+      ownerToken: () => "owner-a",
+      sleep: async (milliseconds) => {
+        elapsed += milliseconds;
       },
-      async sendConfirmation() {},
+    });
+
+    const result = await service.submit(validBooking, {});
+
+    expect(result.status).toBe(409);
+    expect(elapsed).toBe(5_000);
+    expect(gateway.contactCalls).toBe(0);
+  });
+
+  it("aborts contact resolution when lease renewal is lost", async () => {
+    vi.useFakeTimers();
+    const store = new TestStore();
+    store.renewContactLease = async () => false;
+    const gateway: InquiryGateway = {
+      resolveContact: async (_data, { signal }) =>
+        new Promise((_resolve, reject) => {
+          signal.addEventListener(
+            "abort",
+            () => reject(new Error("aborted")),
+            { once: true },
+          );
+        }),
+      findOrCreateOpportunity: async () => ({
+        opportunityId: "should-not-run",
+      }),
     };
     const service = createInquiryService({
-      hmacSecret: "test-secret-with-enough-entropy",
+      identityKeyring: keyring,
       store,
-      delivery,
+      gateway,
       spam: passingSpam,
+      ownerToken: () => "owner-a",
     });
 
-    await service.submit(validBooking, {});
-    const first = captures[0];
-    store.records.clear();
-    await service.submit(validBooking, {});
+    const pending = service.submit(validBooking, {});
+    await vi.advanceTimersByTimeAsync(30_000);
+    const result = await pending;
 
-    expect(captures[1]).toEqual(first);
-    expect(first?.idempotencyKey).toMatch(
-      /^business-inquiry\/[a-f0-9]{48}$/,
+    expect(result.status).toBe(502);
+    expect([...store.records.values()][0]?.state).toBe("business_failed");
+  });
+
+  it("aborts contact resolution at the 75-second maximum budget", async () => {
+    vi.useFakeTimers();
+    const store = new TestStore();
+    const gateway: InquiryGateway = {
+      resolveContact: async (_data, { signal }) =>
+        new Promise((_resolve, reject) => {
+          signal.addEventListener(
+            "abort",
+            () => reject(new Error("aborted")),
+            { once: true },
+          );
+        }),
+      findOrCreateOpportunity: async () => ({
+        opportunityId: "should-not-run",
+      }),
+    };
+    const service = createInquiryService({
+      identityKeyring: keyring,
+      store,
+      gateway,
+      spam: passingSpam,
+      ownerToken: () => "owner-a",
+    });
+
+    const pending = service.submit(validBooking, {});
+    await vi.advanceTimersByTimeAsync(75_000);
+    const result = await pending;
+
+    expect(result.status).toBe(502);
+    expect([...store.records.values()][0]?.state).toBe("business_failed");
+  });
+
+  it("rejects spam and rate-limited requests before provider operations", async () => {
+    const { store, gateway } = setup();
+    const spamService = createInquiryService({
+      identityKeyring: keyring,
+      store,
+      gateway,
+      spam: { verify: async () => false },
+    });
+    expect((await spamService.submit(validBooking, {})).body.code).toBe(
+      "spam_failed",
     );
+
+    const { service, store: limited, gateway: limitedGateway } = setup();
+    limited.rateAllowed = false;
+    limited.rateRetryAfter = 420;
+    const result = await service.submit(validBooking, {});
+    expect(result.status).toBe(429);
+    expect(result.retryAfter).toBe(420);
+    expect(limitedGateway.contactCalls).toBe(0);
   });
 });
