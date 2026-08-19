@@ -23,7 +23,7 @@ const eventTypeLabels: Record<BookingData["eventType"], string> = {
 
 type CustomFieldValue = {
   id: string;
-  fieldValue: string | number | boolean;
+  fieldValue: string | number | string[];
 };
 
 export function mapHighLevelContact(
@@ -59,7 +59,7 @@ export function mapHighLevelOpportunity(
 ) {
   const { data } = input;
   const fieldValues: Array<
-    readonly [keyof HighLevelFieldManifest["fields"], string | number | boolean]
+    readonly [keyof HighLevelFieldManifest["fields"], string | number]
   > = [
     ["websiteInquiryId", input.inquiryId],
     ["organization", data.organization],
@@ -79,7 +79,6 @@ export function mapHighLevelOpportunity(
     ["referralSource", data.referralSource],
     ["referralSourceOther", data.referralSourceOther],
     ["additionalDetails", data.additionalDetails],
-    ["privacyConsent", data.consent],
     ["utmSource", data.utmSource],
     ["utmMedium", data.utmMedium],
     ["utmCampaign", data.utmCampaign],
@@ -87,12 +86,18 @@ export function mapHighLevelOpportunity(
     ["utmContent", data.utmContent],
     ["referrerPath", data.referrerPath],
   ];
-  const customFields: CustomFieldValue[] = fieldValues.map(
-    ([semantic, fieldValue]) => ({
+  const customFields: CustomFieldValue[] = [
+    ...fieldValues.map(([semantic, fieldValue]) => ({
       id: manifest.fields[semantic].id,
       fieldValue,
-    }),
-  );
+    })),
+    {
+      id: manifest.fields.privacyConsent.id,
+      fieldValue: data.consent
+        ? [manifest.fields.privacyConsent.options[0]!]
+        : [],
+    },
+  ];
   const eventType =
     data.eventType === "other" && data.eventTypeOther
       ? data.eventTypeOther

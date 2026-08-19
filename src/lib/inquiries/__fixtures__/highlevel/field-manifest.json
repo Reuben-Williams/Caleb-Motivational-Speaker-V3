@@ -20,7 +20,7 @@
     "referralSource": { "id": "cf_referral", "key": "opportunity.referral_source", "object": "opportunity", "dataType": "SINGLE_OPTIONS", "options": ["search", "social", "referral", "event", "podcast-media", "other"] },
     "referralSourceOther": { "id": "cf_referral_other", "key": "opportunity.other_referral_source", "object": "opportunity", "dataType": "TEXT", "options": [] },
     "additionalDetails": { "id": "cf_additional", "key": "opportunity.additional_details", "object": "opportunity", "dataType": "LARGE_TEXT", "options": [] },
-    "privacyConsent": { "id": "cf_consent", "key": "opportunity.privacy_consent_captured", "object": "opportunity", "dataType": "CHECKBOX", "options": [] },
+    "privacyConsent": { "id": "cf_consent", "key": "opportunity.privacy_consent_captured", "object": "opportunity", "dataType": "CHECKBOX", "options": ["Yes - privacy consent captured"] },
     "utmSource": { "id": "cf_utm_source", "key": "opportunity.utm_source", "object": "opportunity", "dataType": "TEXT", "options": [] },
     "utmMedium": { "id": "cf_utm_medium", "key": "opportunity.utm_medium", "object": "opportunity", "dataType": "TEXT", "options": [] },
     "utmCampaign": { "id": "cf_utm_campaign", "key": "opportunity.utm_campaign", "object": "opportunity", "dataType": "TEXT", "options": [] },

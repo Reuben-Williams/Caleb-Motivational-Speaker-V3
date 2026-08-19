@@ -39,6 +39,8 @@
 | Update contact | `PUT /contacts/:contactId` | Returned the same contact ID after updating owned test fields. |
 | Search opportunities | `GET /opportunities/search` | The v3 endpoint requires camel-case `locationId`, `pipelineId`, and `contactId`; returned `opportunities`, cursor metadata, and `traceId`. Search indexing was eventually consistent after creation. |
 | Create opportunity | `POST /opportunities/` | Returned `201` for both distinctly labeled test inquiries attached to the same synthetic contact and pipeline after the approved account setting was enabled. |
+| Create custom field | `POST /locations/:locationId/customFields` | A temporary provisioning PIT created one isolated Contact field and 25 isolated Opportunity fields. The live validator requires `options: string[]` for option-based fields even though the generated v3 page currently displays `textBoxListOptions`. |
+| Create tag | `POST /locations/:locationId/tags` | Created the two exact website source and speaking-intent tags without modifying the seven pre-existing tags. |
 
 ## Provisioned isolated pipeline
 
@@ -52,6 +54,26 @@
 6. `Closed - Not Booked`
 
 No automatic Won or Lost stages were added.
+
+## Provisioned inquiry fields and tags
+
+The isolated inquiry inventory now contains exactly one owned Contact field and
+25 owned Opportunity fields. A fresh `model=all` inventory resolved every
+semantic field to one unique provider ID and field key. The generated
+26-field manifest passed the production application's real manifest parser.
+
+The privacy-consent field is an option-based HighLevel `CHECKBOX` with one
+exact option, `Yes - privacy consent captured`. The application maps captured
+consent to an array containing that selected value, matching HighLevel's v3
+custom-field value contract.
+
+The two created Contact tags are:
+
+1. `source:calebjakesspeaks.com`
+2. `intent:speaking-inquiry`
+
+The temporary provisioning token is local-only and is not a production runtime
+credential. It should be revoked after provisioning verification is complete.
 
 ## H3 conclusion
 

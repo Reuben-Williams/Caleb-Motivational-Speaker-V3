@@ -64,7 +64,7 @@ describe("HighLevel inquiry mapping", () => {
     });
     expect(result.customFields).toContainEqual({
       id: "cf_consent",
-      fieldValue: true,
+      fieldValue: ["Yes - privacy consent captured"],
     });
   });
 

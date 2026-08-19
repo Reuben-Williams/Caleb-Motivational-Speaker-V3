@@ -113,7 +113,7 @@ const requirements = {
     "Privacy Consent Captured",
     "opportunity",
     "CHECKBOX",
-    [],
+    ["Yes - privacy consent captured"],
   ],
   utmSource: ["UTM Source", "opportunity", "TEXT", []],
   utmMedium: ["UTM Medium", "opportunity", "TEXT", []],

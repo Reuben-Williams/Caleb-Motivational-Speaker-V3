@@ -86,4 +86,15 @@ describe("HighLevel field manifest", () => {
       parseHighLevelFieldManifest(JSON.stringify(extra)),
     ).toThrow("Attendance Mode");
   });
+
+  it("requires the single live-compatible privacy-consent checkbox option", () => {
+    const liveCompatible = cloneManifest();
+    liveCompatible.fields.privacyConsent.options = [
+      "Yes - privacy consent captured",
+    ];
+
+    expect(() =>
+      parseHighLevelFieldManifest(JSON.stringify(liveCompatible)),
+    ).not.toThrow();
+  });
 });
