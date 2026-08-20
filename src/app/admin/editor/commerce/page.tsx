@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function CommerceEditorPage() {
-  return <div className="operator-page"><CommerceOwnerWorkspace /></div>;
+  return <div className="operator-page"><h1 className="sr-only">Commerce operations</h1><CommerceOwnerWorkspace /></div>;
 }

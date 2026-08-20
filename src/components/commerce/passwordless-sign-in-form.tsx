@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 
 import { TurnstileWidget } from "@/components/turnstile-widget";
 
-export function PasswordlessSignInForm({ siteKey }: { siteKey: string }) {
+export function PasswordlessSignInForm({ enabled, siteKey }: { enabled: boolean; siteKey: string }) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
 
@@ -45,14 +45,14 @@ export function PasswordlessSignInForm({ siteKey }: { siteKey: string }) {
         Purchase email
         <input autoComplete="email" name="email" required type="email" />
       </label>
-      {siteKey ? (
+      {enabled && siteKey ? (
         <TurnstileWidget siteKey={siteKey} />
       ) : (
         <p className="commerce-status" role="status">
-          The security check is not configured, so sign-in requests are disabled.
+          Secure customer-library sign-in is not active yet, so no email request can be sent.
         </p>
       )}
-      <button className="button button--gold" disabled={busy || !siteKey} type="submit">
+      <button className="button button--gold" disabled={busy || !siteKey || !enabled} type="submit">
         {busy ? "Requesting…" : "Email me a secure link"}
       </button>
       {notice ? <p className="commerce-notice" role="status">{notice}</p> : null}

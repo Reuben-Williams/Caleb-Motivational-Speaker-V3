@@ -11,11 +11,12 @@ const PENDING: CheckoutStatus = {
   grantsAccess: false,
 };
 
-export function CheckoutStatusPanel() {
+export function CheckoutStatusPanel({ enabled }: { enabled: boolean }) {
   const [status, setStatus] = useState<CheckoutStatus>(PENDING);
-  const [unavailable, setUnavailable] = useState(false);
+  const [unavailable, setUnavailable] = useState(!enabled);
 
   useEffect(() => {
+    if (!enabled) return;
     const supplied = new URLSearchParams(window.location.search).get("session_id") ?? "";
     const checkoutSessionId = /^cs_test_[A-Za-z0-9_]{1,200}$/.test(supplied)
       ? supplied
@@ -55,7 +56,7 @@ export function CheckoutStatusPanel() {
       active = false;
       if (timer) clearTimeout(timer);
     };
-  }, []);
+  }, [enabled]);
 
   const copy = outcomeCopy(status, unavailable);
   return (

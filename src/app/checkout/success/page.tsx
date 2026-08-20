@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { CheckoutStatusPanel } from "@/components/commerce/checkout-status";
+import { getCommerceEnvironment } from "@/lib/platform/environment";
 
 export const metadata: Metadata = {
   title: "Order Status | Caleb Jakes",
@@ -8,10 +9,11 @@ export const metadata: Metadata = {
 };
 
 export default function CheckoutSuccessPage() {
+  const environment = getCommerceEnvironment();
   return (
     <div className="commerce-page commerce-page--outcome">
       <div className="container">
-        <CheckoutStatusPanel />
+        <CheckoutStatusPanel enabled={environment.providersReady && environment.runtimeEnabled} />
       </div>
     </div>
   );

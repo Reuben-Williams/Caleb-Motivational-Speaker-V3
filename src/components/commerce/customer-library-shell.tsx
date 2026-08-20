@@ -10,14 +10,15 @@ type LibraryState = Readonly<{
   items: readonly CustomerLibraryItem[];
 }>;
 
-export function CustomerLibraryShell() {
+export function CustomerLibraryShell({ enabled }: { enabled: boolean }) {
   const [state, setState] = useState<LibraryState>({
-    mode: "loading",
+    mode: enabled ? "loading" : "error",
     customerLabel: "Customer",
     items: [],
   });
 
   useEffect(() => {
+    if (!enabled) return;
     let active = true;
     async function load() {
       try {
@@ -45,7 +46,7 @@ export function CustomerLibraryShell() {
     }
     void load();
     return () => { active = false; };
-  }, []);
+  }, [enabled]);
 
   return (
     <div className="customer-library-shell">

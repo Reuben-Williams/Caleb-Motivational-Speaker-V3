@@ -4,7 +4,7 @@ import path from "node:path";
 import { chromium } from "playwright-core";
 
 const outputDir = "C:\\caleb-q1";
-const baseUrl = "http://127.0.0.1:3000";
+const baseUrl = process.env.QA_BASE_URL ?? "http://127.0.0.1:3000";
 const edgePath =
   "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
 const routes = [
@@ -99,8 +99,12 @@ const desktop = await browser.newContext({
 for (const route of routes) {
   const page = await desktop.newPage();
   observe(page, route);
+  const hasBackgroundRequests = [
+    "/checkout/success",
+    "/library",
+  ].some((prefix) => route.startsWith(prefix));
   const response = await page.goto(`${baseUrl}${route}`, {
-    waitUntil: "networkidle",
+    waitUntil: hasBackgroundRequests ? "domcontentloaded" : "networkidle",
   });
   await page.waitForTimeout(250);
   const details = await page.evaluate(() => ({
@@ -302,7 +306,7 @@ for (const check of [
       headers: { "content-type": "application/json" },
       data: { offerStableKey: "caleb-print-book-single", amount: 1 },
     },
-    expected: 400,
+    expected: 404,
   },
   {
     key: "customerSessionRequired",

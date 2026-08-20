@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { CustomerLibraryShell } from "@/components/commerce/customer-library-shell";
+import { getCommerceEnvironment } from "@/lib/platform/environment";
 
 export const metadata: Metadata = {
   title: "Customer Library | Caleb Jakes",
@@ -9,7 +10,8 @@ export const metadata: Metadata = {
 };
 
 export default function LibraryPage() {
+  const environment = getCommerceEnvironment();
   return <div className="commerce-page commerce-page--library"><div className="container">
-    <CustomerLibraryShell />
+    <CustomerLibraryShell enabled={environment.providersReady && environment.runtimeEnabled} />
   </div></div>;
 }

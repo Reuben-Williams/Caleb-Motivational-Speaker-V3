@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function AutomationsEditorPage() {
-  return <div className="operator-page"><AutomationsOwnerWorkspace /></div>;
+  return <div className="operator-page"><h1 className="sr-only">Automations</h1><AutomationsOwnerWorkspace /></div>;
 }
