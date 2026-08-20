@@ -1,3 +1,6 @@
+import { createHash } from "node:crypto";
+import { readFileSync, statSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -193,5 +196,26 @@ describe("Caleb commerce configuration", () => {
     expect(serialized).not.toMatch(/(?:sk_live|sk_test|(?:^|["'=:\s])re_[A-Za-z0-9]{8,}|ghl_[A-Za-z0-9]{8,}|bearer\s)/i);
     expect(serialized).not.toMatch(/X-Amz-(?:Signature|Credential)|customerRecords?|executionHistory/i);
     expect(serialized).not.toMatch(/\.(?:mp3|m4a|wav|pdf|zip|epub)(?:["?]|$)/i);
+  });
+
+  it("keeps the checked-in source and asset manifests synchronized with their evidence", () => {
+    const sourceManifest = JSON.parse(readFileSync(
+      resolve("docs/evidence/commerce-source-manifest.json"),
+      "utf8",
+    )) as { sourceSnapshots: Array<{ snapshotId: string; contentDigest: string }> };
+    expect(sourceManifest.sourceSnapshots.map(({ snapshotId, contentDigest }) => ({ snapshotId, contentDigest }))).toEqual(
+      calebCommerceConfig.sourceSnapshots.map(({ snapshotId, contentDigest }) => ({ snapshotId, contentDigest })),
+    );
+
+    const assetManifest = JSON.parse(readFileSync(
+      resolve("docs/evidence/private-asset-transfer-manifest.json"),
+      "utf8",
+    )) as { marketingAssets: Array<{ path: string; sizeBytes: number; sha256: string }>; containsPaidBinaries: boolean };
+    expect(assetManifest.containsPaidBinaries).toBe(false);
+    for (const asset of assetManifest.marketingAssets) {
+      const path = resolve(asset.path);
+      expect(statSync(path).size).toBe(asset.sizeBytes);
+      expect(createHash("sha256").update(readFileSync(path)).digest("hex")).toBe(asset.sha256);
+    }
   });
 });
