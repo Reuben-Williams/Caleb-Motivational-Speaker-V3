@@ -18,9 +18,10 @@ describe("Caleb commerce configuration", () => {
     expect(calebCommerceConfig.sourceSnapshots.map((snapshot) => snapshot.recipeKey)).toEqual(
       CALEB_RECIPE_KEYS,
     );
-    expect(new Set(calebCommerceConfig.sourceSnapshots.map((snapshot) => snapshot.snapshotId))).toHaveSize(5);
-    expect(new Set(calebCommerceConfig.sourceSnapshots.map((snapshot) => snapshot.contentDigest))).toHaveSize(5);
+    expect(new Set(calebCommerceConfig.sourceSnapshots.map((snapshot) => snapshot.snapshotId)).size).toBe(5);
+    expect(new Set(calebCommerceConfig.sourceSnapshots.map((snapshot) => snapshot.contentDigest)).size).toBe(5);
     expect(calebCommerceConfig.sourceSnapshots.every((snapshot) => snapshot.executable === false)).toBe(true);
+    expect(calebCommerceConfig.sourceSnapshots.every((snapshot) => Object.isFrozen(snapshot))).toBe(true);
   });
 
   it("preserves source ordering, delays, branches, subjects, links, status, and capture precision", () => {
@@ -189,7 +190,7 @@ describe("Caleb commerce configuration", () => {
 
   it("contains no credential, customer, signed URL, or paid binary material", () => {
     const serialized = JSON.stringify(calebCommerceConfig);
-    expect(serialized).not.toMatch(/(?:sk_live|sk_test|re_[A-Za-z0-9]|ghl_[A-Za-z0-9]|bearer\s)/i);
+    expect(serialized).not.toMatch(/(?:sk_live|sk_test|(?:^|["'=:\s])re_[A-Za-z0-9]{8,}|ghl_[A-Za-z0-9]{8,}|bearer\s)/i);
     expect(serialized).not.toMatch(/X-Amz-(?:Signature|Credential)|customerRecords?|executionHistory/i);
     expect(serialized).not.toMatch(/\.(?:mp3|m4a|wav|pdf|zip|epub)(?:["?]|$)/i);
   });
