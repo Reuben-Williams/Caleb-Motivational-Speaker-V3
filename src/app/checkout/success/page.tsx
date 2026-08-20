@@ -7,19 +7,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false, noarchive: true },
 };
 
-export default async function CheckoutSuccessPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const supplied = (await searchParams).session_id;
-  const checkoutSessionId = typeof supplied === "string" && /^cs_test_[A-Za-z0-9_]{1,200}$/.test(supplied)
-    ? supplied
-    : null;
+export default function CheckoutSuccessPage() {
   return (
     <div className="commerce-page commerce-page--outcome">
       <div className="container">
-        <CheckoutStatusPanel checkoutSessionId={checkoutSessionId} />
+        <CheckoutStatusPanel />
       </div>
     </div>
   );

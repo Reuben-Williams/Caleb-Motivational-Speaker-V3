@@ -11,12 +11,19 @@ const PENDING: CheckoutStatus = {
   grantsAccess: false,
 };
 
-export function CheckoutStatusPanel({ checkoutSessionId }: { checkoutSessionId: string | null }) {
+export function CheckoutStatusPanel() {
   const [status, setStatus] = useState<CheckoutStatus>(PENDING);
-  const [unavailable, setUnavailable] = useState(!checkoutSessionId);
+  const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
-    if (!checkoutSessionId) return;
+    const supplied = new URLSearchParams(window.location.search).get("session_id") ?? "";
+    const checkoutSessionId = /^cs_test_[A-Za-z0-9_]{1,200}$/.test(supplied)
+      ? supplied
+      : null;
+    if (!checkoutSessionId) {
+      setUnavailable(true);
+      return;
+    }
     let active = true;
     let attempts = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -48,7 +55,7 @@ export function CheckoutStatusPanel({ checkoutSessionId }: { checkoutSessionId: 
       active = false;
       if (timer) clearTimeout(timer);
     };
-  }, [checkoutSessionId]);
+  }, []);
 
   const copy = outcomeCopy(status, unavailable);
   return (
