@@ -28,6 +28,22 @@ const serverRedirects: NonNullable<NextConfig["redirects"]> = async () => [
   },
 ];
 
+const serverHeaders: NonNullable<NextConfig["headers"]> = async () => [
+  {
+    source: "/(.*)",
+    headers: [
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      { key: "X-Frame-Options", value: "DENY" },
+      { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+    ],
+  },
+  {
+    source: "/(checkout|library|admin)(.*)",
+    headers: [{ key: "Cache-Control", value: "private, no-store, max-age=0" }],
+  },
+];
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: [
@@ -52,6 +68,14 @@ const nextConfig: NextConfig = {
     "@reuben-williams/growth-messaging",
     "@reuben-williams/next",
   ],
+  webpack(config) {
+    config.resolve.extensionAlias = {
+      ...config.resolve.extensionAlias,
+      ".js": [".js", ".ts", ".tsx"],
+      ".jsx": [".jsx", ".tsx"],
+    };
+    return config;
+  },
   output: isGitHubPages ? "export" : undefined,
   basePath: githubPagesBasePath || undefined,
   trailingSlash: isGitHubPages,
@@ -59,7 +83,7 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_BASE_PATH: githubPagesBasePath,
   },
-  ...(isGitHubPages ? {} : { redirects: serverRedirects }),
+  ...(isGitHubPages ? {} : { redirects: serverRedirects, headers: serverHeaders }),
 };
 
 export default nextConfig;

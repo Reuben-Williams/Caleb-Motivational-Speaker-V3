@@ -37,6 +37,7 @@ describe("Caleb platform attachment boundaries", () => {
 
     expect(environment.mode).toBe("platform_test");
     expect(environment.providersReady).toBe(false);
+    expect(environment.runtimeEnabled).toBe(false);
     expect(environment.missing).toContain("DATABASE_URL");
     expect(environment.missing).toContain("STRIPE_SECRET_KEY");
   });

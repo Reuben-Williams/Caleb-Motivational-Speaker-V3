@@ -18,6 +18,7 @@ const requiredRoutes = [
   "/book-media",
   "/faq",
   "/book-caleb",
+  "/store",
   "/privacy",
   "/thank-you",
 ];

@@ -2450,6 +2450,206 @@ html[data-motion-mode="enhanced"] .home-hero__backdrop {
   color: var(--muted);
 }
 
+.commerce-page {
+  min-height: 82vh;
+  padding-top: var(--header-height);
+  background:
+    radial-gradient(circle at 76% 15%, rgb(var(--theme-accent-rgb) / 0.14), transparent 26%),
+    var(--ink);
+}
+
+.commerce-hero {
+  padding: clamp(5rem, 10vw, 9rem) 0;
+}
+
+.commerce-hero__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.7fr);
+  align-items: center;
+  gap: clamp(3rem, 8vw, 8rem);
+}
+
+.commerce-hero h1,
+.checkout-outcome h1,
+.test-checkout-panel h1 {
+  max-width: 780px;
+  margin-bottom: 1.5rem;
+  font-family: var(--font-display), Impact, sans-serif;
+  font-size: clamp(4rem, 9vw, 7.5rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 0.82;
+  text-transform: uppercase;
+}
+
+.commerce-lead,
+.checkout-outcome > p:not(.eyebrow, .commerce-note, .order-reference),
+.test-checkout-panel > p:not(.test-badge) {
+  max-width: 720px;
+  color: rgb(var(--theme-text-rgb) / 0.76);
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+}
+
+.commerce-cover {
+  position: relative;
+  min-height: 550px;
+}
+
+.commerce-cover::before {
+  position: absolute;
+  inset: 12% 4% 4% 18%;
+  background: rgb(var(--theme-accent-rgb) / 0.16);
+  content: "";
+  filter: blur(50px);
+}
+
+.commerce-cover img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 28px 42px rgb(var(--theme-shadow-rgb) / 0.55));
+}
+
+.commerce-note {
+  max-width: 690px;
+  margin: 1.2rem 0 0;
+  color: rgb(var(--theme-text-rgb) / 0.52);
+  font-size: 0.74rem;
+}
+
+.commerce-catalog {
+  border-top: 1px solid var(--line);
+  padding: clamp(4.5rem, 9vw, 8rem) 0;
+  background: var(--surface);
+}
+
+.commerce-catalog h2 {
+  max-width: 880px;
+  font-size: clamp(2.8rem, 6vw, 5rem);
+}
+
+.commerce-catalog > .container > p:not(.eyebrow) {
+  max-width: 760px;
+  color: var(--muted);
+}
+
+.commerce-status,
+.commerce-notice {
+  max-width: 820px;
+  border-left: 3px solid var(--gold);
+  margin: 2rem 0;
+  padding: 1rem 1.2rem;
+  background: rgb(var(--theme-accent-rgb) / 0.09);
+  color: var(--ivory);
+}
+
+.commerce-text-link {
+  display: inline-block;
+  border-bottom: 1px solid var(--gold);
+  margin-top: 1rem;
+}
+
+.commerce-page--test,
+.commerce-page--outcome,
+.commerce-page--library {
+  padding-bottom: clamp(5rem, 9vw, 8rem);
+}
+
+.test-checkout-panel,
+.checkout-outcome {
+  max-width: 980px;
+  margin-inline: auto;
+  padding-top: clamp(5rem, 10vw, 9rem);
+}
+
+.test-badge {
+  display: inline-flex;
+  border: 1px solid #ffb14a;
+  padding: 0.55rem 0.75rem;
+  color: #ffd39a;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.test-token-field,
+.passwordless-form > label {
+  display: grid;
+  max-width: 620px;
+  margin: 2rem 0;
+  gap: 0.55rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.test-token-field input,
+.passwordless-form input {
+  min-height: 54px;
+  border: 1px solid var(--line);
+  padding: 0.8rem 0.9rem;
+  background: var(--surface);
+  color: var(--ivory);
+}
+
+.test-offer-list {
+  display: grid;
+  margin-top: 2rem;
+  gap: 1rem;
+}
+
+.test-offer-list article {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--line);
+  padding: 1.25rem;
+  background: var(--surface);
+  gap: 2rem;
+}
+
+.test-offer-list h2,
+.test-offer-list p {
+  margin: 0;
+}
+
+.order-reference {
+  width: fit-content;
+  border: 1px solid var(--line);
+  padding: 0.9rem 1rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.order-reference strong {
+  color: var(--gold);
+}
+
+.customer-library-shell {
+  padding-top: clamp(3rem, 7vw, 6rem);
+}
+
+.library-sign-in-link {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.passwordless-form {
+  margin-top: 2.5rem;
+}
+
+.operator-page {
+  min-height: 100vh;
+  padding-top: var(--header-height);
+  background: #f4f0e8;
+  color: #1f1b17;
+}
+
 @keyframes hero-enter {
   to {
     opacity: 1;

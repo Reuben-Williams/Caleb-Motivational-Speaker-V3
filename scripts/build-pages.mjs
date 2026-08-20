@@ -74,7 +74,7 @@ try {
   }
 
   const exitCode = await new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [nextCli, "build"], {
+    const child = spawn(process.execPath, [nextCli, "build", "--webpack"], {
       cwd: root,
       env: {
         ...process.env,

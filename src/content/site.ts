@@ -322,6 +322,11 @@ export const routeMetadata = {
     description:
       "Share your event, audience, preferred date, location, format, and goals with Caleb Jakes and Joyionaire™ Enterprises.",
   },
+  "/store": {
+    title: "Book & Resources | Caleb Jakes",
+    description:
+      "Explore Caleb Jakes's book and purpose-centered resources through his current secure store.",
+  },
   "/privacy": {
     title: "Privacy Policy | Joyionaire™ Enterprises",
     description:

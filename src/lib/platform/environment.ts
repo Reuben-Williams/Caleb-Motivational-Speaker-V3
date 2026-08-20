@@ -32,6 +32,7 @@ export type CommerceEnvironment = Readonly<{
   siteOrigin: string;
   legacyStoreUrl: string;
   providersReady: boolean;
+  runtimeEnabled: boolean;
   missing: readonly string[];
   testAccessToken: string | null;
 }>;
@@ -53,6 +54,7 @@ export function getCommerceEnvironment(
       "https://joyfound.calebjakes.com/",
     ),
     providersReady: missing.length === 0,
+    runtimeEnabled: source.COMMERCE_RUNTIME_ENABLED === "true",
     missing: Object.freeze([...missing]),
     testAccessToken:
       typeof source.COMMERCE_TEST_ACCESS_TOKEN === "string"

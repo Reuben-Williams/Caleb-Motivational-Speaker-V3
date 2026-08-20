@@ -21,6 +21,7 @@ export function SiteFooter() {
               {item.label}
             </Link>
           ))}
+          <Link href="/store">Shop & Resources</Link>
         </nav>
 
         <div>
@@ -48,4 +49,3 @@ export function SiteFooter() {
     </footer>
   );
 }
-

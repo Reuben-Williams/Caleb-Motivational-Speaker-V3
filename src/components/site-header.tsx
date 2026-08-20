@@ -97,6 +97,7 @@ export function SiteHeader() {
               {item.label}
             </Link>
           ))}
+          <Link href="/store">Shop</Link>
         </nav>
 
         <ColorSchemeToggle className="color-scheme-toggle--desktop" />
@@ -157,6 +158,9 @@ export function SiteHeader() {
             {item.label}
           </Link>
         ))}
+        <Link href="/store" onClick={() => setMobileOpen(false)}>
+          Shop
+        </Link>
         <ColorSchemeToggle className="color-scheme-toggle--mobile" />
       </nav>
     </header>
