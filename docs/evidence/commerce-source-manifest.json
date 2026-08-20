@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "siteStableKey": "caleb-jakes-v3",
+  "provider": "highlevel",
+  "locationId": "2FqgdrmWP252v43cX5RY",
+  "observationDate": "2026-08-19",
+  "lastObservedNoLaterThan": "2026-08-19T23:04:51.000Z",
+  "observationTimePrecision": "bounded_by_design_record",
+  "capturedAt": "2026-08-20T15:44:59.751Z",
+  "evidencePath": "docs/evidence/highlevel-commerce-workflow-audit-2026-08-19.md",
+  "sourceSnapshots": [
+    {
+      "recipeKey": "caleb.book_purchased.v1",
+      "snapshotId": "c1100000-0000-4000-8000-000000000001",
+      "externalWorkflowId": "b98d2b26-6631-4504-ae99-de8df7985f46",
+      "contentDigest": "514ffed55748fc9f10b976edce25043be62b7e162be5051ec3c4ad9ac800e6e2",
+      "productionRevisionId": "c4010000-0000-4000-8000-000000000001",
+      "productionState": "inactive",
+      "reviewState": "draft"
+    },
+    {
+      "recipeKey": "caleb.book_nurture.v1",
+      "snapshotId": "c1100000-0000-4000-8000-000000000002",
+      "externalWorkflowId": "031d3e0c-2402-4f15-b3f0-f99d0bfd5877",
+      "contentDigest": "ec0ac7f97b83e65067c915d11cdb9d3dbc8199981dc19289e2c04b97c6b0fd29",
+      "productionRevisionId": "c4010000-0000-4000-8000-000000000002",
+      "productionState": "inactive",
+      "reviewState": "draft"
+    },
+    {
+      "recipeKey": "caleb.audiobook_purchased.v1",
+      "snapshotId": "c1100000-0000-4000-8000-000000000003",
+      "externalWorkflowId": "c19691ab-f433-446c-acba-56ca723f4661",
+      "contentDigest": "c78afb5eaa6eeaa8582596e61dc7ce9d5a1999122869698879f0c51f103cd68e",
+      "productionRevisionId": "c4010000-0000-4000-8000-000000000003",
+      "productionState": "inactive",
+      "reviewState": "draft"
+    },
+    {
+      "recipeKey": "caleb.course_purchased.v1",
+      "snapshotId": "c1100000-0000-4000-8000-000000000004",
+      "externalWorkflowId": "554540ac-901e-4844-8009-bc0040c8b76f",
+      "contentDigest": "a54d7c129c8633b45a98227a789a4746ad1cd8040068fb370dd66cd709109db8",
+      "productionRevisionId": "c4010000-0000-4000-8000-000000000004",
+      "productionState": "inactive",
+      "reviewState": "draft"
+    },
+    {
+      "recipeKey": "caleb.workbook_purchased.v1",
+      "snapshotId": "c1100000-0000-4000-8000-000000000005",
+      "externalWorkflowId": "798ae811-426a-46c3-87a2-6a56013e541d",
+      "contentDigest": "3130ba8b4a8e450c67b04de42fb5d753f89fb3324db12feafe89eb2e5a3fea5c",
+      "productionRevisionId": "c4010000-0000-4000-8000-000000000005",
+      "productionState": "inactive",
+      "reviewState": "draft"
+    }
+  ],
+  "highlevelMutationPerformed": false,
+  "containsCustomerData": false,
+  "containsCredentials": false,
+  "containsMessageBodies": false,
+  "containsPaidAssets": false
+}

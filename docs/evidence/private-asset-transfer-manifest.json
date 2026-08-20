@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "siteStableKey": "caleb-jakes-v3",
+  "reviewState": "awaiting_caleb",
+  "transferAuthorized": false,
+  "destination": {
+    "provider": "cloudflare_r2",
+    "visibility": "private",
+    "bucketBinding": null
+  },
+  "marketingAssets": [
+    { "path": "public/media/book/caleb-book-amazon.webp", "sizeBytes": 48140, "mediaType": "image/webp", "sha256": "2de0cd6ff0ab5d202f27f4b76fdbd09adc30c2e98cc0c0c3227a6e98fa1b9f95", "intendedAssignment": "print-book commerce image", "approvalState": "awaiting_caleb" },
+    { "path": "public/media/book/caleb-book-front.webp", "sizeBytes": 72396, "mediaType": "image/webp", "sha256": "9868b8e0b1b7dbe2e00db79bc00b5244e079ffecd4d5d4d3d18ab2d3f7634586", "intendedAssignment": "print-book front cover", "approvalState": "awaiting_caleb" },
+    { "path": "media-sources/book/caleb-book-amazon.png", "sizeBytes": 358472, "mediaType": "image/png", "sha256": "b20870d547b197cee476219859dbb2a49e9613f658adbe3e3bc026ed04bba775", "intendedAssignment": "source for approved derivatives", "approvalState": "awaiting_caleb" },
+    { "path": "media-sources/book/caleb-book-cover-wrap.png", "sizeBytes": 778851, "mediaType": "image/png", "sha256": "752e393197a0c561b25275cc33ea0f3b65474913a191eb7c21d9fc0cf47b5cea", "intendedAssignment": "source cover wrap", "approvalState": "awaiting_caleb" },
+    { "path": "public/media/photos/caleb-book-portrait.webp", "sizeBytes": 266600, "mediaType": "image/webp", "sha256": "d3a7d3fa64924ca8868a776e09bda564ca49a504c5950c3f7375936df16678e0", "intendedAssignment": "optional commerce editorial image", "approvalState": "awaiting_caleb" },
+    { "path": "public/media/photos/caleb-book-wide-01.webp", "sizeBytes": 139410, "mediaType": "image/webp", "sha256": "bd5bd04cf3c80f733ac2704eab301fc9a4120bf37b86557aeae700b27ecb41c3", "intendedAssignment": "optional commerce editorial image", "approvalState": "awaiting_caleb" },
+    { "path": "public/media/photos/caleb-book-wide-02.webp", "sizeBytes": 134272, "mediaType": "image/webp", "sha256": "2b6bafc471e7052f92fb24695da854b60314f26d1513eb0db770376454405984", "intendedAssignment": "optional commerce editorial image", "approvalState": "awaiting_caleb" },
+    { "path": "public/media/photos/caleb-book-wide-03.webp", "sizeBytes": 141502, "mediaType": "image/webp", "sha256": "aab80732aa0a640b31fe3059a5857ea85f529156437c77df42fb433344f6c55c", "intendedAssignment": "optional commerce editorial image", "approvalState": "awaiting_caleb" },
+    { "path": "public/og/book-media.jpg", "sizeBytes": 109133, "mediaType": "image/jpeg", "sha256": "42f1fe919ca207d676aabcfb2b1d907cdbc8931df53031eb042977c49d189fb0", "intendedAssignment": "commerce social sharing candidate", "approvalState": "awaiting_caleb" }
+  ],
+  "paidAssets": [
+    { "productStableKey": "caleb-audiobook", "sourceState": "missing", "sourceFilename": null, "sizeBytes": null, "mediaType": null, "sha256": null, "destinationKey": null, "malwareScanState": "not_run", "approvalState": "awaiting_caleb" },
+    { "productStableKey": "caleb-workbook", "sourceState": "missing", "sourceFilename": null, "sizeBytes": null, "mediaType": null, "sha256": null, "destinationKey": null, "malwareScanState": "not_run", "approvalState": "awaiting_caleb" },
+    { "productStableKey": "caleb-course", "sourceState": "missing", "sourceFilename": null, "sizeBytes": null, "mediaType": null, "sha256": null, "destinationKey": null, "malwareScanState": "not_run", "approvalState": "awaiting_caleb" }
+  ],
+  "containsPaidBinaries": false,
+  "containsPermanentDownloadUrls": false,
+  "containsSignedUrls": false,
+  "containsCredentials": false
+}
