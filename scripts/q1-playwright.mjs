@@ -3,8 +3,9 @@ import path from "node:path";
 
 import { chromium } from "playwright-core";
 
-const outputDir = "C:\\caleb-q1";
+const outputDir = process.env.QA_OUTPUT_DIR ?? "C:\\caleb-q1";
 const baseUrl = process.env.QA_BASE_URL ?? "http://127.0.0.1:3000";
+const bootstrapUrl = process.env.QA_BOOTSTRAP_URL;
 const edgePath =
   "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
 const routes = [
@@ -90,11 +91,20 @@ async function revealScrollSections(page) {
   await page.waitForTimeout(700);
 }
 
+async function authorizeProtectedPreview(context) {
+  if (!bootstrapUrl) return;
+
+  const page = await context.newPage();
+  await page.goto(bootstrapUrl, { waitUntil: "networkidle" });
+  await page.close();
+}
+
 const desktop = await browser.newContext({
   viewport: { width: 1440, height: 1000 },
   deviceScaleFactor: 1,
   colorScheme: "dark",
 });
+await authorizeProtectedPreview(desktop);
 
 for (const route of routes) {
   const page = await desktop.newPage();
@@ -286,6 +296,7 @@ const reduced = await browser.newContext({
   viewport: { width: 1440, height: 1000 },
   reducedMotion: "reduce",
 });
+await authorizeProtectedPreview(reduced);
 const reducedPage = await reduced.newPage();
 observe(reducedPage, "reduced-motion");
 await reducedPage.goto(baseUrl, { waitUntil: "networkidle" });
@@ -355,6 +366,7 @@ for (const viewport of [
     isMobile: true,
     hasTouch: true,
   });
+  await authorizeProtectedPreview(mobile);
   const page = await mobile.newPage();
   observe(page, `mobile-${viewport.name}`);
   await page.goto(baseUrl, { waitUntil: "networkidle" });
