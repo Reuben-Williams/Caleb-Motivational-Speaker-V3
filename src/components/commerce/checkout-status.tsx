@@ -21,8 +21,8 @@ export function CheckoutStatusPanel() {
       ? supplied
       : null;
     if (!checkoutSessionId) {
-      setUnavailable(true);
-      return;
+      const unavailableTimer = setTimeout(() => setUnavailable(true), 0);
+      return () => clearTimeout(unavailableTimer);
     }
     let active = true;
     let attempts = 0;
