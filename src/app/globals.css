@@ -3257,3 +3257,42 @@ html[data-motion-mode="enhanced"] .home-hero__backdrop {
     stroke-dashoffset: 0;
   }
 }
+
+@media (max-width: 767px) {
+  .commerce-hero {
+    padding-top: 4rem;
+  }
+
+  .commerce-hero__grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .commerce-hero h1,
+  .checkout-outcome h1,
+  .test-checkout-panel h1 {
+    font-size: clamp(3.6rem, 18vw, 5rem);
+  }
+
+  .commerce-cover {
+    min-height: 430px;
+  }
+
+  .commerce-catalog {
+    padding-block: 4rem;
+  }
+
+  .test-offer-list article {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .test-offer-list .button {
+    width: 100%;
+  }
+
+  .checkout-outcome,
+  .test-checkout-panel {
+    padding-top: 4rem;
+  }
+}

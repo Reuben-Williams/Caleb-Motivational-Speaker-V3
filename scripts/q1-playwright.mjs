@@ -19,6 +19,15 @@ const routes = [
   "/book-caleb",
   "/privacy",
   "/thank-you",
+  "/store",
+  "/store/test",
+  "/checkout/success?session_id=cs_test_browser_verification",
+  "/checkout/attention",
+  "/checkout/cancel",
+  "/library",
+  "/library/sign-in",
+  "/admin/editor/commerce",
+  "/admin/editor/automations",
 ];
 
 await mkdir(outputDir, { recursive: true });
@@ -31,6 +40,7 @@ const report = {
   routes: [],
   interactions: {},
   redirects: {},
+  commerceBoundaries: {},
   reducedMotion: {},
   screenshots: [],
   console: [],
@@ -181,6 +191,15 @@ for (const route of routes) {
   } else if (route === "/book-caleb") {
     await revealScrollSections(page);
     await capture(page, "book-caleb-1440-full.png", { fullPage: true });
+  } else if (route === "/store") {
+    await revealScrollSections(page);
+    await capture(page, "store-1440-full.png", { fullPage: true });
+  } else if (route === "/library") {
+    await capture(page, "library-1440-fold.png");
+  } else if (route === "/admin/editor/commerce") {
+    await capture(page, "commerce-denied-1440-fold.png");
+  } else if (route === "/admin/editor/automations") {
+    await capture(page, "automations-denied-1440-fold.png");
   }
   await page.close();
 }
@@ -274,6 +293,54 @@ report.reducedMotion = await reducedPage.evaluate(() => ({
 await capture(reducedPage, "home-reduced-motion.png");
 await reduced.close();
 
+for (const check of [
+  {
+    key: "browserAuthoredCheckoutRejected",
+    url: "/api/commerce/checkout",
+    options: {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      data: { offerStableKey: "caleb-print-book-single", amount: 1 },
+    },
+    expected: 400,
+  },
+  {
+    key: "customerSessionRequired",
+    url: "/api/customer-auth/session",
+    options: { method: "GET" },
+    expected: 401,
+  },
+  {
+    key: "workerAuthRequired",
+    url: "/api/commerce/workers/automations",
+    options: {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      data: {},
+    },
+    expected: 401,
+  },
+  {
+    key: "stripeRuntimeClosed",
+    url: "/api/commerce/stripe/webhook",
+    options: { method: "POST", data: "unsigned" },
+    expected: 503,
+  },
+  {
+    key: "privateAssetRequiresSession",
+    url: "/api/commerce/assets/c5010000-0000-4000-8000-000000000003",
+    options: { method: "GET" },
+    expected: 401,
+  },
+]) {
+  const response = await desktop.request.fetch(`${baseUrl}${check.url}`, check.options);
+  report.commerceBoundaries[check.key] = {
+    status: response.status(),
+    expected: check.expected,
+    passed: response.status() === check.expected,
+  };
+}
+
 for (const viewport of [
   { width: 390, height: 844, name: "390" },
   { width: 320, height: 760, name: "320" },
@@ -320,6 +387,13 @@ for (const viewport of [
   );
   await page.goto(`${baseUrl}/book-caleb`, { waitUntil: "networkidle" });
   await capture(page, `book-caleb-${viewport.name}-fold.png`);
+  await page.goto(`${baseUrl}/store`, { waitUntil: "networkidle" });
+  report.interactions[`storeMobile${viewport.name}`] = {
+    overflow: await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+    ),
+  };
+  await capture(page, `store-${viewport.name}-fold.png`);
   await mobile.close();
 }
 
