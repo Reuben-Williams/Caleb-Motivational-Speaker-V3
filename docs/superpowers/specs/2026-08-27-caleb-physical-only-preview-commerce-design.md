@@ -2,7 +2,7 @@
 
 - Date: 2026-08-27
 - Branch: `codex/caleb-commerce-integration`
-- Status: Option 1 approved in conversation; written-spec review pending
+- Status: written Option 1 spec approved in conversation
 - Scope: one protected Preview test; no Production, DNS, Joyfound, or HighLevel changes
 
 ## Outcome
