@@ -137,6 +137,41 @@ describe("Caleb commerce configuration", () => {
     });
   });
 
+  it("records Caleb's approved shipping, workbook, and course amounts without inventing missing prices", () => {
+    const offers = Object.fromEntries(
+      calebCommerceConfig.catalog.offers.map((offer) => [offer.stableKey, offer]),
+    );
+
+    expect(calebCommerceConfig.catalog.shipping).toMatchObject({
+      shippingAmountMinor: 995,
+      approvalState: "awaiting_caleb",
+    });
+    expect(offers["caleb-print-book-single"]?.priceRevision).toMatchObject({
+      currency: null,
+      unitAmountMinor: null,
+      observedSourceAmountMinor: null,
+      approvalState: "awaiting_caleb",
+    });
+    expect(offers["caleb-audiobook-single"]?.priceRevision).toMatchObject({
+      currency: null,
+      unitAmountMinor: null,
+      approvalState: "awaiting_caleb",
+    });
+    expect(offers["caleb-workbook-single"]?.priceRevision).toMatchObject({
+      currency: "USD",
+      unitAmountMinor: 999,
+      approvalState: "approved",
+    });
+    expect(offers["caleb-course-single"]?.priceRevision).toMatchObject({
+      currency: "USD",
+      unitAmountMinor: 19_700,
+      approvalState: "approved",
+    });
+    expect(calebCommerceConfig.catalog.offers.every(
+      (offer) => offer.approvalState === "awaiting_caleb",
+    )).toBe(true);
+  });
+
   it("rejects unsafe production content and public paid-asset paths", () => {
     for (const mutate of [
       (copy: typeof calebCommerceConfig) => {

@@ -20,7 +20,7 @@ export const calebCommerceConfig: CalebCommerceConfig = deepFreeze({
     shipping: {
       mode: "manual_fulfillment",
       supportedCountries: [],
-      shippingAmountMinor: null,
+      shippingAmountMinor: 995,
       addressRetentionDays: null,
       approvalState: "awaiting_caleb",
     },
