@@ -12,6 +12,6 @@ export const metadata: Metadata = {
 export default function LibraryPage() {
   const environment = getCommerceEnvironment();
   return <div className="commerce-page commerce-page--library"><div className="container">
-    <CustomerLibraryShell enabled={environment.providersReady && environment.runtimeEnabled} />
+    <CustomerLibraryShell enabled={environment.capabilities.digitalDeliveryReady && environment.runtimeEnabled} />
   </div></div>;
 }

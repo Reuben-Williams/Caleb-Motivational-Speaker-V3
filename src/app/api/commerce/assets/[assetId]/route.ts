@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 
 const environment = getCommerceEnvironment();
 const handleAsset = createPrivateAssetBoundary({
-  enabled: environment.providersReady && environment.runtimeEnabled,
+  enabled: environment.capabilities.digitalDeliveryReady && environment.runtimeEnabled,
   async handle() {
     return Response.json(
       { error: { code: "CUSTOMER_ACCESS_NOT_READY" } },

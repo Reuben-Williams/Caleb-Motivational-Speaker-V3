@@ -16,7 +16,7 @@ export function createCalebStripeWebhookRoute(
   const endpointSecret = source.STRIPE_WEBHOOK_SECRET ?? "";
   const connectedAccountId = source.STRIPE_CONNECTED_ACCOUNT_ID ?? "";
   const enabled = environment.runtimeEnabled
-    && environment.providersReady
+    && environment.capabilities.stripeWebhookReady
     && secretKey.startsWith("sk_test_")
     && endpointSecret.startsWith("whsec_")
     && /^acct_[A-Za-z0-9_]+$/.test(connectedAccountId);

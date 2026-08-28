@@ -72,6 +72,7 @@ export function evaluateCheckoutRequest(input: Readonly<{
   suppliedTestToken: string | null;
   offerStableKey: string;
   browserFields: Readonly<Record<string, unknown>>;
+  offers?: readonly ApprovedOffer[];
 }>): CheckoutDecision {
   if (input.mode !== "platform_test") {
     return Object.freeze({ accepted: false, reason: "PLATFORM_CHECKOUT_CLOSED" });
@@ -82,7 +83,7 @@ export function evaluateCheckoutRequest(input: Readonly<{
   if (!safeTokenMatch(input.configuredTestToken, input.suppliedTestToken)) {
     return Object.freeze({ accepted: false, reason: "TEST_ACCESS_DENIED" });
   }
-  const offer = listApprovedOffers().find(
+  const offer = (input.offers ?? listApprovedOffers()).find(
     (candidate) => candidate.stableKey === input.offerStableKey,
   );
   if (!offer) {

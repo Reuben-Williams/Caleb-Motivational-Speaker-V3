@@ -13,7 +13,7 @@ export default function CheckoutSuccessPage() {
   return (
     <div className="commerce-page commerce-page--outcome">
       <div className="container">
-        <CheckoutStatusPanel enabled={environment.providersReady && environment.runtimeEnabled} />
+        <CheckoutStatusPanel enabled={environment.capabilities.statusReady && environment.runtimeEnabled} />
       </div>
     </div>
   );

@@ -19,7 +19,7 @@ export default function LibrarySignInPage() {
         does not require a password.
       </p>
       <PasswordlessSignInForm
-        enabled={environment.providersReady && environment.runtimeEnabled}
+        enabled={environment.capabilities.digitalDeliveryReady && environment.runtimeEnabled}
         siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? ""}
       />
     </section>

@@ -12,6 +12,17 @@ const baseEnvironment = {
   runtimeEnabled: false,
   missing: ["DATABASE_URL"],
   testAccessToken: "a".repeat(32),
+  previewGuard: { ready: false, reasons: ["DATABASE_HOST_MISMATCH"] },
+  capabilities: {
+    checkoutCreateReady: false,
+    stripeWebhookReady: false,
+    resendWebhookReady: false,
+    statusReady: false,
+    paidOrderSagaReady: false,
+    resendDeliveryWorkerReady: false,
+    assetStorageReady: false,
+    digitalDeliveryReady: false,
+  },
 };
 
 describe("Caleb runtime route boundaries", () => {
@@ -56,6 +67,39 @@ describe("Caleb runtime route boundaries", () => {
 
     expect(response.status).toBe(409);
     expect(createSession).not.toHaveBeenCalled();
+  });
+
+  it("uses the guarded physical fixture and Checkout capability without R2 or Resend", async () => {
+    const createSession = vi.fn(async () => ({
+      id: "cs_test_caleb_preview",
+      url: "https://checkout.stripe.com/c/pay/cs_test_caleb_preview",
+      livemode: false,
+    }));
+    const route = createCheckoutRoute({
+      environment: {
+        ...baseEnvironment,
+        runtimeEnabled: true,
+        previewGuard: { ready: true, reasons: [] },
+        capabilities: { ...baseEnvironment.capabilities, checkoutCreateReady: true },
+      },
+      createSession,
+    });
+    const response = await route(
+      new Request("https://caleb-preview.example.vercel.app/api/commerce/checkout", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-platform-test-token": "a".repeat(32),
+        },
+        body: JSON.stringify({ offerStableKey: "caleb-print-book-preview-test" }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(createSession).toHaveBeenCalledWith(expect.objectContaining({
+      stableKey: "caleb-print-book-preview-test",
+      unitAmountMinor: 100,
+    }));
   });
 
   it("requires worker authorization before reporting setup state", async () => {

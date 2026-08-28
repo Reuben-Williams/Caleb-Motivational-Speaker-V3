@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
 import { TestCheckoutPanel } from "@/components/commerce/test-checkout-panel";
-import { listApprovedOffers } from "@/lib/platform/routing";
+import { getCommerceEnvironment } from "@/lib/platform/environment";
+import { getTestStoreModel } from "@/lib/platform/test-store-model";
 
 export const metadata: Metadata = {
   title: "Private Checkout Verification | Caleb Jakes",
@@ -9,10 +10,12 @@ export const metadata: Metadata = {
 };
 
 export default function TestStorePage() {
+  const model = getTestStoreModel(getCommerceEnvironment());
   return (
     <div className="commerce-page commerce-page--test">
       <div className="container">
-        <TestCheckoutPanel offers={listApprovedOffers()} />
+        <p className="eyebrow">{model.label}</p>
+        <TestCheckoutPanel offers={model.offers} />
       </div>
     </div>
   );

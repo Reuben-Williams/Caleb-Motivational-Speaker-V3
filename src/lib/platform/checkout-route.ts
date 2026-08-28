@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { CommerceEnvironment } from "./environment";
+import { listCalebPreviewOffers } from "./caleb-preview-catalog";
 import { evaluateCheckoutRequest, type ApprovedOffer } from "./routing";
 
 const JSON_HEADERS = Object.freeze({
@@ -44,9 +45,10 @@ export function createCheckoutRoute(input: Readonly<{
       suppliedTestToken: request.headers.get("x-platform-test-token"),
       offerStableKey,
       browserFields,
+      offers: listCalebPreviewOffers(input.environment.previewGuard),
     });
     if (!decision.accepted) return decisionError(decision.reason);
-    if (!input.environment.providersReady || !input.environment.runtimeEnabled) {
+    if (!input.environment.capabilities.checkoutCreateReady || !input.environment.runtimeEnabled) {
       return error(503, "CHECKOUT_SETUP_REQUIRED");
     }
 

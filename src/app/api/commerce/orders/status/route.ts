@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 const environment = getCommerceEnvironment();
 
 export const GET = createCheckoutStatusRoute({
-  enabled: environment.providersReady && environment.runtimeEnabled,
+  enabled: environment.capabilities.statusReady && environment.runtimeEnabled,
   async lookup() {
     throw new TypeError("Order persistence is not provisioned.");
   },
