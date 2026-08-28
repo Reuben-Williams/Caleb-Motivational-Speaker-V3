@@ -20,10 +20,10 @@ describe("Caleb platform attachment boundaries", () => {
     ) as { dependencies: Record<string, string> };
     const npmrc = fs.readFileSync(path.join(root, ".npmrc"), "utf8");
 
-    expect(packageJson.dependencies["@reuben-williams/core"]).toBe("0.4.0");
-    expect(packageJson.dependencies["@reuben-williams/next"]).toBe("0.4.0");
-    expect(packageJson.dependencies["@reuben-williams/growth-commerce-ui"]).toBe("0.4.0");
-    expect(packageJson.dependencies["@reuben-williams/growth-automations-ui"]).toBe("0.4.0");
+    expect(packageJson.dependencies["@reuben-williams/core"]).toBe("0.5.0");
+    expect(packageJson.dependencies["@reuben-williams/next"]).toBe("0.5.0");
+    expect(packageJson.dependencies["@reuben-williams/growth-commerce-ui"]).toBe("0.5.0");
+    expect(packageJson.dependencies["@reuben-williams/growth-automations-ui"]).toBe("0.5.0");
     expect(npmrc).toContain("${NODE_AUTH_TOKEN}");
     expect(npmrc).not.toMatch(/ghp_|github_pat_|Bearer\s/i);
   });
