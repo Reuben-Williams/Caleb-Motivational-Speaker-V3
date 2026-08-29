@@ -17,7 +17,10 @@ function jsonResponse(body: unknown, status = 200, headers?: HeadersInit) {
   });
 }
 
-function setup(responses: Array<Response | Error>) {
+function setup(
+  responses: Array<Response | Error>,
+  diagnosticSink?: (diagnostic: Record<string, unknown>) => void,
+) {
   const fetchMock = vi.fn(
     async (input: string | URL | Request, init?: RequestInit) => {
     void input;
@@ -37,6 +40,7 @@ function setup(responses: Array<Response | Error>) {
     sleep: async (milliseconds) => {
       sleeps.push(milliseconds);
     },
+    diagnosticSink,
   });
   return { client, fetchMock, sleeps };
 }
@@ -210,6 +214,28 @@ describe("focused HighLevel v3 client", () => {
     });
     expect(JSON.stringify(error)).not.toContain("person@example.invalid");
     expect(JSON.stringify(error)).not.toContain("private provider body");
+  });
+
+  it("reports provider failures without logging request or response data", async () => {
+    const diagnostics: Array<Record<string, unknown>> = [];
+    const { client } = setup(
+      [jsonResponse({ message: "private person@example.invalid" }, 422)],
+      (diagnostic) => diagnostics.push(diagnostic),
+    );
+
+    await expect(client.createOpportunity({ private: "payload" })).rejects.toBeInstanceOf(
+      HighLevelRequestError,
+    );
+    expect(diagnostics).toEqual([
+      {
+        operation: "opportunity_create",
+        code: "opportunity_create_rejected",
+        status: 422,
+        retryable: false,
+      },
+    ]);
+    expect(JSON.stringify(diagnostics)).not.toContain("person@example.invalid");
+    expect(JSON.stringify(diagnostics)).not.toContain("payload");
   });
 
   it("attaches an abort signal and keeps each timeout below the contact lease", async () => {

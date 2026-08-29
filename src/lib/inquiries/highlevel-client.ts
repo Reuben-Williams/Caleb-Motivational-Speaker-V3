@@ -22,6 +22,15 @@ type FetchLike = (
   init?: RequestInit,
 ) => Promise<Response>;
 
+type ProviderDiagnostic = {
+  operation: RequestOperation;
+  code: string;
+  status: number;
+  retryable: boolean;
+};
+
+type ProviderDiagnosticSink = (diagnostic: ProviderDiagnostic) => void;
+
 type ClientOptions = {
   token: string;
   locationId: string;
@@ -29,6 +38,7 @@ type ClientOptions = {
   baseUrl?: string;
   timeoutMs?: number;
   sleep?: (milliseconds: number) => Promise<void>;
+  diagnosticSink?: ProviderDiagnosticSink;
 };
 
 type RequestOperation =
@@ -70,6 +80,7 @@ export class HighLevelClient {
   private readonly fetch: FetchLike;
   private readonly baseUrl: string;
   private readonly sleep: (milliseconds: number) => Promise<void>;
+  private readonly diagnosticSink: ProviderDiagnosticSink;
 
   constructor({
     token,
@@ -79,6 +90,8 @@ export class HighLevelClient {
     timeoutMs = 20_000,
     sleep = (milliseconds) =>
       new Promise((resolve) => setTimeout(resolve, milliseconds)),
+    diagnosticSink = (diagnostic) =>
+      console.error("HighLevel request failed", diagnostic),
   }: ClientOptions) {
     if (!token.trim() || !locationId.trim()) {
       throw new Error("HighLevel client configuration is incomplete.");
@@ -92,6 +105,7 @@ export class HighLevelClient {
     this.baseUrl = baseUrl.replace(/\/$/, "");
     this.timeoutMs = timeoutMs;
     this.sleep = sleep;
+    this.diagnosticSink = diagnosticSink;
   }
 
   async readLocation(signal?: AbortSignal) {
@@ -301,7 +315,18 @@ export class HighLevelClient {
             await this.sleep(this.retryDelay(response, attempt));
             continue;
           }
-          throw this.responseError(operation, response.status, retryable);
+          const failure = this.responseError(
+            operation,
+            response.status,
+            retryable,
+          );
+          this.diagnosticSink({
+            operation: failure.operation,
+            code: failure.code,
+            status: failure.status,
+            retryable: failure.retryable,
+          });
+          throw failure;
         }
 
         let body: unknown;
