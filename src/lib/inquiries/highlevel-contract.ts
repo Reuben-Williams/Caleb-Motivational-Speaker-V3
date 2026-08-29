@@ -27,6 +27,46 @@ const customValueSchema = z.union([
       value: z.unknown(),
     })
     .transform(({ value, ...field }) => ({ ...field, fieldValue: value })),
+  z
+    .object({
+      id: z.string().min(1),
+      key: z.string().min(1).optional(),
+      fieldValueString: z.string(),
+    })
+    .transform(({ fieldValueString, ...field }) => ({
+      ...field,
+      fieldValue: fieldValueString,
+    })),
+  z
+    .object({
+      id: z.string().min(1),
+      key: z.string().min(1).optional(),
+      fieldValueNumber: z.number(),
+    })
+    .transform(({ fieldValueNumber, ...field }) => ({
+      ...field,
+      fieldValue: fieldValueNumber,
+    })),
+  z
+    .object({
+      id: z.string().min(1),
+      key: z.string().min(1).optional(),
+      fieldValueDate: z.union([z.string(), z.number()]),
+    })
+    .transform(({ fieldValueDate, ...field }) => ({
+      ...field,
+      fieldValue: fieldValueDate,
+    })),
+  z
+    .object({
+      id: z.string().min(1),
+      key: z.string().min(1).optional(),
+      fieldValueArray: z.array(z.unknown()),
+    })
+    .transform(({ fieldValueArray, ...field }) => ({
+      ...field,
+      fieldValue: fieldValueArray,
+    })),
 ]);
 
 const contactSchema = z.object({

@@ -87,6 +87,48 @@ describe("HighLevel v3 provider contract", () => {
     );
   });
 
+  it("normalizes typed opportunity-search custom-field values", () => {
+    const typed = {
+      ...opportunitiesPage,
+      opportunities: [
+        {
+          ...opportunitiesPage.opportunities[0],
+          customFields: [
+            {
+              id: "string_field",
+              type: "string",
+              fieldValueString: "CJ-ABCDEF123456",
+            },
+            {
+              id: "number_field",
+              type: "number",
+              fieldValueNumber: 125,
+            },
+            {
+              id: "date_field",
+              type: "date",
+              fieldValueDate: "2099-06-20",
+            },
+            {
+              id: "array_field",
+              type: "array",
+              fieldValueArray: ["approved"],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(
+      parseOpportunitySearchResponse(typed).opportunities[0]?.customFields,
+    ).toEqual([
+      { id: "string_field", fieldValue: "CJ-ABCDEF123456" },
+      { id: "number_field", fieldValue: 125 },
+      { id: "date_field", fieldValue: "2099-06-20" },
+      { id: "array_field", fieldValue: ["approved"] },
+    ]);
+  });
+
   it("parses pipeline stages and contact/opportunity field inventories", () => {
     expect(parsePipelinesResponse(pipelines).pipelines[0]?.stages[0]).toEqual({
       id: "stage_fixture",
