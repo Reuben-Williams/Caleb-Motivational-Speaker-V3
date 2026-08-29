@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import type { BookingInput } from "@/lib/booking-schema";
 import { logInquiryEvent } from "@/lib/inquiries/inquiry-log";
-import type { InquiryResult } from "@/lib/inquiries/service";
+import type { NativeInquiryResult } from "@/lib/inquiries/native-service";
 
 const MAX_BODY_BYTES = 32 * 1024;
 const alternatives =
@@ -12,7 +12,7 @@ type InquiryRuntime = {
   submit(
     input: BookingInput,
     context: { trustedClientIp?: string },
-  ): Promise<InquiryResult>;
+  ): Promise<NativeInquiryResult>;
 };
 
 type HandlerOptions = {

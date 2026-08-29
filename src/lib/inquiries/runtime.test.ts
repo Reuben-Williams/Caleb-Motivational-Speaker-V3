@@ -4,14 +4,19 @@ import {
   createInquiryRuntime,
   trustedClientIpFromRequest,
 } from "@/lib/inquiries/runtime";
-import manifestFixture from "@/lib/inquiries/__fixtures__/highlevel/field-manifest.json";
 
 const completeEnv = {
-  HIGHLEVEL_PRIVATE_INTEGRATION_TOKEN: "highlevel-token",
-  HIGHLEVEL_LOCATION_ID: "location-a",
-  HIGHLEVEL_PIPELINE_ID: "pipeline-a",
-  HIGHLEVEL_NEW_INQUIRY_STAGE_ID: "stage-a",
-  HIGHLEVEL_FIELD_MAP_JSON: JSON.stringify(manifestFixture),
+  DATABASE_URL: "postgresql://runtime:secret@db.example.test/caleb?sslmode=require",
+  NATIVE_INQUIRY_SITE_ID: "11111111-1111-4111-8111-111111111111",
+  NATIVE_INQUIRY_RUNTIME_MEMBER_ID: "22222222-2222-4222-8222-222222222222",
+  NATIVE_INQUIRY_CAPABILITIES_JSON: JSON.stringify([
+    "forms.submit",
+    "customers.write",
+    "leads.write",
+    "messaging.enqueue",
+  ]),
+  RESEND_FROM_EMAIL: "Caleb Jakes <bookings@mail.calebjakes.com>",
+  INQUIRY_NOTIFICATION_EMAIL: "info@calebjakes.com",
   TURNSTILE_SECRET_KEY: "turnstile-secret",
   UPSTASH_REDIS_REST_URL: "https://example.upstash.io",
   UPSTASH_REDIS_REST_TOKEN: "upstash-token",
@@ -26,7 +31,7 @@ describe("inquiry production runtime", () => {
     expect(
       createInquiryRuntime({
         ...completeEnv,
-        HIGHLEVEL_PRIVATE_INTEGRATION_TOKEN: "",
+        DATABASE_URL: "",
       }),
     ).toBeNull();
   });
@@ -38,7 +43,7 @@ describe("inquiry production runtime", () => {
       createInquiryRuntime(
         {
           ...completeEnv,
-          HIGHLEVEL_PRIVATE_INTEGRATION_TOKEN: "",
+          DATABASE_URL: "",
         },
         (diagnostic) => diagnostics.push(diagnostic),
       ),
@@ -46,12 +51,12 @@ describe("inquiry production runtime", () => {
     expect(diagnostics).toEqual([
       {
         code: "missing_configuration",
-        component: "HIGHLEVEL_PRIVATE_INTEGRATION_TOKEN",
+        component: "DATABASE_URL",
       },
     ]);
   });
 
-  it("fails closed for an invalid identity keyring or field manifest", () => {
+  it("fails closed for an invalid identity keyring or capability list", () => {
     expect(
       createInquiryRuntime({
         ...completeEnv,
@@ -61,7 +66,7 @@ describe("inquiry production runtime", () => {
     expect(
       createInquiryRuntime({
         ...completeEnv,
-        HIGHLEVEL_FIELD_MAP_JSON: '{"version":2}',
+        NATIVE_INQUIRY_CAPABILITIES_JSON: '{"version":2}',
       }),
     ).toBeNull();
   });
@@ -73,7 +78,7 @@ describe("inquiry production runtime", () => {
       createInquiryRuntime(
         {
           ...completeEnv,
-          HIGHLEVEL_FIELD_MAP_JSON: '{"version":2}',
+        NATIVE_INQUIRY_CAPABILITIES_JSON: '["forms.submit","unknown.write"]',
         },
         (diagnostic) => diagnostics.push(diagnostic),
       ),
@@ -81,13 +86,23 @@ describe("inquiry production runtime", () => {
     expect(diagnostics).toEqual([
       {
         code: "invalid_configuration",
-        component: "highlevel_field_manifest",
+        component: "native_inquiry_session",
       },
     ]);
   });
 
-  it("creates the runtime only from complete server configuration", () => {
+  it("creates the runtime only from complete native server configuration", () => {
     expect(createInquiryRuntime(completeEnv)).not.toBeNull();
+  });
+
+  it("does not require or consume HighLevel configuration", () => {
+    expect(
+      createInquiryRuntime({
+        ...completeEnv,
+        HIGHLEVEL_PRIVATE_INTEGRATION_TOKEN: "must-not-be-used",
+        HIGHLEVEL_LOCATION_ID: "must-not-be-used",
+      }),
+    ).not.toBeNull();
   });
 
   it("reads a client address only from the explicitly trusted header", () => {

@@ -4,11 +4,7 @@ import type { BookingData } from "@/lib/booking-schema";
 
 export function canonicalInquiry(data: BookingData): string {
   return JSON.stringify({
-    fullName: data.fullName,
-    workEmail: data.workEmail.toLowerCase(),
-    phone: data.phone,
-    organization: data.organization,
-    roleTitle: data.roleTitle,
+    workEmail: data.workEmail.trim().toLowerCase(),
     audienceType: data.audienceType,
     audienceTypeOther: data.audienceTypeOther,
     eventType: data.eventType,
@@ -21,16 +17,7 @@ export function canonicalInquiry(data: BookingData): string {
     programLength: data.programLength,
     eventGoals: data.eventGoals,
     budgetRange: data.budgetRange,
-    referralSource: data.referralSource,
-    referralSourceOther: data.referralSourceOther,
     additionalDetails: data.additionalDetails,
-    consent: data.consent,
-    utmSource: data.utmSource,
-    utmMedium: data.utmMedium,
-    utmCampaign: data.utmCampaign,
-    utmTerm: data.utmTerm,
-    utmContent: data.utmContent,
-    referrerPath: data.referrerPath,
   });
 }
 
@@ -49,4 +36,3 @@ export function rateDigest(
     .update(`${email.trim().toLowerCase()}|${trustedClientIp ?? ""}`)
     .digest("hex");
 }
-

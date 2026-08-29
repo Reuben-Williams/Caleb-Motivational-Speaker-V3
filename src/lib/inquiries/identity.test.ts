@@ -86,6 +86,30 @@ describe("inquiry identity keyring", () => {
     expect(eventChanged?.digest).not.toBe(first?.digest);
   });
 
+  it("keeps contact and attribution corrections on the original event identity", () => {
+    const keyring = createInquiryIdentityKeyring({
+      activeKeyId: "v1",
+      activeSecret: "active-secret-with-enough-entropy",
+      previousKeysJson: "{}",
+    });
+    const first = inquiryIdentityCandidates(booking, keyring)[0];
+    const corrected = inquiryIdentityCandidates(
+      {
+        ...booking,
+        fullName: "Jordan A. Avery",
+        phone: "+1 404 555 0199",
+        organization: "North Star University",
+        roleTitle: "Vice President of Student Life",
+        referralSource: "referral",
+        utmSource: "partner",
+        referrerPath: "/faith-events",
+      },
+      keyring,
+    )[0];
+
+    expect(corrected).toEqual(first);
+  });
+
   it("retains accepted duplicate identities for exactly 400 days", () => {
     expect(ACCEPTED_INQUIRY_TTL_SECONDS).toBe(400 * 24 * 60 * 60);
   });
