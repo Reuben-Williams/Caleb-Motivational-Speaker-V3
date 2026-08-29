@@ -1,65 +1,123 @@
+import { createHash } from "node:crypto";
+
 import { Resend } from "resend";
 
-import {
-  renderBusinessEmail,
-  renderConfirmationEmail,
-} from "@/lib/inquiries/email-renderer";
-import type { BookingData } from "@/lib/booking-schema";
+import type {
+  InquiryDeliveryResult,
+  InquiryOutboxClaim,
+  InquiryOutboxDelivery,
+} from "@/lib/inquiries/outbox-worker";
 
-type DeliveryMessage = {
-  inquiryId: string;
-  data: BookingData;
-  idempotencyKey: string;
-};
+type ResendResponse = Readonly<{
+  data: Readonly<{ id: string }> | null;
+  error: Readonly<{ statusCode?: number }> | null;
+}>;
 
-interface LegacyInquiryDelivery {
-  sendBusiness(message: DeliveryMessage): Promise<void>;
-  sendConfirmation(message: DeliveryMessage): Promise<void>;
+type ResendClient = Readonly<{
+  emails: Readonly<{
+    send(
+      message: Readonly<{
+        from: string;
+        to: string;
+        replyTo: string;
+        subject: string;
+        text: string;
+      }>,
+      options: Readonly<{ idempotencyKey: string }>,
+    ): Promise<ResendResponse>;
+  }>;
+}>;
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function safeEmail(value: string): boolean {
+  return value.length <= 320 && emailPattern.test(value);
 }
 
-export class ResendInquiryDelivery implements LegacyInquiryDelivery {
-  private readonly resend: Resend;
-
-  constructor(
-    apiKey: string,
-    private readonly from: string,
-    private readonly notificationEmail: string,
+function authorized(
+  claim: InquiryOutboxClaim,
+  from: string,
+  notificationEmail: string,
+): boolean {
+  if (claim.sender !== from || !safeEmail(claim.replyTo)) return false;
+  if (
+    claim.messageKind === "organizer_acknowledgement" &&
+    claim.recipientKind === "organizer"
   ) {
-    this.resend = new Resend(apiKey);
+    return safeEmail(claim.destination) && claim.replyTo === notificationEmail;
   }
+  if (
+    claim.messageKind === "internal_notification" &&
+    claim.recipientKind === "internal"
+  ) {
+    return claim.destination === notificationEmail;
+  }
+  return false;
+}
 
-  async sendBusiness(message: DeliveryMessage) {
-    const rendered = renderBusinessEmail(message.inquiryId, message.data);
-    const response = await this.resend.emails.send(
-      {
-        from: this.from,
-        to: this.notificationEmail,
-        replyTo: message.data.workEmail,
-        subject: rendered.subject,
-        html: rendered.html,
-        text: rendered.text,
-      },
-      { idempotencyKey: message.idempotencyKey },
-    );
-    if (response.error) {
-      throw new Error(response.error.name);
-    }
+function classify(error: Readonly<{ statusCode?: number }>): InquiryDeliveryResult {
+  if (error.statusCode === 429) {
+    return {
+      outcome: "failed_retryable",
+      safeReasonCode: "PROVIDER_RATE_LIMITED",
+    };
   }
+  if (typeof error.statusCode === "number" && error.statusCode >= 500) {
+    return {
+      outcome: "failed_retryable",
+      safeReasonCode: "PROVIDER_TRANSIENT",
+    };
+  }
+  return { outcome: "dead_letter", safeReasonCode: "PROVIDER_REJECTED" };
+}
 
-  async sendConfirmation(message: DeliveryMessage) {
-    const rendered = renderConfirmationEmail(message.inquiryId, message.data);
-    const response = await this.resend.emails.send(
-      {
-        from: this.from,
-        to: message.data.workEmail,
-        subject: rendered.subject,
-        html: rendered.html,
-        text: rendered.text,
-      },
-      { idempotencyKey: message.idempotencyKey },
-    );
-    if (response.error) {
-      throw new Error(response.error.name);
-    }
-  }
+export function createResendOutboxDelivery(input: Readonly<{
+  apiKey?: string;
+  client?: ResendClient;
+  from: string;
+  notificationEmail: string;
+}>): InquiryOutboxDelivery {
+  const client = input.client ?? (new Resend(input.apiKey) as unknown as ResendClient);
+  const notificationEmail = input.notificationEmail.trim().toLowerCase();
+  return Object.freeze({
+    async deliver(claim: InquiryOutboxClaim): Promise<InquiryDeliveryResult> {
+      if (!authorized(claim, input.from, notificationEmail)) {
+        return {
+          outcome: "dead_letter",
+          safeReasonCode: "RECIPIENT_NOT_AUTHORIZED",
+        };
+      }
+      try {
+        const response = await client.emails.send(
+          {
+            from: claim.sender,
+            to: claim.destination,
+            replyTo: claim.replyTo,
+            subject: claim.subject,
+            text: claim.bodyText,
+          },
+          { idempotencyKey: claim.idempotencyKey },
+        );
+        if (response.error) return classify(response.error);
+        if (!response.data?.id) {
+          return {
+            outcome: "reconciliation_required",
+            safeReasonCode: "PROVIDER_OUTCOME_UNCERTAIN",
+          };
+        }
+        return {
+          outcome: "delivered",
+          providerReference: response.data.id,
+          providerReferenceDigest: createHash("sha256")
+            .update(response.data.id)
+            .digest("hex"),
+        };
+      } catch {
+        return {
+          outcome: "reconciliation_required",
+          safeReasonCode: "PROVIDER_OUTCOME_UNCERTAIN",
+        };
+      }
+    },
+  });
 }

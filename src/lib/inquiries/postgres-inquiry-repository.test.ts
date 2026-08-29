@@ -86,8 +86,15 @@ describe("PostgresInquiryRepository", () => {
         withSession: async (_session, operation) =>
           operation({
             ...session,
-            query: async () => ({
-              rows: [{ result: { status: "accepted", providerReference: "secret" } }],
+            query: async <Row extends Record<string, unknown>>() => ({
+              rows: [
+                {
+                  result: {
+                    status: "accepted",
+                    providerReference: "secret",
+                  },
+                } as unknown as Row,
+              ],
               rowCount: 1,
             }),
           }),

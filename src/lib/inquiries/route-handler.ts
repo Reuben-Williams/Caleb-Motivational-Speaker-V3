@@ -18,6 +18,7 @@ type InquiryRuntime = {
 type HandlerOptions = {
   resolveRuntime: () => InquiryRuntime | null;
   getTrustedClientIp?: (request: Request) => string | undefined;
+  onAccepted?: (result: NativeInquiryResult) => void;
 };
 
 function json(
@@ -31,6 +32,7 @@ function json(
 export function createInquiryPostHandler({
   resolveRuntime,
   getTrustedClientIp = () => undefined,
+  onAccepted,
 }: HandlerOptions) {
   return async function postInquiry(request: Request): Promise<Response> {
     const contentType = request.headers.get("content-type") ?? "";
@@ -93,6 +95,16 @@ export function createInquiryPostHandler({
       const result = await runtime.submit(input, {
         trustedClientIp: getTrustedClientIp(request),
       });
+      if (
+        result.body.code === "accepted" ||
+        result.body.code === "duplicate_accepted"
+      ) {
+        try {
+          onAccepted?.(result);
+        } catch {
+          // Neon is authoritative; scheduled delivery remains available.
+        }
+      }
       const headers =
         result.retryAfter === undefined
           ? undefined

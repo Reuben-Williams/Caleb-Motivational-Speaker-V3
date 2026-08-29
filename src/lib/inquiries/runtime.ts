@@ -41,7 +41,7 @@ const requiredCapabilities = Object.freeze([
   "messaging.enqueue",
 ]);
 
-function nativeSession(environment: InquiryEnvironment) {
+export function createNativeInquirySession(environment: InquiryEnvironment) {
   const parsed = JSON.parse(
     environment.NATIVE_INQUIRY_CAPABILITIES_JSON!,
   ) as unknown;
@@ -93,7 +93,7 @@ export function createInquiryRuntime(
 
   let session;
   try {
-    session = nativeSession(environment);
+    session = createNativeInquirySession(environment);
   } catch {
     reportDiagnostic({
       code: "invalid_configuration",

@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createInquiryIdentityKeyring } from "@/lib/inquiries/identity";
+import type {
+  NativeInquiryAcceptance,
+  NativeInquiryGatewayInput,
+} from "@/lib/inquiries/native-contracts";
 import { createNativeInquiryService } from "@/lib/inquiries/native-service";
 import { validBooking } from "../../../tests/booking-fixture";
 
@@ -27,17 +31,19 @@ function setup() {
     return true;
   });
   const releaseProcessingLease = vi.fn(async () => true);
-  const acceptInquiry = vi.fn(async ({ candidates, receivedAt }) => {
-    calls.push("neon");
-    return {
-      status: "accepted" as const,
-      inquiryId: candidates[0]!.inquiryId,
-      acceptedAt: receivedAt.toISOString(),
-      submissionId: "c1000000-0000-4000-8000-000000000020",
-      contactId: "c1000000-0000-4000-8000-000000000021",
-      leadId: "c1000000-0000-4000-8000-000000000022",
-    };
-  });
+  const acceptInquiry = vi.fn<
+    (input: NativeInquiryGatewayInput) => Promise<NativeInquiryAcceptance>
+  >(async ({ candidates, receivedAt }) => {
+      calls.push("neon");
+      return {
+        status: "accepted",
+        inquiryId: candidates[0]!.inquiryId,
+        acceptedAt: receivedAt.toISOString(),
+        submissionId: "c1000000-0000-4000-8000-000000000020",
+        contactId: "c1000000-0000-4000-8000-000000000021",
+        leadId: "c1000000-0000-4000-8000-000000000022",
+      };
+    });
   const service = createNativeInquiryService({
     identityKeyring: keyring,
     spam: { verify },

@@ -1,3 +1,6 @@
+import { after } from "next/server";
+
+import { createInquiryOutboxRuntime } from "@/lib/inquiries/outbox-runtime";
 import { createInquiryPostHandler } from "@/lib/inquiries/route-handler";
 import {
   createInquiryRuntime,
@@ -13,5 +16,10 @@ export const POST = createInquiryPostHandler({
       request,
       process.env.TRUSTED_CLIENT_IP_HEADER,
     ),
+  onAccepted: () => {
+    after(async () => {
+      const worker = createInquiryOutboxRuntime(process.env);
+      if (worker) await worker.run();
+    });
+  },
 });
-

@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createInquiryPostHandler } from "@/lib/inquiries/route-handler";
-import type { InquiryResult } from "@/lib/inquiries/service";
+import type { NativeInquiryResult } from "@/lib/inquiries/native-service";
 
-const accepted: InquiryResult = {
+const accepted: NativeInquiryResult = {
   status: 202,
   body: {
     code: "accepted",
@@ -87,5 +87,46 @@ describe("inquiry route handler", () => {
     expect(response.status).toBe(429);
     expect(response.headers.get("retry-after")).toBe("300");
     expect((await response.json()).code).toBe("rate_limited");
+  });
+
+  it("schedules one best-effort delivery attempt only after native acceptance", async () => {
+    const onAccepted = vi.fn();
+    const handler = createInquiryPostHandler({
+      resolveRuntime: () => ({ submit: async () => accepted }),
+      onAccepted,
+    });
+    const response = await handler(
+      new Request("http://localhost/api/inquiries", {
+        method: "POST",
+        body: "{}",
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    expect(response.status).toBe(202);
+    expect(onAccepted).toHaveBeenCalledOnce();
+    expect(onAccepted).toHaveBeenCalledWith(accepted);
+  });
+
+  it("does not schedule delivery for rejected submissions", async () => {
+    const onAccepted = vi.fn();
+    const handler = createInquiryPostHandler({
+      resolveRuntime: () => ({
+        submit: async () => ({
+          status: 400,
+          body: { code: "validation_failed", message: "correct fields" },
+        }),
+      }),
+      onAccepted,
+    });
+    await handler(
+      new Request("http://localhost/api/inquiries", {
+        method: "POST",
+        body: "{}",
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    expect(onAccepted).not.toHaveBeenCalled();
   });
 });
