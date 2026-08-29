@@ -176,7 +176,7 @@ export default function HomePage() {
           </p>
         </div>
         <Reveal className="reel-section__frame">
-          <AccessibleVideo />
+          <AccessibleVideo responsiveHomepage />
         </Reveal>
       </section>
 

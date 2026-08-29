@@ -120,3 +120,24 @@ or imply any new venue, client, audience, recognition, or speaking history.
 
 Revision 2 is approved. Route metadata may reference the exact hashed social
 images recorded above.
+
+## Revision 3 — homepage mobile speaker video
+
+Revision 3 adds the user-supplied portrait edit of Caleb's “Pain Comes To
+Develop” message for the homepage video player at viewport widths up to and
+including 767px. Desktop visitors and the `/book-media` compact player retain
+the approved V02 speaker reel.
+
+| ID | Exact source and source SHA-256 | Reviewed output and output SHA-256 | Dimensions / media contract | Classification | Intended use | Transformation | Reviewer decision |
+|---|---|---|---|---|---|---|---|
+| V03-MOBILE | `D:\Motivational Speaker Caleb\V3\Caleb (Pain Comes To Develop).mp4`<br>`2718161a1fbe266577a9bf6e400c0169601cdd347bdf00c495bdc6ad9a4dacc6` | `public/media/video/caleb-pain-comes-to-develop-mobile.mp4`<br>`96bf8c2ed798b1f0f79b7a6d824f46863d313b67e159cb869671e115dca3907d` | 720×1280, 46.613s, H.264 High 1.52 Mbps, AAC stereo 128 kbps, 9,665,830 bytes | Authentic, edited | Homepage speaker video at `max-width: 767px` only | Complete uncut source; proportional 1080×1920 to 720×1280 resize; web-safe 8-bit yuv420p H.264/AAC transcode; fast-start metadata; no content edits | Source and mobile use approved 2026-08-18 |
+| V03-VTT | Same V03 source and source SHA-256 as above | `public/media/video/caleb-pain-comes-to-develop-mobile.en.vtt`<br>`73ec07e3e752f99c490467ff85231be0add00c55b6034da73586776fa4640a09` | WebVTT, English, full spoken runtime | Authentic, reviewed edit | Captions paired only with V03-MOBILE | Faster-Whisper small.en timing draft checked word-for-word against the supplied video | Approved word-for-word 2026-08-28 |
+| V03-TXT | Same V03 source and source SHA-256 as above | `public/media/video/caleb-pain-comes-to-develop-mobile-transcript.txt`<br>`1dff6ebf54cd565c415687ebc80ec757c76f71f2ba9cefb7134467b7962b7d79` | UTF-8 text, full spoken runtime | Authentic, reviewed edit | Accessible transcript paired only with V03-MOBILE | Mirrors the approved V03 caption wording and records the final review date | Approved word-for-word 2026-08-28 |
+
+### Revision 3 decision log
+
+| Date | Revision | Decision |
+|---|---:|---|
+| 2026-08-18 | 3 | Project owner supplied V03 and approved using it as the homepage mobile default while retaining V02 on desktop. |
+| 2026-08-18 | 3 | Responsive implementation was authorized. V03 caption and transcript wording remains explicitly labeled for final human review. |
+| 2026-08-28 | 3 | User completed the final word-for-word video, caption, and transcript review and approved all three for production. |

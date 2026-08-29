@@ -2805,6 +2805,11 @@ html[data-motion-mode="enhanced"] .home-hero__backdrop {
     text-align: center;
   }
 
+  .video-frame--responsive-homepage video {
+    max-height: none;
+    aspect-ratio: 9 / 16;
+  }
+
   .topic-card {
     min-height: 250px;
   }
