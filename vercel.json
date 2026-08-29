@@ -4,6 +4,10 @@
     {
       "path": "/api/cron/inquiries-email",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/inquiries-retention",
+      "schedule": "15 6 * * *"
     }
   ]
 }

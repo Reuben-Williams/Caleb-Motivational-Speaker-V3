@@ -1,12 +1,6 @@
 import { isAuthorizedWorkerRequest } from "@/lib/inquiries/worker-auth";
 
-type WorkerSummary = Readonly<{
-  claimed: number;
-  delivered: number;
-  failedRetryable: number;
-  deadLetter: number;
-  reconciliationRequired: number;
-}>;
+type WorkerSummary = Readonly<Record<string, number>>;
 
 type Worker = Readonly<{ run(): Promise<WorkerSummary> }>;
 
