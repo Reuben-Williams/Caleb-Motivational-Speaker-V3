@@ -13,3 +13,4 @@ npm-debug.log*
 .DS_Store
 public/media/video/caleb-speaker-reel-1080.mp4
 artifacts/edge-profile/
+.vercel/

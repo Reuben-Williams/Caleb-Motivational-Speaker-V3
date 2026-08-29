@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "audit:native-db": "node scripts/audit-native-database.mjs",
     "check:no-highlevel": "node scripts/check-no-highlevel-runtime.mjs",
     "check": "npm run check:no-highlevel && npm run lint && npm run typecheck && npm run test && npm run build"
   },
