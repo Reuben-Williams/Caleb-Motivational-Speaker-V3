@@ -31,6 +31,26 @@ describe("inquiry production runtime", () => {
     ).toBeNull();
   });
 
+  it("reports the missing configuration key without exposing its value", () => {
+    const diagnostics: Array<Record<string, string>> = [];
+
+    expect(
+      createInquiryRuntime(
+        {
+          ...completeEnv,
+          HIGHLEVEL_PRIVATE_INTEGRATION_TOKEN: "",
+        },
+        (diagnostic) => diagnostics.push(diagnostic),
+      ),
+    ).toBeNull();
+    expect(diagnostics).toEqual([
+      {
+        code: "missing_configuration",
+        component: "HIGHLEVEL_PRIVATE_INTEGRATION_TOKEN",
+      },
+    ]);
+  });
+
   it("fails closed for an invalid identity keyring or field manifest", () => {
     expect(
       createInquiryRuntime({
@@ -44,6 +64,26 @@ describe("inquiry production runtime", () => {
         HIGHLEVEL_FIELD_MAP_JSON: '{"version":2}',
       }),
     ).toBeNull();
+  });
+
+  it("reports the invalid parser stage without logging configuration values", () => {
+    const diagnostics: Array<Record<string, string>> = [];
+
+    expect(
+      createInquiryRuntime(
+        {
+          ...completeEnv,
+          HIGHLEVEL_FIELD_MAP_JSON: '{"version":2}',
+        },
+        (diagnostic) => diagnostics.push(diagnostic),
+      ),
+    ).toBeNull();
+    expect(diagnostics).toEqual([
+      {
+        code: "invalid_configuration",
+        component: "highlevel_field_manifest",
+      },
+    ]);
   });
 
   it("creates the runtime only from complete server configuration", () => {

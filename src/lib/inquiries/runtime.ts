@@ -9,6 +9,13 @@ import { TurnstileVerifier } from "@/lib/inquiries/turnstile-verifier";
 import { UpstashInquiryStore } from "@/lib/inquiries/upstash-store";
 
 type InquiryEnvironment = Record<string, string | undefined>;
+type InquiryRuntimeDiagnostic = {
+  code: "missing_configuration" | "invalid_configuration";
+  component: string;
+};
+type InquiryRuntimeDiagnosticSink = (
+  diagnostic: InquiryRuntimeDiagnostic,
+) => void;
 
 const requiredKeys = [
   "HIGHLEVEL_PRIVATE_INTEGRATION_TOKEN",
@@ -24,20 +31,49 @@ const requiredKeys = [
   "INQUIRY_HMAC_PREVIOUS_KEYS_JSON",
 ] as const;
 
-export function createInquiryRuntime(environment: InquiryEnvironment) {
-  if (requiredKeys.some((key) => !environment[key]?.trim())) {
+export function createInquiryRuntime(
+  environment: InquiryEnvironment,
+  reportDiagnostic: InquiryRuntimeDiagnosticSink = (diagnostic) =>
+    console.error("Inquiry runtime configuration", diagnostic),
+) {
+  const missingKey = requiredKeys.find((key) => !environment[key]?.trim());
+  if (missingKey) {
+    reportDiagnostic({
+      code: "missing_configuration",
+      component: missingKey,
+    });
     return null;
   }
 
+  let identityKeyring;
   try {
-    const identityKeyring = createInquiryIdentityKeyring({
+    identityKeyring = createInquiryIdentityKeyring({
       activeKeyId: environment.INQUIRY_HMAC_ACTIVE_KEY_ID,
       activeSecret: environment.INQUIRY_HMAC_SECRET,
       previousKeysJson: environment.INQUIRY_HMAC_PREVIOUS_KEYS_JSON,
     });
-    const manifest = parseHighLevelFieldManifest(
+  } catch {
+    reportDiagnostic({
+      code: "invalid_configuration",
+      component: "inquiry_identity_keyring",
+    });
+    return null;
+  }
+
+  let manifest;
+  try {
+    manifest = parseHighLevelFieldManifest(
       environment.HIGHLEVEL_FIELD_MAP_JSON!,
     );
+  } catch {
+    reportDiagnostic({
+      code: "invalid_configuration",
+      component: "highlevel_field_manifest",
+    });
+    return null;
+  }
+
+  try {
     const store = new UpstashInquiryStore(
       environment.UPSTASH_REDIS_REST_URL!,
       environment.UPSTASH_REDIS_REST_TOKEN!,
@@ -62,6 +98,10 @@ export function createInquiryRuntime(environment: InquiryEnvironment) {
       spam,
     });
   } catch {
+    reportDiagnostic({
+      code: "invalid_configuration",
+      component: "inquiry_runtime",
+    });
     return null;
   }
 }
