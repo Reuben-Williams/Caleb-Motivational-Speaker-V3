@@ -3,7 +3,7 @@
 - Date: 2026-08-28
 - Repository: `Reuben-Williams/Caleb-Motivational-Speaker-V3`
 - Target branch: `main`
-- Status: independently reviewed; awaiting final written-spec approval
+- Status: approved by the user on 2026-08-29
 - Production boundary: no DNS change and no commerce order
 
 ## Outcome
@@ -159,10 +159,12 @@ queued Resend deliveries immediately:
 
 Each delivery uses a stable provider idempotency key. A temporary Resend failure
 does not erase or reject the stored inquiry. It leaves the outbox item retryable
-and the public response truthfully confirms only receipt. A protected worker
-route also runs from a Vercel Cron every five minutes. The route requires a
-dedicated worker secret, accepts POST only, and never accepts site, recipient,
-sender, lease, or capability values from the browser.
+and the public response truthfully confirms only receipt. A protected
+operational worker route requires a dedicated worker secret, accepts POST only,
+and never accepts site, recipient, sender, lease, or capability values from the
+browser. Because Vercel Cron invokes a GET handler, a separate GET-only
+scheduler shim runs every five minutes, validates `CRON_SECRET`, accepts no
+request parameters, and calls the same worker service directly.
 
 Both the immediate attempt and Cron call the same claim function. Neon owns the
 60-second fenced lease, attempt number, and lease token; Upstash does not lease
