@@ -1,4 +1,10 @@
-# HighLevel speaking-inquiry workflow setup
+# Historical HighLevel speaking-inquiry workflow setup
+
+> **Inactive reference — do not execute.** Caleb Jakes no longer uses HighLevel
+> for website booking inquiries. This document is retained only to explain the
+> previously approved source workflow. The active operating guide is
+> [`native-speaking-inquiry-workflow.md`](./native-speaking-inquiry-workflow.md).
+> Do not create, publish, edit, or reconnect this workflow.
 
 Use this runbook only in the **Joyionaire Enterprises LLC** sub-account with
 location ID `2FqgdrmWP252v43cX5RY`.

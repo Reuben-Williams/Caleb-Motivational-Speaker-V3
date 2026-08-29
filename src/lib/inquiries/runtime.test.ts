@@ -95,12 +95,12 @@ describe("inquiry production runtime", () => {
     expect(createInquiryRuntime(completeEnv)).not.toBeNull();
   });
 
-  it("does not require or consume HighLevel configuration", () => {
+  it("ignores unrelated legacy provider configuration", () => {
     expect(
       createInquiryRuntime({
         ...completeEnv,
-        HIGHLEVEL_PRIVATE_INTEGRATION_TOKEN: "must-not-be-used",
-        HIGHLEVEL_LOCATION_ID: "must-not-be-used",
+        LEGACY_CRM_TOKEN: "must-not-be-used",
+        LEGACY_CRM_LOCATION: "must-not-be-used",
       }),
     ).not.toBeNull();
   });

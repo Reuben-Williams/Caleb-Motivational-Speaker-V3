@@ -31,11 +31,11 @@ describe("native inquiry outbox runtime", () => {
     ]);
   });
 
-  it("constructs the fixed server-selected worker without HighLevel", () => {
+  it("constructs the fixed server-selected worker without a legacy CRM", () => {
     expect(
       createInquiryOutboxRuntime({
         ...completeEnv,
-        HIGHLEVEL_PRIVATE_INTEGRATION_TOKEN: "must-not-be-used",
+        LEGACY_CRM_TOKEN: "must-not-be-used",
       }),
     ).not.toBeNull();
   });

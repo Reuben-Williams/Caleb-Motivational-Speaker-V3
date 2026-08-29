@@ -128,9 +128,9 @@ export function createInquiryRuntime(
         incrementRateKey: (key, ttlSeconds, limit) =>
           store.incrementRateKey(key, ttlSeconds, limit),
         acquireProcessingLease: (key, owner, ttlSeconds) =>
-          store.acquireContactLease(key, owner, ttlSeconds),
+          store.acquireProcessingLease(key, owner, ttlSeconds),
         releaseProcessingLease: (key, owner) =>
-          store.releaseContactLease(key, owner),
+          store.releaseProcessingLease(key, owner),
       },
     });
   } catch {

@@ -1,6 +1,6 @@
-import type { SpamVerifier } from "@/lib/inquiries/service";
+import type { NativeSpamVerifier } from "@/lib/inquiries/native-service";
 
-export class TurnstileVerifier implements SpamVerifier {
+export class TurnstileVerifier implements NativeSpamVerifier {
   constructor(private readonly secret: string) {}
 
   async verify(token: string, trustedClientIp?: string): Promise<boolean> {
@@ -29,4 +29,3 @@ export class TurnstileVerifier implements SpamVerifier {
     }
   }
 }
-

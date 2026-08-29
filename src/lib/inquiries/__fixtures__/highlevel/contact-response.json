@@ -1,9 +1,0 @@
-{
-  "contact": {
-    "id": "contact_fixture",
-    "locationId": "loc_fixture",
-    "tags": ["source:fixture"],
-    "customFields": []
-  },
-  "traceId": "trace_fixture"
-}

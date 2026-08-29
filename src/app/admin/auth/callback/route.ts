@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { nextCookieAdapter } from "@/lib/staff/next-cookies";
+import { staffCsrfCookieOptions } from "@/lib/staff/csrf-cookie";
 
 export const runtime = "nodejs";
 
@@ -27,12 +28,10 @@ export async function GET(request: Request) {
   });
   const { error } = await client.auth.exchangeCodeForSession(code);
   if (error) return NextResponse.redirect(new URL("/admin/login", url.origin));
-  store.set("builder_csrf", randomBytes(24).toString("base64url"), {
-    httpOnly: false,
-    secure: true,
-    sameSite: "lax",
-    path: "/admin",
-    maxAge: 60 * 60 * 8,
-  });
+  store.set(
+    "builder_csrf",
+    randomBytes(24).toString("base64url"),
+    staffCsrfCookieOptions,
+  );
   return NextResponse.redirect(new URL(destination, url.origin));
 }

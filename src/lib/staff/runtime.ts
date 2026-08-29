@@ -137,7 +137,7 @@ export function createCalebStaffRuntime(
         const result = await authorizePrivilegedStaffRequest({
           request,
           allowedOrigin: environment.NEXT_PUBLIC_SITE_URL!,
-          siteKey: "caleb-jakes",
+          siteKey: "caleb-jakes-v3",
           requiredCapability: capability,
           operation: "commerce.view",
           requiredModuleAction: { moduleId: "growth-leads", action: "write" },

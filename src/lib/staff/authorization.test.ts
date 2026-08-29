@@ -12,7 +12,7 @@ const session = {
 function context(overrides: Record<string, unknown> = {}) {
   return {
     siteId: "22222222-2222-4222-8222-222222222222",
-    siteKey: "caleb-jakes",
+    siteKey: "caleb-jakes-v3",
     subject: session.subject,
     role: "administrator_operator" as const,
     membershipState: "active" as const,
@@ -52,7 +52,7 @@ async function authorize(overrides: Record<string, unknown> = {}) {
 describe("Caleb staff authorization", () => {
   it("derives the Caleb site and operator role from verified server state", async () => {
     await expect(authorize()).resolves.toMatchObject({
-      siteKey: "caleb-jakes",
+      siteKey: "caleb-jakes-v3",
       role: "administrator_operator",
       capability: "leads.read",
     });
@@ -76,11 +76,11 @@ describe("Caleb staff authorization", () => {
     const grant = await authorizeCalebStaff({
       request: new Request("https://calebjakes.com/admin/editor?role=owner&site=other"),
       verifier: { verify: vi.fn().mockResolvedValue(session) },
-      authorizer: { authorize: vi.fn().mockResolvedValue({ siteKey: "caleb-jakes" }) },
+      authorizer: { authorize: vi.fn().mockResolvedValue({ siteKey: "caleb-jakes-v3" }) },
       capability: "leads.read",
       moduleAction: "read",
       correlationId: "correlation-a",
     });
-    expect(grant).toEqual({ siteKey: "caleb-jakes" });
+    expect(grant).toEqual({ siteKey: "caleb-jakes-v3" });
   });
 });

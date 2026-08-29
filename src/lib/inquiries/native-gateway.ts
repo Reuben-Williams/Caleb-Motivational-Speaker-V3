@@ -29,7 +29,8 @@ function normalizedPhone(value: string): string {
 }
 
 function publicPayload(data: BookingData): Readonly<Record<string, unknown>> {
-  const { turnstileToken: _turnstileToken, ...payload } = data;
+  const payload: Record<string, unknown> = { ...data };
+  delete payload.turnstileToken;
   return Object.freeze(payload);
 }
 

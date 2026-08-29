@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "postinstall": "node scripts/prepare-builder-packages.mjs",
+    "prebuild": "node scripts/prepare-builder-packages.mjs",
     "build": "next build",
     "build:pages": "node scripts/build-pages.mjs",
     "start": "next start",
@@ -11,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+    "check:no-highlevel": "node scripts/check-no-highlevel-runtime.mjs",
+    "check": "npm run check:no-highlevel && npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
     "@react-three/fiber": "9.6.1",

@@ -9,7 +9,7 @@ import type {
   StaffSessionVerifier,
 } from "@reuben-williams/next/auth";
 
-export const CALEB_SITE_KEY = "caleb-jakes";
+export const CALEB_SITE_KEY = "caleb-jakes-v3";
 
 export function createCalebStaffAuthorizer(input: Readonly<{
   repository: StaffAuthorizationRepository;
