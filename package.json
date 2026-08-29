@@ -15,6 +15,13 @@
   },
   "dependencies": {
     "@react-three/fiber": "9.6.1",
+    "@reuben-williams/core": "0.5.0",
+    "@reuben-williams/forms": "0.5.0",
+    "@reuben-williams/growth-core": "0.5.0",
+    "@reuben-williams/growth-customers": "0.5.0",
+    "@reuben-williams/growth-leads": "0.5.0",
+    "@reuben-williams/growth-messaging": "0.5.0",
+    "@reuben-williams/next": "0.5.0",
     "@upstash/redis": "1.38.0",
     "framer-motion": "12.42.2",
     "gsap": "3.15.0",
