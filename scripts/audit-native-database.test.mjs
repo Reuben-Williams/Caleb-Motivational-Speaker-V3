@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   compareMigrationState,
   loadMigrationManifest,
+  retentionPolicyQuery,
 } from "./audit-native-database.mjs";
 
 const roots = [];
@@ -25,6 +26,11 @@ function manifest() {
 }
 
 describe("native database audit", () => {
+  it("checks the retention column created by migration 0012", () => {
+    expect(retentionPolicyQuery).toContain("policy.raw_retention_days=400");
+    expect(retentionPolicyQuery).not.toContain("policy.retention_days=400");
+  });
+
   it("computes a sequential manifest and pending suffix", () => {
     const expected = manifest();
     const state = compareMigrationState(expected, [expected[0]]);

@@ -7,6 +7,9 @@ import pg from "pg";
 
 const migrationName = /^\d{4}_[a-z0-9_]+\.sql$/;
 
+export const retentionPolicyQuery =
+  "select exists(select 1 from public.builder_submission_retention_policies policy join public.builder_sites site on site.id=policy.site_id where site.stable_key=$1 and policy.raw_retention_days=400) as present";
+
 export function loadMigrationManifest(directory) {
   const names = readdirSync(directory)
     .filter((name) => migrationName.test(name))
@@ -78,7 +81,7 @@ async function audit() {
     const retentionPolicyPresent = policy.rows[0]?.table_present
       ? (
           await client.query(
-            "select exists(select 1 from public.builder_submission_retention_policies policy join public.builder_sites site on site.id=policy.site_id where site.stable_key=$1 and policy.retention_days=400) as present",
+            retentionPolicyQuery,
             ["caleb-jakes-v3"],
           )
         ).rows[0]?.present === true
