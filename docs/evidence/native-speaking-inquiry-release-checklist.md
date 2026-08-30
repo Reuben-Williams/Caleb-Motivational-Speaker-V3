@@ -31,6 +31,8 @@ paste tokens, passwords, connection strings, customer payloads, or email bodies.
 - [ ] Resend domain and sender are verified.
 - [ ] Upstash, Turnstile, worker, Cron, HMAC, staff-auth, and database variable
   names are present in the intended Vercel environment only.
+- [ ] `INQUIRY_REDIS_NAMESPACE` is `caleb:preview` in Preview and
+  `caleb:production` in Production, even when both environments share Upstash.
 
 ## Protected acceptance
 

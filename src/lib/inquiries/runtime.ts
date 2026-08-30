@@ -29,6 +29,7 @@ const requiredKeys = [
   "TURNSTILE_SECRET_KEY",
   "UPSTASH_REDIS_REST_URL",
   "UPSTASH_REDIS_REST_TOKEN",
+  "INQUIRY_REDIS_NAMESPACE",
   "INQUIRY_HMAC_ACTIVE_KEY_ID",
   "INQUIRY_HMAC_SECRET",
   "INQUIRY_HMAC_PREVIOUS_KEYS_JSON",
@@ -106,6 +107,7 @@ export function createInquiryRuntime(
     const store = new UpstashInquiryStore(
       environment.UPSTASH_REDIS_REST_URL!,
       environment.UPSTASH_REDIS_REST_TOKEN!,
+      environment.INQUIRY_REDIS_NAMESPACE!,
     );
     const database = createPostgresDataPlane({
       connectionString: environment.DATABASE_URL!,

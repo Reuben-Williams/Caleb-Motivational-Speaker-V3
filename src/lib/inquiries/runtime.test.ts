@@ -20,6 +20,7 @@ const completeEnv = {
   TURNSTILE_SECRET_KEY: "turnstile-secret",
   UPSTASH_REDIS_REST_URL: "https://example.upstash.io",
   UPSTASH_REDIS_REST_TOKEN: "upstash-token",
+  INQUIRY_REDIS_NAMESPACE: "caleb:preview",
   INQUIRY_HMAC_ACTIVE_KEY_ID: "v1",
   INQUIRY_HMAC_SECRET: "hmac-secret-with-sufficient-entropy",
   INQUIRY_HMAC_PREVIOUS_KEYS_JSON: "{}",
@@ -52,6 +53,46 @@ describe("inquiry production runtime", () => {
       {
         code: "missing_configuration",
         component: "DATABASE_URL",
+      },
+    ]);
+  });
+
+  it("fails closed when the Redis namespace is missing", () => {
+    const diagnostics: Array<Record<string, string>> = [];
+
+    expect(
+      createInquiryRuntime(
+        {
+          ...completeEnv,
+          INQUIRY_REDIS_NAMESPACE: "",
+        },
+        (diagnostic) => diagnostics.push(diagnostic),
+      ),
+    ).toBeNull();
+    expect(diagnostics).toEqual([
+      {
+        code: "missing_configuration",
+        component: "INQUIRY_REDIS_NAMESPACE",
+      },
+    ]);
+  });
+
+  it("fails closed when the Redis namespace is invalid", () => {
+    const diagnostics: Array<Record<string, string>> = [];
+
+    expect(
+      createInquiryRuntime(
+        {
+          ...completeEnv,
+          INQUIRY_REDIS_NAMESPACE: "Caleb:Preview",
+        },
+        (diagnostic) => diagnostics.push(diagnostic),
+      ),
+    ).toBeNull();
+    expect(diagnostics).toEqual([
+      {
+        code: "invalid_configuration",
+        component: "inquiry_runtime",
       },
     ]);
   });

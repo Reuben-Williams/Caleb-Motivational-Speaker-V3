@@ -45,6 +45,12 @@ explicitly trusted by configuration, the client address:
 - twenty attempts in 24 hours; and
 - a two-minute lease while an identical event is being committed.
 
+Preview and Production may share one Upstash database, but every rate-limit and
+processing-lease key is prefixed inside the store with the required validated
+`INQUIRY_REDIS_NAMESPACE`. Use `caleb:preview` for Preview and
+`caleb:production` for Production. A missing or malformed namespace disables
+the inquiry runtime instead of falling back to unscoped keys.
+
 If Turnstile, Upstash, or Neon is unavailable, the website fails closed and
 offers Caleb's published phone and email. It never claims that an inquiry was
 received when the database commit failed.

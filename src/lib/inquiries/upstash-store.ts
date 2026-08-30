@@ -28,18 +28,38 @@ type RedisAdapter = {
   ): Promise<"OK" | null>;
 };
 
-export class UpstashInquiryStore {
-  readonly redis: RedisAdapter;
+const namespacePattern = /^[a-z][a-z0-9-]{0,31}:[a-z][a-z0-9-]{0,31}$/;
 
-  constructor(url: string, token: string);
-  constructor(redis: RedisAdapter);
-  constructor(urlOrRedis: string | RedisAdapter, token?: string) {
+export class UpstashInquiryStore {
+  private readonly redis: RedisAdapter;
+  private readonly namespace: string;
+
+  constructor(url: string, token: string, namespace: string);
+  constructor(redis: RedisAdapter, namespace: string);
+  constructor(
+    urlOrRedis: string | RedisAdapter,
+    tokenOrNamespace: string,
+    namespace?: string,
+  ) {
+    const selectedNamespace =
+      typeof urlOrRedis === "string" ? namespace : tokenOrNamespace;
+    if (!selectedNamespace || !namespacePattern.test(selectedNamespace)) {
+      throw new Error("A valid inquiry Redis namespace is required.");
+    }
+    this.namespace = selectedNamespace;
     if (typeof urlOrRedis === "string") {
-      if (!token) throw new Error("Upstash token is required.");
-      this.redis = new Redis({ url: urlOrRedis, token }) as RedisAdapter;
+      if (!tokenOrNamespace) throw new Error("Upstash token is required.");
+      this.redis = new Redis({
+        url: urlOrRedis,
+        token: tokenOrNamespace,
+      }) as RedisAdapter;
     } else {
       this.redis = urlOrRedis;
     }
+  }
+
+  private key(key: string) {
+    return `${this.namespace}:${key}`;
   }
 
   async incrementRateKey(
@@ -49,7 +69,7 @@ export class UpstashInquiryStore {
   ) {
     const [count, ttl] = await this.redis.eval<[number, number]>(
       rateScript,
-      [key],
+      [this.key(key)],
       [windowSeconds],
     );
     return {
@@ -64,7 +84,7 @@ export class UpstashInquiryStore {
     ttlSeconds: number,
   ): Promise<boolean> {
     return (
-      (await this.redis.set(key, ownerToken, {
+      (await this.redis.set(this.key(key), ownerToken, {
         nx: true,
         ex: ttlSeconds,
       })) === "OK"
@@ -77,7 +97,7 @@ export class UpstashInquiryStore {
   ): Promise<boolean> {
     const changed = await this.redis.eval<number>(
       releaseLeaseScript,
-      [key],
+      [this.key(key)],
       [ownerToken],
     );
     return Number(changed) === 1;
