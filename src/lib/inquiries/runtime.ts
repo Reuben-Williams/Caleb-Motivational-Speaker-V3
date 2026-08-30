@@ -126,6 +126,8 @@ export function createInquiryRuntime(
       identityKeyring,
       gateway,
       spam,
+      reportFailure: (component) =>
+        console.error("Inquiry submission failure", { component }),
       coordination: {
         incrementRateKey: (key, ttlSeconds, limit) =>
           store.incrementRateKey(key, ttlSeconds, limit),

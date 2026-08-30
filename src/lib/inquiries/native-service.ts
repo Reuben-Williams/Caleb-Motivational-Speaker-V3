@@ -89,6 +89,12 @@ export function createNativeInquiryService(input: Readonly<{
   spam: NativeSpamVerifier;
   coordination: InquiryCoordination;
   gateway: AtomicInquiryGateway;
+  reportFailure?: (
+    component:
+      | "inquiry_rate_limit_store"
+      | "inquiry_processing_lease"
+      | "inquiry_gateway",
+  ) => void;
   now?: () => Date;
   ownerToken?: () => string;
 }>) {
@@ -150,6 +156,7 @@ export function createNativeInquiryService(input: Readonly<{
           }
         }
       } catch {
+        input.reportFailure?.("inquiry_rate_limit_store");
         return unavailable();
       }
 
@@ -185,6 +192,7 @@ export function createNativeInquiryService(input: Readonly<{
           };
         }
       } catch {
+        input.reportFailure?.("inquiry_processing_lease");
         return unavailable();
       }
 
@@ -197,6 +205,7 @@ export function createNativeInquiryService(input: Readonly<{
           }),
         );
       } catch {
+        input.reportFailure?.("inquiry_gateway");
         return unavailable();
       } finally {
         try {

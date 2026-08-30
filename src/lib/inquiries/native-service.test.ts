@@ -31,6 +31,7 @@ function setup() {
     return true;
   });
   const releaseProcessingLease = vi.fn(async () => true);
+  const reportFailure = vi.fn();
   const acceptInquiry = vi.fn<
     (input: NativeInquiryGatewayInput) => Promise<NativeInquiryAcceptance>
   >(async ({ candidates, receivedAt }) => {
@@ -53,6 +54,7 @@ function setup() {
       releaseProcessingLease,
     },
     gateway: { acceptInquiry },
+    reportFailure,
     now: () => new Date("2026-08-29T12:00:00.000Z"),
     ownerToken: () => "owner-a",
   });
@@ -64,6 +66,7 @@ function setup() {
     acquireProcessingLease,
     releaseProcessingLease,
     acceptInquiry,
+    reportFailure,
   };
 }
 
@@ -130,6 +133,7 @@ describe("native inquiry service", () => {
     });
     expect(result.body).not.toHaveProperty("inquiryId");
     expect(context.releaseProcessingLease).toHaveBeenCalledOnce();
+    expect(context.reportFailure).toHaveBeenCalledWith("inquiry_gateway");
   });
 
   it("does not touch rate limits or Neon after failed Turnstile", async () => {
@@ -154,5 +158,8 @@ describe("native inquiry service", () => {
       body: { code: "service_unavailable" },
     });
     expect(context.acceptInquiry).not.toHaveBeenCalled();
+    expect(context.reportFailure).toHaveBeenCalledWith(
+      "inquiry_rate_limit_store",
+    );
   });
 });
