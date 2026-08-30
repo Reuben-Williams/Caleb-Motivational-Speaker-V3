@@ -106,4 +106,22 @@ describe("PostgresInquiryRepository", () => {
       "Native inquiry result was invalid.",
     );
   });
+
+  it("reports only an allowlisted data-plane failure code", async () => {
+    const reportFailure = vi.fn();
+    const repository = new PostgresInquiryRepository({
+      database: {
+        withSession: async () => {
+          throw Object.assign(new Error("must not be logged"), {
+            code: "DATA_PLANE_RESTRICTED",
+          });
+        },
+      },
+      session,
+      reportFailure,
+    });
+
+    await expect(repository.accept(write)).rejects.toThrow("must not be logged");
+    expect(reportFailure).toHaveBeenCalledWith("DATA_PLANE_RESTRICTED");
+  });
 });

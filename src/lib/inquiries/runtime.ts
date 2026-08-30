@@ -113,7 +113,12 @@ export function createInquiryRuntime(
       connectionString: environment.DATABASE_URL!,
       maximumPoolSize: 4,
     });
-    const repository = new PostgresInquiryRepository({ database, session });
+    const repository = new PostgresInquiryRepository({
+      database,
+      session,
+      reportFailure: (code) =>
+        console.error("Inquiry database failure", { code }),
+    });
     const gateway = createNativeInquiryGateway({
       repository,
       from: environment.RESEND_FROM_EMAIL!,

@@ -24,6 +24,27 @@ type Database = {
   ): Promise<Result>;
 };
 
+const dataPlaneFailureCodes = new Set([
+  "DATA_PLANE_INVALID_SESSION",
+  "DATA_PLANE_RESTRICTED",
+  "DATA_PLANE_CONFLICT",
+  "DATA_PLANE_UNAVAILABLE",
+  "DATA_PLANE_SCHEMA_DRIFT",
+]);
+
+function safeFailureCode(error: unknown) {
+  if (
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    typeof error.code === "string" &&
+    dataPlaneFailureCodes.has(error.code)
+  ) {
+    return error.code;
+  }
+  return "DATA_PLANE_UNKNOWN";
+}
+
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const inquiryPattern = /^CJ-[A-F0-9]{12}$/;
@@ -75,20 +96,26 @@ export class PostgresInquiryRepository {
     private readonly input: Readonly<{
       database: Database;
       session: TrustedSession;
+      reportFailure?: (code: string) => void;
     }>,
   ) {}
 
   async accept(write: NativeInquiryWrite): Promise<NativeInquiryAcceptance> {
-    return this.input.database.withSession(
-      this.input.session,
-      async (transaction) => {
-        const response = await transaction.query<{ result: unknown }>(
-          "select builder_private.builder_runtime_accept_speaking_inquiry_v1($1::jsonb) as result",
-          [JSON.stringify(write)],
-        );
-        return parseAcceptance(response.rows[0]?.result);
-      },
-      { retrySafe: true, maximumAttempts: 3 },
-    );
+    try {
+      return await this.input.database.withSession(
+        this.input.session,
+        async (transaction) => {
+          const response = await transaction.query<{ result: unknown }>(
+            "select builder_private.builder_runtime_accept_speaking_inquiry_v1($1::jsonb) as result",
+            [JSON.stringify(write)],
+          );
+          return parseAcceptance(response.rows[0]?.result);
+        },
+        { retrySafe: true, maximumAttempts: 3 },
+      );
+    } catch (error) {
+      this.input.reportFailure?.(safeFailureCode(error));
+      throw error;
+    }
   }
 }
