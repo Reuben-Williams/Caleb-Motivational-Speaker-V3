@@ -91,6 +91,28 @@ The repository gains three committed, reviewable runtime manifests:
   command types, command versions, idempotency contract, module IDs/versions,
   configuration versions, and Caleb configuration profile.
 
+The configuration-policy file has this exact closed top-level shape:
+
+- `version`: integer literal `1`;
+- `stableSiteKey`: string literal `caleb-jakes-v3`; and
+- `entries`: an array of exactly three objects sorted by `commandType` and then
+  `commandVersion`.
+
+Every entry accepts exactly these fields and no others:
+
+- `commandType`: bounded command identifier;
+- `commandVersion`: positive integer;
+- `idempotency`: string literal `commandId`;
+- `moduleId`: bounded module identifier;
+- `moduleVersion`: canonical semantic version;
+- `configVersion`: positive integer; and
+- `configuration`: string literal `caleb-speaking-engagements-v1`.
+
+The three entry values must exactly equal the allowlist table in **Command
+handler registry**. Duplicate `(commandType, commandVersion)` or `moduleId`
+values are invalid. `configurationPolicySha256` covers the complete canonical
+top-level document, including `version`, `stableSiteKey`, and `entries`.
+
 The published files are generated from code and audited runtime facts. The
 first two are parsed by
 the published `0.5.0` trust validators. Handwritten placeholders, a null
@@ -454,8 +476,39 @@ not relax installation authentication or data-plane identity checks.
   interrupted manual handoff resumes from reviewed state rather than generating
   another installation accidentally.
 - The exchange can be revoked and reissued if it expires before acceptance.
-  Accepted installation credentials rotate through the published overlap
-  procedure; they are not replaced by editing Git files.
+  Accepted installation credentials rotate through the maintenance-window
+  procedure below; they are not replaced by editing Git files alone.
+
+### Credential rotation
+
+The runtime has one active key binding. Rotation uses the control plane's
+published overlap window for remote acceptance but deliberately pauses local
+command execution rather than supporting two local keys:
+
+1. An operator compare-and-set changes the current Neon installation binding
+   from `active` to `rotation_pending`; scheduled wakes then return fail-closed
+   before pulling commands.
+2. The published CLI rotation command creates and registers the next key using
+   a bounded overlap period. It updates the protected local JWK and accepted
+   key ID only after the control plane accepts the new key.
+3. The binding generator writes revised safe registration/key-binding files.
+   The operator transaction replaces the Neon key ID/public-JWK digest only
+   when the old key ID/digest and `rotation_pending` state still match.
+4. The operator updates the two Vercel key values, deploys the reviewed safe
+   binding files, and verifies the composition boundary succeeds while the
+   Neon binding remains paused.
+5. An operator compare-and-set changes the matching Neon binding back to
+   `active`. The next wake must post healthy signed evidence with the new key
+   before the overlap expires.
+6. The old control-plane key is allowed to expire or is revoked through the
+   published procedure only after new-key health succeeds.
+
+If rotation fails before the overlap ends, the operator may restore the old
+protected key, safe files, Vercel values, and Neon binding with a compare-and-
+set, then reactivate it. After the overlap ends, the old key is never reused;
+the operator must finish the new binding or perform an explicitly authorized
+rebind. No command runs while Git, Neon, Vercel, and control-plane key state do
+not agree.
 
 ## Testing
 
@@ -487,6 +540,10 @@ Implementation follows red-green-refactor. Required automated evidence covers:
     editor access, commerce, and public routes; and
 13. lint, typecheck, the complete unit suite, production build, secret scan,
     package-lock integrity, and `git diff --check`.
+
+Credential tests also cover the `active -> rotation_pending -> active`
+compare-and-set sequence, old/new key overlap, failed pre-expiry rollback,
+post-expiry old-key rejection, and zero command pulls during binding drift.
 
 An isolated test database is used for adapter and migration tests. No test may
 write to Caleb's Production Neon database before the separately authorized
