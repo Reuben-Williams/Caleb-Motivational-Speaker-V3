@@ -14,3 +14,8 @@ npm-debug.log*
 public/media/video/caleb-speaker-reel-1080.mp4
 artifacts/edge-profile/
 .vercel/
+.builder/secrets/
+.builder/setup-lock.json
+.builder/setup-journal.json
+.builder/installation-registration.pending.json
+.builder/*.tmp
