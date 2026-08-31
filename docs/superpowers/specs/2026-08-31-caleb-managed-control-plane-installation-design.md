@@ -155,7 +155,8 @@ lexicographically, arrays retained in declared order, and no insignificant
 whitespace. `publicJwkSha256` hashes exactly the canonical public projection
 `{alg:"EdDSA",crv:"Ed25519",kty:"OKP",x:<canonical-base64url-x>}`; the private
 `d` value is excluded. `configurationPolicySha256` hashes the policy entries
-sorted by command type and then command version.
+only as part of the complete canonical policy document described above; its
+`entries` array is first sorted by command type and then command version.
 
 Both binding files are committed after human review. The registration response
 does not echo Caleb's installation public key, so the second file is the local
@@ -277,7 +278,8 @@ full installation receipt contract. A checksum-verified
 - `builder_site_installations`, keyed by `site_id` with a unique
   `installation_id`, containing the stable site key, accepted key ID, manifest
   digest, handler-registry digest, configuration-policy digest, public-JWK
-  digest, worker version, active status, and binding timestamps;
+  digest, worker version, binding timestamps, and a status constrained to
+  exactly `active|rotation_pending`;
 - `builder_installation_command_receipts`, keyed by
   `(site_id, command_id)` with a unique `(site_id, idempotency_key)`, containing
   installation ID, type, version, payload hash, `received|succeeded|failed|retry`
@@ -291,6 +293,28 @@ full installation receipt contract. A checksum-verified
 - the minimum transaction functions for receipt reserve/complete/find,
   run-lease acquire/renew/release, identity verification, managed Growth
   configuration, and sanitized health facts.
+
+The operator-only installation-binding functions are fixed as:
+
+- `builder_bind_site_installation_v1`: inserts the initial reviewed binding
+  only when the site UUID/stable key match and no binding exists;
+- `builder_begin_installation_key_rotation_v1`: changes `active` to
+  `rotation_pending` only when the expected installation ID, key ID, and
+  public-JWK digest match;
+- `builder_stage_installation_key_rotation_v1`: while still pending, replaces
+  the key ID/public-JWK digest only when every expected old binding value and
+  every unchanged manifest/policy digest match;
+- `builder_activate_installation_key_binding_v1`: changes the exact staged new
+  binding from `rotation_pending` to `active`; and
+- `builder_restore_installation_key_binding_v1`: before old-key expiry, restores
+  the exact protected old key ID/digest and returns the pending row to `active`
+  only when the staged new key ID/digest still match.
+
+All five functions return a boolean compare-and-set result, lock the target row,
+and accept no unbounded JSON. Public, browser, authenticated-user, and
+installation-worker execution is revoked. Only the operator migration role may
+execute them. Worker lease acquisition and runtime construction require status
+`active`.
 
 Receipt reservation locks any row matching the site-scoped command ID or
 idempotency key. A different type, version, or payload hash returns `conflict`.
@@ -488,24 +512,40 @@ command execution rather than supporting two local keys:
 1. An operator compare-and-set changes the current Neon installation binding
    from `active` to `rotation_pending`; scheduled wakes then return fail-closed
    before pulling commands.
-2. The published CLI rotation command creates and registers the next key using
+2. Before invoking the CLI, the operator copies the current protected private
+   JWK into `.builder/secrets/rotation-backup/<old-key-id>.jwk` using exclusive
+   creation and owner-only permissions, verifies that its derived public-JWK
+   digest matches the current safe binding, and records no private material in
+   logs or Git.
+3. The published CLI rotation command creates and registers the next key using
    a bounded overlap period. It updates the protected local JWK and accepted
    key ID only after the control plane accepts the new key.
-3. The binding generator writes revised safe registration/key-binding files.
+4. The binding generator writes revised safe registration/key-binding files.
    The operator transaction replaces the Neon key ID/public-JWK digest only
    when the old key ID/digest and `rotation_pending` state still match.
-4. The operator updates the two Vercel key values, deploys the reviewed safe
-   binding files, and verifies the composition boundary succeeds while the
-   Neon binding remains paused.
-5. An operator compare-and-set changes the matching Neon binding back to
-   `active`. The next wake must post healthy signed evidence with the new key
-   before the overlap expires.
-6. The old control-plane key is allowed to expire or is revoked through the
+5. An operator-only local preflight parses all manifests and bindings, derives
+   the new public key, checks the pending Neon row, and verifies every runtime
+   invariant except the required `active` status. This preflight cannot
+   construct the runtime, pull commands, acquire a worker lease, acknowledge a
+   result, or report health.
+6. The operator updates the two Vercel key values and deploys the reviewed safe
+   binding files. The deployed worker continues to return fail-closed while the
+   Neon row remains pending.
+7. An operator compare-and-set changes the exact staged new Neon binding back
+   to `active`. The next authenticated wake must pass the normal composition
+   boundary and post healthy signed evidence with the new key before the
+   overlap expires.
+8. The old control-plane key is allowed to expire or is revoked through the
    published procedure only after new-key health succeeds.
+9. After the control plane confirms the old key is no longer accepted, the
+   operator deletes the protected old-key backup and verifies its removal. The
+   backup is never retained as an archive.
 
 If rotation fails before the overlap ends, the operator may restore the old
-protected key, safe files, Vercel values, and Neon binding with a compare-and-
-set, then reactivate it. After the overlap ends, the old key is never reused;
+protected key from the ownership-checked backup, safe files, Vercel values, and
+Neon binding with the named compare-and-set, then reactivate it. After the
+overlap ends or explicit revocation, the backup is deleted and the old key is
+never reused;
 the operator must finish the new binding or perform an explicitly authorized
 rebind. No command runs while Git, Neon, Vercel, and control-plane key state do
 not agree.
@@ -543,7 +583,9 @@ Implementation follows red-green-refactor. Required automated evidence covers:
 
 Credential tests also cover the `active -> rotation_pending -> active`
 compare-and-set sequence, old/new key overlap, failed pre-expiry rollback,
-post-expiry old-key rejection, and zero command pulls during binding drift.
+owner-only old-key backup creation/removal, operator-only paused preflight,
+post-expiry old-key rejection, operator/worker grant separation, and zero
+command pulls during binding drift.
 
 An isolated test database is used for adapter and migration tests. No test may
 write to Caleb's Production Neon database before the separately authorized
