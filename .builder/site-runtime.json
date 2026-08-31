@@ -11,5 +11,5 @@
   "scheduledInvocationContract": "direct-in-process-v1",
   "handlerRegistrySha256": "99dd2f923f14e10fc14c1b1d4b6e923bb5c44ebad39ee4722d5a256f4db242c5",
   "workerVersion": "0.5.0",
-  "reachabilityEvidenceRevision": null
+  "reachabilityEvidenceRevision": "dpl_He1A8tXGcm4jfcHBJsvioQ61q642"
 }

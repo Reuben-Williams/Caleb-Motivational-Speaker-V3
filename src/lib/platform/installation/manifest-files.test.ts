@@ -10,11 +10,17 @@ async function json(path: string): Promise<unknown> {
 }
 
 describe("committed managed installation manifest files", () => {
-  it("match the generated blocked-before-reachability artifacts", async () => {
-    const expected = createCalebInstallationArtifacts({ reachabilityEvidenceRevision: null });
+  it("match the generated verified-reachability artifacts", async () => {
+    const siteRuntime = await json(".builder/site-runtime.json") as {
+      reachabilityEvidenceRevision?: unknown;
+    };
+    expect(siteRuntime.reachabilityEvidenceRevision).toMatch(/^dpl_[A-Za-z0-9]+$/);
+    const expected = createCalebInstallationArtifacts({
+      reachabilityEvidenceRevision: siteRuntime.reachabilityEvidenceRevision as string,
+    });
 
     expect(await json(".builder/installation-manifest.json")).toEqual(expected.installationManifest);
-    expect(await json(".builder/site-runtime.json")).toEqual(expected.siteRuntime);
+    expect(siteRuntime).toEqual(expected.siteRuntime);
     expect(await json(".builder/caleb-configuration-policy.json")).toEqual(
       expected.configurationPolicy,
     );
