@@ -108,8 +108,9 @@ provider response bodies or secrets.
 
 ## 5. Pipeline, notes, and tasks
 
-The private route is `/admin/editor/speaking-engagements`. It is not linked from
-the public site and is marked no-index/no-store.
+The public footer's `Staff Login` link routes to `/admin/login`. The private
+workspace route is `/admin/editor/speaking-engagements`; it is not linked
+directly and is marked no-index/no-store.
 
 Approved staff can:
 

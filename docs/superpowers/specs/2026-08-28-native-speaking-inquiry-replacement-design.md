@@ -234,9 +234,11 @@ entry backed by the published Growth Leads workspace. Caleb can:
 - add tasks and notes supported by the existing contracts; and
 - see safe notification-delivery status.
 
-No public owner/admin link is added. If central staff identity, Caleb membership,
-or entitlement provisioning is incomplete, the workspace remains unavailable;
-the public booking route does not weaken or bypass staff authorization.
+A discreet `Staff Login` link in the public footer routes only to
+`/admin/login`. The editor route remains unlinked, no-index, and no-store. If
+central staff identity, Caleb membership, or entitlement provisioning is
+incomplete, the workspace remains unavailable; the public booking route does
+not weaken or bypass staff authorization.
 
 ## Data Mapping
 

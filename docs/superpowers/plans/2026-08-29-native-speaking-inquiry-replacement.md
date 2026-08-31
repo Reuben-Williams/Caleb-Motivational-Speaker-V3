@@ -56,7 +56,8 @@ routes, Stripe, products, or fulfillment.
    backup/recovery point, and rollback path are verified.
 5. Do not claim receipt unless the Neon transaction committed.
 6. Do not fall back to HighLevel after native acceptance.
-7. Do not add a public admin link or index an owner-data route.
+7. Do not add a public link to an owner-data/editor route or index one. The
+   approved `Staff Login` link may route only to `/admin/login`.
 8. Do not send an email except to the verified internal inbox or the organizer
    address stored on the accepted submission.
 
@@ -357,6 +358,8 @@ Commit the worker, routes, schedule, and tests.
 - Create: `src/app/api/admin/speaking-engagements/[leadId]/route.ts`
 - Create: `src/components/admin/speaking-engagements-workspace.tsx`
 - Create: `src/components/admin/speaking-engagements-workspace.test.tsx`
+- Modify: `src/components/site-footer.tsx`
+- Create: `src/components/site-footer.test.tsx`
 - Modify: `src/app/robots.ts`
 
 **Step 1: Write failing authorization tests**
@@ -381,8 +384,13 @@ tasks/notes, and inspect safe notification state.
 
 **Step 4: Keep the route private**
 
-Do not add the route to the public header/footer. Add non-indexing metadata and
-`Cache-Control: private, no-store` for every owner-data response.
+Add only a discreet public-footer link to `/admin/login`; do not link the editor
+route itself. Add non-indexing metadata and `Cache-Control: private, no-store`
+for every owner-data response.
+
+The footer regression test must assert the exact `Staff Login` label and
+`/admin/login` destination, and must prove that no public link targets
+`/admin/editor/speaking-engagements`.
 
 **Step 5: Run tests and commit**
 
