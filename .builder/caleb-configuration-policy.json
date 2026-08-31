@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "stableSiteKey": "caleb-jakes-v3",
+  "entries": [
+    {
+      "commandType": "growth.customers.configure-v2",
+      "commandVersion": 1,
+      "idempotency": "commandId",
+      "moduleId": "growth.customers",
+      "moduleVersion": "1.1.0",
+      "configVersion": 1,
+      "configuration": "caleb-speaking-engagements-v1"
+    },
+    {
+      "commandType": "growth.leads.configure-v2",
+      "commandVersion": 1,
+      "idempotency": "commandId",
+      "moduleId": "growth.leads",
+      "moduleVersion": "1.1.0",
+      "configVersion": 1,
+      "configuration": "caleb-speaking-engagements-v1"
+    },
+    {
+      "commandType": "growth.messaging.configure",
+      "commandVersion": 1,
+      "idempotency": "commandId",
+      "moduleId": "growth.messaging",
+      "moduleVersion": "1.0.0",
+      "configVersion": 1,
+      "configuration": "caleb-speaking-engagements-v1"
+    }
+  ]
+}

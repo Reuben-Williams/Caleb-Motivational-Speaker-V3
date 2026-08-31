@@ -14,6 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "audit:native-db": "node scripts/audit-native-database.mjs",
+    "builder:generate-installation-key-binding": "node scripts/generate-installation-key-binding.mjs",
+    "builder:generate-installation-manifests": "node scripts/generate-installation-manifests.mjs",
     "check:no-highlevel": "node scripts/check-no-highlevel-runtime.mjs",
     "check": "npm run check:no-highlevel && npm run lint && npm run typecheck && npm run test && npm run build"
   },
@@ -47,7 +49,7 @@
     "@testing-library/jest-dom": "7.0.0",
     "@testing-library/react": "16.3.2",
     "@testing-library/user-event": "14.6.1",
-    "@types/node": "26.1.1",
+    "@types/node": "22.20.1",
     "@types/pg": "8.23.1",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
@@ -58,6 +60,7 @@
     "playwright-core": "^1.62.0",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
+    "vite": "8.1.5",
     "vitest": "4.1.10"
   },
   "overrides": {

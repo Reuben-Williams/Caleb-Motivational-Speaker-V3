@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "siteDataPlaneSiteId": "ce607bf6-2959-4d7e-b52a-31a8d21b1db2",
+  "expectedSiteKey": "caleb-jakes-v3",
+  "installationManifestSha256": "292ed6a3bb01ceb48b57bfcdf95e41c519dc853a0df17f28b89174907358b011",
+  "configLoaderContract": "installation-client-config-v1",
+  "durableStoreContract": "supabase-command-receipts-v1",
+  "leaseContract": "site-installation-run-lease-v1",
+  "leaseSeconds": 120,
+  "invocationTimeoutSeconds": 45,
+  "scheduledInvocationContract": "direct-in-process-v1",
+  "handlerRegistrySha256": "99dd2f923f14e10fc14c1b1d4b6e923bb5c44ebad39ee4722d5a256f4db242c5",
+  "workerVersion": "0.5.0",
+  "reachabilityEvidenceRevision": null
+}
