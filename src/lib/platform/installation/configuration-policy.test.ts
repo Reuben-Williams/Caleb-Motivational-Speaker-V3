@@ -23,11 +23,12 @@ describe("Caleb managed configuration policy", () => {
   });
 
   it("rejects extra handlers, duplicate modules, and unknown fields", () => {
-    const extra = structuredClone(CALEB_CONFIGURATION_POLICY) as any;
+    type MutablePolicy = { entries: Array<Record<string, unknown>> };
+    const extra = structuredClone(CALEB_CONFIGURATION_POLICY) as unknown as MutablePolicy;
     extra.entries.push({ ...extra.entries[0], commandType: "growth.ai.configure", moduleId: "growth.ai" });
     expect(() => parseCalebConfigurationPolicy(extra)).toThrow("invalid_caleb_configuration_policy");
 
-    const duplicateModule = structuredClone(CALEB_CONFIGURATION_POLICY) as any;
+    const duplicateModule = structuredClone(CALEB_CONFIGURATION_POLICY) as unknown as MutablePolicy;
     duplicateModule.entries[1].moduleId = duplicateModule.entries[0].moduleId;
     expect(() => parseCalebConfigurationPolicy(duplicateModule)).toThrow(
       "invalid_caleb_configuration_policy",

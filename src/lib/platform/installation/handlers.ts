@@ -13,7 +13,7 @@ import { CALEB_HANDLER_REGISTRY_SHA256 } from "./manifest";
 
 export function createCalebInstallationHandlers(
   adapter: GrowthConfigurationAdapter,
-): readonly ProvisioningSiteCommandHandler<any>[] {
+): readonly ProvisioningSiteCommandHandler<unknown>[] {
   const candidates = createGrowthConfigurationHandlers(adapter, {
     configuration: "caleb-speaking-engagements-v1",
   });
@@ -25,7 +25,7 @@ export function createCalebInstallationHandlers(
   );
   if (selected.some((handler) => !handler)) throw new CalebHandlerPolicyError();
   const handlers = Object.freeze(
-    selected as unknown as readonly ProvisioningSiteCommandHandler<any>[],
+    selected as unknown as readonly ProvisioningSiteCommandHandler<unknown>[],
   );
   assertCalebHandlerPolicy(handlers);
   if (siteCommandHandlerRegistrySha256(handlers) !== CALEB_HANDLER_REGISTRY_SHA256) {

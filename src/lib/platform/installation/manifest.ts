@@ -55,7 +55,7 @@ const HANDLER_IDENTITIES = CALEB_CONFIGURATION_POLICY.entries.map((entry) => ({
     resultCode: "NOT_EXECUTED",
     evidence: { codes: [], metrics: {}, flags: {}, digests: {} },
   }),
-})) as unknown as readonly ProvisioningSiteCommandHandler<any>[];
+})) as unknown as readonly ProvisioningSiteCommandHandler<unknown>[];
 
 export const CALEB_HANDLER_REGISTRY_SHA256 = siteCommandHandlerRegistrySha256(HANDLER_IDENTITIES);
 

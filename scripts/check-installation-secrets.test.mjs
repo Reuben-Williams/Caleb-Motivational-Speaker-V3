@@ -20,7 +20,8 @@ describe("installation secret scan", () => {
     await writeFile(join(root, ".builder", "safe.json"), JSON.stringify({
       publicJwkSha256: "a".repeat(64),
     }));
-    await writeFile(join(root, "leak.txt"), "postgresql://worker:private@production.internal/caleb");
+    const syntheticCredential = ["postgresql:", "", "worker:private@production.internal/caleb"].join("/");
+    await writeFile(join(root, "leak.txt"), syntheticCredential);
 
     expect((await scanInstallationSecrets({
       projectDir: root,
