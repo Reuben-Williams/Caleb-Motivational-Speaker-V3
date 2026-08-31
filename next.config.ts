@@ -56,6 +56,9 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_BASE_PATH: githubPagesBasePath,
   },
+  outputFileTracingIncludes: {
+    "/api/builder/workers/installation": ["./.builder/**/*"],
+  },
   ...(isGitHubPages ? {} : { redirects: serverRedirects }),
 };
 
