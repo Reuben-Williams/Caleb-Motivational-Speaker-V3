@@ -7,7 +7,7 @@
       "commandVersion": 1,
       "idempotency": "commandId",
       "moduleId": "growth.customers",
-      "moduleVersion": "1.1.0",
+      "moduleVersion": "1.1.1",
       "configVersion": 1,
       "configuration": "caleb-speaking-engagements-v1"
     },
@@ -16,7 +16,7 @@
       "commandVersion": 1,
       "idempotency": "commandId",
       "moduleId": "growth.leads",
-      "moduleVersion": "1.1.0",
+      "moduleVersion": "1.1.1",
       "configVersion": 1,
       "configuration": "caleb-speaking-engagements-v1"
     },
@@ -25,7 +25,7 @@
       "commandVersion": 1,
       "idempotency": "commandId",
       "moduleId": "growth.messaging",
-      "moduleVersion": "1.0.0",
+      "moduleVersion": "1.0.1",
       "configVersion": 1,
       "configuration": "caleb-speaking-engagements-v1"
     }

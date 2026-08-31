@@ -60,7 +60,7 @@ describe("Caleb managed Growth handler registry", () => {
     });
     expect(upsertConfiguration).toHaveBeenCalledWith(expect.objectContaining({
       moduleId: "growth.customers",
-      moduleVersion: "1.1.0",
+      moduleVersion: "1.1.1",
       configVersion: "1",
       configuration: "caleb-speaking-engagements-v1",
       lease,

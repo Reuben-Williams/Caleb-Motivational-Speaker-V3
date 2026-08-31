@@ -8,7 +8,7 @@ import {
 const input = {
   commandId: "1cfa3d0a-c9c9-4781-88b8-a41574929306",
   moduleId: "growth.customers",
-  moduleVersion: "1.1.0",
+  moduleVersion: "1.1.1",
   configVersion: "1",
   configuration: "caleb-speaking-engagements-v1",
   signal: new AbortController().signal,

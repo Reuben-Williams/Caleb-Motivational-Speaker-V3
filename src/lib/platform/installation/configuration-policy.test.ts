@@ -20,6 +20,11 @@ describe("Caleb managed configuration policy", () => {
     expect(policy.entries.every((entry) => entry.idempotency === "commandId")).toBe(true);
     expect(policy.entries.every((entry) => entry.configuration === "caleb-speaking-engagements-v1"))
       .toBe(true);
+    expect(policy.entries.map((entry) => entry.moduleVersion)).toEqual([
+      "1.1.1",
+      "1.1.1",
+      "1.0.1",
+    ]);
   });
 
   it("rejects extra handlers, duplicate modules, and unknown fields", () => {

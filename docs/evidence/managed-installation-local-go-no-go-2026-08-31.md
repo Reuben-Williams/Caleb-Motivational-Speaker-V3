@@ -11,6 +11,9 @@ This report covers the embedded Caleb V3 installation worker only. It does not a
 
 - Exact Caleb client packages remain pinned to `@reuben-williams/*@0.5.0`.
 - The platform data-plane implementation is recorded at `a8a608b` on `codex/caleb-commerce-automations-design`.
+- The additive Caleb release catalog and three-module bundle are recorded at `d6105dc` on `codex/caleb-commerce-automations-design`.
+- The catalog freezes `growth.customers@1.1.1`, `growth.leads@1.1.1`, and `growth.messaging@1.0.1` with minimum worker `0.5.0`, exact client packages `@reuben-williams/*@0.5.0`, and health policy `growth-caleb-speaking-engagements-v1`.
+- Existing generic, Garcia, and Assembly release descriptors remain unchanged; the Caleb bundle is isolated as `growth.caleb-speaking-engagements@1`.
 - The isolated PostgreSQL managed-installation contract suite passed: 5 files, 67 tests.
 - Caleb V3 lint, type checking, 64 test files / 209 tests, and the Next.js production build passed.
 - The dependency audit reports 0 known vulnerabilities after patch-only transitive overrides.
@@ -34,7 +37,7 @@ These codes are expected before a candidate deployment is selected, the controll
 
 ## Release blockers
 
-1. The current control-plane release catalog still describes internal `@your-builder/*@0.1.0` packages and a minimum worker of `1.0.0`. Caleb V3 is intentionally pinned to the published client contract `@reuben-williams/*@0.5.0` with worker `0.5.0`. Compatibility/activation must not proceed until the catalog has a reviewed Caleb-compatible release contract.
+1. The Caleb-compatible release family is resolved locally but is not yet pushed or deployed to the control plane. No package is assigned or activated.
 2. A candidate deployment must be created and its immutable URL verified before `reachabilityEvidenceRevision` can be recorded.
 3. The one-time installation exchange, installation registration, key binding, and provider variables require separate approval and must be performed in that order.
 4. Migration `0013`, first signed worker execution, health evidence, package assignment/activation, and launch acceptance remain separately gated.
