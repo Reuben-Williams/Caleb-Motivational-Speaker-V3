@@ -6,7 +6,8 @@
 - Public URL: `https://calebjakes.com/`
 - Control plane: `https://control-staging.saveyour.app`
 - Hosting: Vercel, manual installation handoff
-- Implementation baseline: `codex/native-booking-preview` at design commit `6091748`
+- Implementation baseline: `codex/native-booking-preview`; first tightened review
+  baseline `a1093a2` (later commits contain specification corrections only)
 - Runtime baseline: Node.js 22 or newer
 - Status: design approved; written specification awaiting user review
 
@@ -77,7 +78,7 @@ rejected.
 
 ### 1. Reviewed runtime manifests
 
-The repository gains two committed, reviewable runtime manifests:
+The repository gains three committed, reviewable runtime manifests:
 
 - `.builder/installation-manifest.json` declares the exact installed
   `@reuben-williams/*` packages, schema versions, server routes, worker version,
@@ -86,8 +87,12 @@ The repository gains two committed, reviewable runtime manifests:
   `builder_sites.id`, installation-manifest digest, handler-registry digest,
   lease bounds, invocation timeout, worker version, and the tested deployment
   revision.
+- `.builder/caleb-configuration-policy.json` declares the exact three allowed
+  command types, command versions, idempotency contract, module IDs/versions,
+  configuration versions, and Caleb configuration profile.
 
-Both files are generated from code and audited runtime facts, then parsed by
+The published files are generated from code and audited runtime facts. The
+first two are parsed by
 the published `0.5.0` trust validators. Handwritten placeholders, a null
 reachability revision, unverified routes, or a manifest/runtime digest mismatch
 block installation setup.
@@ -107,9 +112,28 @@ artifacts:
   installation ID, accepted key ID, control-plane signing keys, and exact
   control-plane endpoint paths.
 - `.builder/installation-key-binding.json`, generated locally after accepted
-  registration, records the installation ID, accepted key ID, manifest digest,
-  and SHA-256 digest of the installation public JWK derived from the protected
-  private key. It contains no private key material.
+  registration, has this exact closed schema:
+
+  | Field | Required value |
+  | --- | --- |
+  | `version` | integer literal `1` |
+  | `stableSiteKey` | string literal `caleb-jakes-v3` |
+  | `installationId` | canonical lowercase UUID |
+  | `acceptedKeyId` | the accepted bounded key identifier |
+  | `installationManifestSha256` | 64 lowercase hexadecimal characters |
+  | `handlerRegistrySha256` | 64 lowercase hexadecimal characters |
+  | `configurationPolicySha256` | 64 lowercase hexadecimal characters |
+  | `publicJwkSha256` | 64 lowercase hexadecimal characters |
+  | `boundAt` | canonical UTC ISO-8601 instant |
+
+  No additional fields are accepted. The file contains no private key material.
+
+All digests use UTF-8 SHA-256 over canonical JSON with object keys sorted
+lexicographically, arrays retained in declared order, and no insignificant
+whitespace. `publicJwkSha256` hashes exactly the canonical public projection
+`{alg:"EdDSA",crv:"Ed25519",kty:"OKP",x:<canonical-base64url-x>}`; the private
+`d` value is excluded. `configurationPolicySha256` hashes the policy entries
+sorted by command type and then command version.
 
 Both binding files are committed after human review. The registration response
 does not echo Caleb's installation public key, so the second file is the local
@@ -150,8 +174,9 @@ key material.
 A Caleb-specific `createCalebInstallationRuntime` composition module is the
 only place allowed to construct the published runtime. Before construction it:
 
-1. parses both runtime manifests and both registration binding files;
-2. recomputes the installation-manifest and handler-registry SHA-256 digests;
+1. parses all three runtime manifests and both registration binding files;
+2. recomputes the installation-manifest, handler-registry, and canonical Caleb
+   configuration-policy SHA-256 digests;
 3. verifies worker version `0.5.0`, a 120-second run lease, a 45-second
    invocation timeout, and the recorded reachability deployment ID;
 4. compares the environment control-plane URL, installation ID, and key ID to
@@ -163,8 +188,10 @@ only place allowed to construct the published runtime. Before construction it:
    `/api/platform/v1/installations/credentials/rotate`;
 5. derives the public JWK from the environment private JWK and compares its
    digest to `.builder/installation-key-binding.json`;
-6. verifies the Neon `builder_sites` UUID and stable key; and
-7. constructs `createSiteInstallationRuntime` only after all checks pass.
+6. compares every installation, manifest, registry, policy, and public-key
+   binding field to the active Neon `builder_site_installations` row;
+7. verifies the Neon `builder_sites` UUID and stable key; and
+8. constructs `createSiteInstallationRuntime` only after all checks pass.
 
 Any discrepancy raises a safe configuration error before a control-plane pull,
 database lease, handler execution, or health report.
@@ -227,8 +254,8 @@ full installation receipt contract. A checksum-verified
 
 - `builder_site_installations`, keyed by `site_id` with a unique
   `installation_id`, containing the stable site key, accepted key ID, manifest
-  digest, handler-registry digest, worker version, active status, and binding
-  timestamps;
+  digest, handler-registry digest, configuration-policy digest, public-JWK
+  digest, worker version, active status, and binding timestamps;
 - `builder_installation_command_receipts`, keyed by
   `(site_id, command_id)` with a unique `(site_id, idempotency_key)`, containing
   installation ID, type, version, payload hash, `received|succeeded|failed|retry`
@@ -254,8 +281,9 @@ and clears the lease fields atomically.
 The migration creates the installation binding table empty. After an exchange
 is accepted, an operator-only provisioning transaction inserts exactly the
 reviewed site UUID, stable key, installation ID, accepted key ID, manifest
-digest, registry digest, and worker version. The installation-worker role has
-read access but cannot insert, replace, or delete that binding.
+digest, registry digest, configuration-policy digest, public-JWK digest, and
+worker version. The installation-worker role has read access but cannot insert,
+replace, or delete that binding.
 
 Run-lease acquire verifies `builder_sites.id`, `stable_key`, and the active
 `builder_site_installations` binding in the same transaction. An active different owner receives
@@ -297,6 +325,14 @@ modules merely because the published package family contains those contracts.
 Adding a handler later requires a reviewed manifest/registry digest change and
 a new deployment.
 
+The published handler-registry digest binds only command type, command version,
+and `commandId` idempotency. The separate configuration-policy manifest and
+digest bind the module versions, configuration version, and
+`caleb-speaking-engagements-v1` profile that the published digest omits. A
+policy change therefore requires a reviewed file change, a new policy digest,
+a new Neon installation binding, and a new deployment even when handler type
+and version remain unchanged.
+
 Every handler validates a closed payload shape and independently honors the
 command idempotency key for external effects. Handlers cannot select a site,
 installation, lease, provider, recipient, or capability from command payload
@@ -337,10 +373,12 @@ key. Caleb V3 does not expose its database or an unrestricted diagnostic
 endpoint. Secrets, stack traces, SQL, provider bodies, email addresses, form
 payloads, and customer identifiers never enter health evidence.
 
-Health is `healthy` only when the runtime initialized, the scheduled execution
+Worker health is `healthy` only when the runtime initialized, the scheduled execution
 succeeded, the durable store is available, versions match, and no safe error
 code remains. Otherwise the control plane shows a degraded, stopped, attention,
-or blocked state with a non-sensitive reason.
+or blocked worker state with a non-sensitive reason. This is runtime health,
+not overall installation acceptance: assignment, entitlement, provisioning,
+activation, and acceptance gates may still keep the installation incomplete.
 
 ### 7. Existing application boundaries
 
@@ -394,7 +432,8 @@ not relax installation authentication or data-plane identity checks.
 
 - Missing or malformed installation configuration prevents runtime creation.
 - Stable-key, site-UUID, installation-ID, manifest, worker-version, handler-
-  registry, schema, or reachability-revision mismatch fails closed.
+  registry, configuration-policy, public-key-binding, schema, or reachability-
+  revision mismatch fails closed.
 - Expired control-plane command leases are not executed.
 - A semantic digest mismatch for the same idempotency key is a terminal
   conflict, never a retryable overwrite.
@@ -407,9 +446,10 @@ not relax installation authentication or data-plane identity checks.
   and never loop inside one invocation.
 - Handler exceptions become sanitized terminal results. Stack traces and raw
   error messages stay in secret-safe server logs only when logging is required.
-- Partial package activation cannot report healthy. Assignment, entitlement,
-  provisioning, activation, and acceptance receipts remain independently
-  inspectable.
+- Worker health may be healthy before package activation because it measures
+  runtime readiness. Overall installation acceptance remains blocked until
+  assignment, entitlement, provisioning, activation, and acceptance receipts
+  all pass independently.
 - Setup uses a protected single-process lock and recoverable journal. An
   interrupted manual handoff resumes from reviewed state rather than generating
   another installation accidentally.
@@ -421,10 +461,11 @@ not relax installation authentication or data-plane identity checks.
 
 Implementation follows red-green-refactor. Required automated evidence covers:
 
-1. exact parsing and digest agreement for both `.builder` manifests;
+1. exact parsing and digest agreement for all three `.builder` runtime manifests;
 2. failure before token consumption when runtime evidence is absent or stale;
-3. registration metadata and key-binding drift, installation configuration
-   validation, and browser-bundle exclusion;
+3. registration metadata, key-binding and configuration-policy drift,
+   canonical-digest agreement, installation configuration validation, and
+   browser-bundle exclusion;
 4. Neon site identity success, wrong-key rejection, and cross-site isolation;
 5. run-lease acquisition, renewal, contention, expiry reclamation, fencing, and
    ownership loss;
@@ -473,15 +514,19 @@ production migration and installation steps.
 9. Generate and review `.builder/installation-key-binding.json`, commit both
    safe registration binding files, and verify their values against the
    control-plane site detail without exposing credentials.
-10. Redeploy with the accepted installation credentials and dedicated Neon
+10. Using the operator database role, insert the active
+    `builder_site_installations` row from the reviewed registration and key-
+    binding artifacts. Read it back and prove every identity and digest matches;
+    do not give the worker role permission to perform this step.
+11. Redeploy with the accepted installation credentials and dedicated Neon
     worker role, wake the runtime, and
    confirm one healthy signed report before any package activation.
-11. Assign, provision, and activate only the approved Caleb package set in
+12. Assign, provision, and activate only the approved Caleb package set in
     dependency order.
-12. Verify the control plane displays the correct site/installation identity,
+13. Verify the control plane displays the correct site/installation identity,
     exact package versions, compatible schemas, healthy worker, successful
     receipts, and no blocked setup gate.
-13. Produce a secret-safe acceptance and rollback report.
+14. Produce a secret-safe acceptance and rollback report.
 
 The installation setup command uses the installed published CLI path:
 
