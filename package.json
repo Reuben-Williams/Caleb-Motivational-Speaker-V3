@@ -16,6 +16,8 @@
     "audit:native-db": "node scripts/audit-native-database.mjs",
     "builder:generate-installation-key-binding": "node scripts/generate-installation-key-binding.mjs",
     "builder:generate-installation-manifests": "node scripts/generate-installation-manifests.mjs",
+    "builder:preflight-installation": "node scripts/preflight-installation-runtime.mjs",
+    "builder:check-installation-secrets": "node scripts/check-installation-secrets.mjs",
     "check:no-highlevel": "node scripts/check-no-highlevel-runtime.mjs",
     "check": "npm run check:no-highlevel && npm run lint && npm run typecheck && npm run test && npm run build"
   },
