@@ -39,7 +39,7 @@ export function SiteFooter() {
             Facebook
           </a>
           <Link href="/privacy">Privacy</Link>
-          <Link href="/admin/login">Staff Login</Link>
+          <Link href="/admin/editor">Staff Login</Link>
         </div>
       </div>
       <div className="container site-footer__bottom">

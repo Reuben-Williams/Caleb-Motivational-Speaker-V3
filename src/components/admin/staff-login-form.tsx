@@ -4,7 +4,14 @@ import { FormEvent, useState } from "react";
 
 import { createBuilderBrowserClient } from "@reuben-williams/next/auth";
 
-export function StaffLoginForm() {
+import {
+  STAFF_EDITOR_PATH,
+  resolveStaffEditorReturnPath,
+} from "@/lib/staff/editor-paths";
+
+export function StaffLoginForm({
+  nextPath = STAFF_EDITOR_PATH,
+}: Readonly<{ nextPath?: string }>) {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -18,10 +25,17 @@ export function StaffLoginForm() {
       const publishableKey = process.env.NEXT_PUBLIC_STAFF_AUTH_PUBLISHABLE_KEY;
       if (!url || !publishableKey) throw new Error("not_configured");
       const client = createBuilderBrowserClient({ url, publishableKey });
-      const redirect = `${window.location.origin}/admin/auth/callback?next=/admin/editor/speaking-engagements`;
+      const callback = new URL("/admin/auth/callback", window.location.origin);
+      callback.searchParams.set(
+        "next",
+        resolveStaffEditorReturnPath(nextPath),
+      );
       const { error } = await client.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: redirect, shouldCreateUser: false },
+        options: {
+          emailRedirectTo: callback.toString(),
+          shouldCreateUser: false,
+        },
       });
       if (error) throw error;
       setMessage("Check your approved staff email for a secure sign-in link.");

@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+import { productionSecurityHeaders } from "./src/lib/security-headers";
+
 const isGitHubPages = process.env.GITHUB_PAGES === "true";
 const githubPagesBasePath = isGitHubPages
   ? "/Caleb-Motivational-Speaker-V3"
@@ -25,6 +27,13 @@ const serverRedirects: NonNullable<NextConfig["redirects"]> = async () => [
     source: "/about-caleb-jakes",
     destination: "/about",
     permanent: true,
+  },
+];
+
+const serverHeaders: NonNullable<NextConfig["headers"]> = async () => [
+  {
+    source: "/(.*)",
+    headers: productionSecurityHeaders,
   },
 ];
 
@@ -59,7 +68,9 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/builder/workers/installation": ["./.builder/**/*"],
   },
-  ...(isGitHubPages ? {} : { redirects: serverRedirects }),
+  ...(isGitHubPages
+    ? {}
+    : { redirects: serverRedirects, headers: serverHeaders }),
 };
 
 export default nextConfig;

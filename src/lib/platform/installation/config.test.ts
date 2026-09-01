@@ -26,7 +26,9 @@ describe("Caleb installation configuration", () => {
         installationId: "17a58e73-5384-4cf4-b2df-ff8097127d37",
         keyId: "caleb-key-1",
       },
-      databaseUrl: expect.stringContaining("ep-example.neon.tech"),
+      databaseUrl: expect.stringMatching(
+        /ep-example\.neon\.tech\/caleb\?sslmode=verify-full/,
+      ),
     });
   });
 

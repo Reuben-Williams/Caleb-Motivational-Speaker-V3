@@ -5,6 +5,8 @@ import {
   type InstallationClientConfig,
 } from "@reuben-williams/next/control-plane";
 
+import { normalizePostgresConnectionString } from "@/lib/postgres/connection-string";
+
 const CONTROL_PLANE_URL = "https://site-editor-control-plane.vercel.app";
 
 export interface CalebInstallationConfig {
@@ -27,19 +29,14 @@ function failed(): never {
 function parseDatabaseUrl(value: unknown): string {
   if (typeof value !== "string" || value.length > 4_096 || value.trim() !== value) return failed();
   try {
-    const url = new URL(value);
-    if (
-      url.protocol !== "postgresql:" ||
-      url.username === "" ||
-      url.password === "" ||
-      url.hostname === "" ||
-      url.pathname.length < 2 ||
-      url.searchParams.get("sslmode") !== "require"
-    ) return failed();
+    const normalized = normalizePostgresConnectionString(value);
+    if (new URL(normalized).searchParams.get("sslmode") !== "verify-full") {
+      return failed();
+    }
+    return normalized;
   } catch {
     return failed();
   }
-  return value;
 }
 
 export function parseCalebInstallationConfig(

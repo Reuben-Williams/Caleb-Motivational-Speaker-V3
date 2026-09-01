@@ -4,6 +4,7 @@ import { createOutboxWorker } from "@/lib/inquiries/outbox-worker";
 import { PostgresInquiryOutboxRepository } from "@/lib/inquiries/postgres-outbox-repository";
 import { createResendOutboxDelivery } from "@/lib/inquiries/resend-delivery";
 import { createNativeInquirySession } from "@/lib/inquiries/runtime";
+import { normalizePostgresConnectionString } from "@/lib/postgres/connection-string";
 
 type Environment = Record<string, string | undefined>;
 type Diagnostic = Readonly<{
@@ -43,7 +44,9 @@ export function createInquiryOutboxRuntime(
   }
   try {
     const database = createPostgresDataPlane({
-      connectionString: environment.DATABASE_URL!,
+      connectionString: normalizePostgresConnectionString(
+        environment.DATABASE_URL!,
+      ),
       maximumPoolSize: 2,
     });
     return createOutboxWorker({

@@ -21,6 +21,7 @@ import {
   createCalebStaffAuthorizer,
 } from "@/lib/staff/authorization";
 import { PostgresSpeakingLeadRepository } from "@/lib/staff/lead-repository";
+import { normalizePostgresConnectionString } from "@/lib/postgres/connection-string";
 import { createCalebStaffSessionVerifier } from "@/lib/staff/session";
 
 type Environment = Record<string, string | undefined>;
@@ -43,23 +44,26 @@ let cachedPool: Pool | undefined;
 let cachedDatabase: DataPlaneDatabase | undefined;
 
 function resources(connectionString: string) {
+  const normalizedConnectionString = normalizePostgresConnectionString(
+    connectionString,
+  );
   if (
     !cachedPool ||
     !cachedDatabase ||
-    cachedConnectionString !== connectionString
+    cachedConnectionString !== normalizedConnectionString
   ) {
     cachedPool = new Pool({
-      connectionString,
+      connectionString: normalizedConnectionString,
       max: 4,
       connectionTimeoutMillis: 5_000,
       idleTimeoutMillis: 10_000,
       allowExitOnIdle: true,
     });
     cachedDatabase = createPostgresDataPlane({
-      connectionString,
+      connectionString: normalizedConnectionString,
       maximumPoolSize: 4,
     });
-    cachedConnectionString = connectionString;
+    cachedConnectionString = normalizedConnectionString;
   }
   return { pool: cachedPool, database: cachedDatabase };
 }

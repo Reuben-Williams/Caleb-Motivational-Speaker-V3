@@ -325,7 +325,7 @@ export const routeMetadata = {
   "/privacy": {
     title: "Privacy Policy | Joyionaire™ Enterprises",
     description:
-      "Learn how speaking-inquiry information is transmitted and used by the Caleb Jakes website.",
+      "Learn how speaking-inquiry information is stored, protected, retained, and used by the Caleb Jakes website.",
   },
   "/thank-you": {
     title: "Speaking Inquiry | Caleb Jakes",
@@ -334,7 +334,7 @@ export const routeMetadata = {
 } as const;
 
 export const privacyDisclosure =
-  "When you submit a speaking inquiry, Joyionaire™ Enterprises uses the information to evaluate and respond to your request. The website does not store the complete inquiry in its own application database in this release. Form-security and rate-limiting providers process limited information needed to protect the form, and the submitted inquiry is transmitted to Caleb's customer relationship management system to create or update contact and opportunity records and support follow-up workflows. Do not include sensitive personal, medical, financial, or student information. Inquiry information is not sold through this website. To ask about an inquiry or the information you submitted, contact info@calebjakes.com or call (404) 941-5670.";
+  "When you submit a speaking inquiry, Joyionaire™ Enterprises uses the information to evaluate and respond to your request. The completed inquiry, consent record, follow-up status, and safe delivery history are stored in Caleb's website database and retained for 400 days under the reviewed site policy unless a verified privacy request shortens that period. Cloudflare Turnstile and rate limiting process limited request information to protect the form. Resend delivers the organizer acknowledgement and internal notification. Do not include sensitive personal, medical, financial, or student information. Inquiry information is not sold through this website. To ask about an inquiry or the information you submitted, contact info@calebjakes.com or call (404) 941-5670.";
 
 export const routeCopy = {
   about: {

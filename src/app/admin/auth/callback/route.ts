@@ -6,15 +6,16 @@ import { NextResponse } from "next/server";
 
 import { nextCookieAdapter } from "@/lib/staff/next-cookies";
 import { staffCsrfCookieOptions } from "@/lib/staff/csrf-cookie";
+import { resolveStaffEditorReturnPath } from "@/lib/staff/editor-paths";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code") ?? "";
-  const destination = url.searchParams.get("next") === "/admin/editor/speaking-engagements"
-    ? "/admin/editor/speaking-engagements"
-    : "/admin/editor/speaking-engagements";
+  const destination = resolveStaffEditorReturnPath(
+    url.searchParams.get("next"),
+  );
   const authUrl = process.env.STAFF_AUTH_URL;
   const publishableKey = process.env.STAFF_AUTH_PUBLISHABLE_KEY;
   if (!code || !authUrl || !publishableKey) {

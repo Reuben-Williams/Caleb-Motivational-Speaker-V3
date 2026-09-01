@@ -9,6 +9,7 @@ import { createNativeInquiryService } from "@/lib/inquiries/native-service";
 import { PostgresInquiryRepository } from "@/lib/inquiries/postgres-inquiry-repository";
 import { TurnstileVerifier } from "@/lib/inquiries/turnstile-verifier";
 import { UpstashInquiryStore } from "@/lib/inquiries/upstash-store";
+import { normalizePostgresConnectionString } from "@/lib/postgres/connection-string";
 
 type InquiryEnvironment = Record<string, string | undefined>;
 type InquiryRuntimeDiagnostic = {
@@ -110,7 +111,9 @@ export function createInquiryRuntime(
       environment.INQUIRY_REDIS_NAMESPACE!,
     );
     const database = createPostgresDataPlane({
-      connectionString: environment.DATABASE_URL!,
+      connectionString: normalizePostgresConnectionString(
+        environment.DATABASE_URL!,
+      ),
       maximumPoolSize: 4,
     });
     const repository = new PostgresInquiryRepository({

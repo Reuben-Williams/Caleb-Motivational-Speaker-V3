@@ -1,11 +1,10 @@
-import { randomUUID } from "node:crypto";
-
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { SpeakingEngagementsWorkspace } from "@/components/admin/speaking-engagements-workspace";
 import { nextCookieAdapter } from "@/lib/staff/next-cookies";
+import { staffLoginPath } from "@/lib/staff/editor-paths";
 import { createCalebStaffRuntime } from "@/lib/staff/runtime";
 
 export const dynamic = "force-dynamic";
@@ -34,7 +33,7 @@ export default async function SpeakingEngagementsPage() {
   try {
     authorized = await runtime.authorizeRead(request, ["leads.read"]);
   } catch {
-    redirect(`/admin/login?return=${encodeURIComponent(randomUUID())}`);
+    redirect(staffLoginPath());
   }
   const leads = await authorized.repository.list();
   return <SpeakingEngagementsWorkspace initialLeads={leads} />;

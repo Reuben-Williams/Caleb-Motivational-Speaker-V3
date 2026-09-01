@@ -2,6 +2,8 @@ import "server-only";
 
 import { Pool, type PoolConfig } from "pg";
 
+import { normalizePostgresConnectionString } from "@/lib/postgres/connection-string";
+
 interface Queryable {
   query(text: string, values?: readonly unknown[]): PromiseLike<{
     rows: Array<{ data?: unknown }>;
@@ -101,24 +103,17 @@ export function createInstallationPostgresRpcClient(
 }
 
 export function createInstallationPostgresPool(connectionString: string): Pool {
-  let url: URL;
+  let normalized: string;
   try {
-    url = new URL(connectionString);
+    normalized = normalizePostgresConnectionString(connectionString);
   } catch {
     return failed();
   }
-  if (
-    url.protocol !== "postgresql:" ||
-    url.username === "" ||
-    url.password === "" ||
-    url.hostname === "" ||
-    url.pathname.length < 2 ||
-    url.searchParams.get("sslmode") !== "require"
-  ) {
+  if (new URL(normalized).searchParams.get("sslmode") !== "verify-full") {
     return failed();
   }
   const config: PoolConfig = {
-    connectionString,
+    connectionString: normalized,
     max: 2,
     idleTimeoutMillis: 10_000,
     connectionTimeoutMillis: 5_000,

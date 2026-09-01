@@ -4,12 +4,12 @@ import { describe, expect, it } from "vitest";
 import { SiteFooter } from "@/components/site-footer";
 
 describe("SiteFooter", () => {
-  it("links approved staff to Caleb's protected login route", () => {
+  it("links approved staff to Caleb's canonical editor entry", () => {
     render(<SiteFooter />);
 
     expect(screen.getByRole("link", { name: "Staff Login" })).toHaveAttribute(
       "href",
-      "/admin/login",
+      "/admin/editor",
     );
     expect(
       screen.queryByRole("link", { name: /speaking engagements/i }),

@@ -60,9 +60,12 @@ describe("approved site content", () => {
     );
   });
 
-  it("accurately discloses CRM processing for speaking inquiries", () => {
-    expect(privacyDisclosure).toMatch(/customer relationship management/i);
-    expect(privacyDisclosure).toMatch(/contact and opportunity records/i);
-    expect(privacyDisclosure).not.toMatch(/email-delivery providers/i);
+  it("accurately discloses native inquiry storage and retention", () => {
+    expect(privacyDisclosure).toMatch(/website database/i);
+    expect(privacyDisclosure).toMatch(/400 days/i);
+    expect(privacyDisclosure).toMatch(/Cloudflare Turnstile/i);
+    expect(privacyDisclosure).toMatch(/Resend/i);
+    expect(privacyDisclosure).not.toMatch(/does not store the complete inquiry/i);
+    expect(privacyDisclosure).not.toMatch(/customer relationship management/i);
   });
 });
