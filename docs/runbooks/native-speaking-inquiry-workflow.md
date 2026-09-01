@@ -108,9 +108,13 @@ provider response bodies or secrets.
 
 ## 5. Pipeline, notes, and tasks
 
-The public footer's `Staff Login` link routes to `/admin/login`. The private
-workspace route is `/admin/editor/speaking-engagements`; it is not linked
-directly and is marked no-index/no-store.
+The public footer's `Staff Login` link routes to the canonical private workspace
+at `/admin/editor`. An unauthenticated visitor is redirected to
+`/admin/login?next=%2Fadmin%2Feditor`, and a successful approved-staff sign-in
+returns to `/admin/editor`. The legacy
+`/admin/editor/speaking-engagements` route remains compatible, but
+`/admin/editor` is the handoff URL. Private editor responses are marked
+no-index/no-store.
 
 Approved staff can:
 
