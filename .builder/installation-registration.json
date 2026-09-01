@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "controlPlaneUrl": "https://site-editor-control-plane.vercel.app",
+  "stableSiteKey": "caleb-jakes-v3",
+  "publicUrl": "https://calebjakes.com",
+  "registeredAt": "2026-09-01T02:18:40.551757Z",
+  "installationId": "625b1cbc-2667-4383-b90f-ba4d78ee6b5f",
+  "acceptedKeyId": "key-20260901-IfGEfD9SnNQ",
+  "publicSigningKeys": [
+    {
+      "keyId": "entitlements-staging-2026-07",
+      "publicJwk": {
+        "kty": "OKP",
+        "crv": "Ed25519",
+        "alg": "EdDSA",
+        "x": "5JGYpIQqsDVzQliveOXR_A1MIw2zznEo5GwvKafj2qs"
+      },
+      "algorithm": "EdDSA",
+      "validFrom": "2026-07-30T03:14:07.832975+00:00",
+      "validUntil": null
+    }
+  ],
+  "endpoints": {
+    "pullCommands": "/api/platform/v1/installations/commands/pull",
+    "submitCommandResult": "/api/platform/v1/installations/commands/{commandId}/result",
+    "reportHealth": "/api/platform/v1/installations/health",
+    "rotateCredential": "/api/platform/v1/installations/credentials/rotate"
+  }
+}

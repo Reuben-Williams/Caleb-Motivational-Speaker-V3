@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "stableSiteKey": "caleb-jakes-v3",
+  "installationId": "625b1cbc-2667-4383-b90f-ba4d78ee6b5f",
+  "acceptedKeyId": "key-20260901-IfGEfD9SnNQ",
+  "installationManifestSha256": "292ed6a3bb01ceb48b57bfcdf95e41c519dc853a0df17f28b89174907358b011",
+  "handlerRegistrySha256": "99dd2f923f14e10fc14c1b1d4b6e923bb5c44ebad39ee4722d5a256f4db242c5",
+  "configurationPolicySha256": "f1a8f79717c579c4bec172ec6ac932eb05263f183fcba363476a2b0d8aa0a2e7",
+  "publicJwkSha256": "14f28a9a445e998da31a02e802438478d16c95721947983855ae70e2e9d3f517",
+  "boundAt": "2026-09-01T02:35:27.722Z"
+}
