@@ -5,7 +5,7 @@ import {
   type InstallationClientConfig,
 } from "@reuben-williams/next/control-plane";
 
-const CONTROL_PLANE_URL = "https://control-staging.saveyour.app";
+const CONTROL_PLANE_URL = "https://site-editor-control-plane.vercel.app";
 
 export interface CalebInstallationConfig {
   client: InstallationClientConfig;

@@ -10,7 +10,7 @@ function validEnv(): Record<string, string> {
     alg: "EdDSA",
   };
   return {
-    BUILDER_CONTROL_PLANE_URL: "https://control-staging.saveyour.app",
+    BUILDER_CONTROL_PLANE_URL: "https://site-editor-control-plane.vercel.app",
     BUILDER_INSTALLATION_ID: "17a58e73-5384-4cf4-b2df-ff8097127d37",
     BUILDER_INSTALLATION_KEY_ID: "caleb-key-1",
     BUILDER_INSTALLATION_PRIVATE_JWK: JSON.stringify(jwk),
@@ -22,7 +22,7 @@ describe("Caleb installation configuration", () => {
   it("parses the exact control-plane identity and private worker database", () => {
     expect(parseCalebInstallationConfig(validEnv())).toMatchObject({
       client: {
-        controlPlaneUrl: "https://control-staging.saveyour.app",
+        controlPlaneUrl: "https://site-editor-control-plane.vercel.app",
         installationId: "17a58e73-5384-4cf4-b2df-ff8097127d37",
         keyId: "caleb-key-1",
       },
@@ -34,6 +34,7 @@ describe("Caleb installation configuration", () => {
     for (const mutate of [
       (env: Record<string, string>) => delete env.BUILDER_DATABASE_URL,
       (env: Record<string, string>) => { env.BUILDER_CONTROL_PLANE_URL = "https://example.com"; },
+      (env: Record<string, string>) => { env.BUILDER_CONTROL_PLANE_URL = "https://control-staging.saveyour.app"; },
       (env: Record<string, string>) => { env.BUILDER_INSTALLATION_PRIVATE_JWK = "secret"; },
     ]) {
       const env = validEnv();
