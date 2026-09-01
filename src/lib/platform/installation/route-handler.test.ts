@@ -97,6 +97,19 @@ describe("Caleb installation worker route", () => {
     }
   });
 
+  it("reports only the safe failure code for runtime diagnostics", async () => {
+    const reportFailure = vi.fn();
+    const handler = createCalebInstallationWorkerHandler({
+      secret: () => secret,
+      reportFailure,
+      resolveRuntime: async () => { throw new Error("postgresql://secret"); },
+    });
+    const response = await handler(request());
+    expect(response.status).toBe(503);
+    expect(reportFailure).toHaveBeenCalledExactlyOnceWith("installation_configuration_invalid");
+    expect(JSON.stringify(reportFailure.mock.calls)).not.toContain("postgresql://secret");
+  });
+
   it("keeps existing schedules and adds the five-minute installation worker", async () => {
     const vercel = JSON.parse(await readFile("vercel.json", "utf8")) as {
       crons: Array<{ path: string; schedule: string }>;

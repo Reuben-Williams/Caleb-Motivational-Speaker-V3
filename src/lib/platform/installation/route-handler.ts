@@ -20,7 +20,12 @@ export function createCalebInstallationWorkerHandler(input: {
   secret: () => string | undefined;
   resolveRuntime: () => Promise<InstallationRuntime>;
   timeoutSignal?: () => AbortSignal;
+  reportFailure?: (code: string) => void;
 }) {
+  const failure = (code: string) => {
+    input.reportFailure?.(code);
+    return json(code, 503);
+  };
   return async function calebInstallationWorker(request: Request): Promise<Response> {
     if (request.method !== "GET") return json("method_not_allowed", 405);
     if (!isAuthorizedWorkerRequest(request, input.secret())) return json("unauthorized", 401);
@@ -36,7 +41,7 @@ export function createCalebInstallationWorkerHandler(input: {
     try {
       runtime = await input.resolveRuntime();
     } catch {
-      return json("installation_configuration_invalid", 503);
+      return failure("installation_configuration_invalid");
     }
 
     const signal = input.timeoutSignal?.() ?? AbortSignal.timeout(45_000);
@@ -50,7 +55,7 @@ export function createCalebInstallationWorkerHandler(input: {
         result.acknowledged < 0 ||
         result.acknowledged > result.pulled ||
         typeof result.healthReported !== "boolean"
-      ) return json("installation_worker_failed", 503);
+      ) return failure("installation_worker_failed");
       return json(
         result.pulled === 0 && !result.healthReported
           ? "installation_worker_idle"
@@ -59,9 +64,8 @@ export function createCalebInstallationWorkerHandler(input: {
         result,
       );
     } catch {
-      return json(
+      return failure(
         signal.aborted ? "installation_worker_timeout" : "installation_worker_failed",
-        503,
       );
     }
   };

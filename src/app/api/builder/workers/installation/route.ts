@@ -6,5 +6,6 @@ export const maxDuration = 60;
 
 export const GET = createCalebInstallationWorkerHandler({
   secret: () => process.env.CRON_SECRET,
+  reportFailure: (code) => console.error(code),
   resolveRuntime: () => createCalebInstallationRuntimeFromEnvironment(process.env),
 });
