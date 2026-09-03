@@ -14,8 +14,8 @@ Ship one locally verified change set that:
    soundtrack;
 2. retains the current portrait mobile player and the 3:21 `/book-media` reel;
 3. replaces the homepage hero only after the user explicitly approves one
-   identity-preserving Higgsfield candidate derived from the exact `IMG_1168.jpg`
-   source; and
+   non-generative, alpha-only Higgsfield sandbox cutout derived from the exact
+   `IMG_1168.jpg` source; and
 4. changes current public base-location copy from Rochester/New York to
    Atlanta, Georgia without rewriting historical evidence or the Eastern-time
    `America/New_York` IANA identifier.
@@ -28,15 +28,12 @@ Ship one locally verified change set that:
 - Use test-first red-green-refactor for application behavior.
 - Never modify `D:\Motivational Speaker Caleb\V1\media-ready\images\IMG_1168.jpg`
   in place.
-- Do not spend Higgsfield credits until the live model schema, per-attempt
-  estimate, optional retry estimate, and maximum possible total have been
-  shown to and explicitly authorized by the user.
-- A completed Higgsfield job is not an approved asset. Show the exact candidate
-  and pause for explicit visual approval before downloading it into the repo or
-  referencing it from application code.
-- Generate at most one initial candidate and one user-authorized targeted
-  retry. If identity, clothing, stripes, anatomy, or pose still drifts, retain
-  the current production hero and stop that part of the change.
+- Do not spend the remaining authorized Higgsfield credit. The user superseded
+  the generative retry with a non-generative background-cutout instruction.
+- Preserve Caleb's source RGB pixels and change only the alpha matte. A
+  completed cutout is not an approved asset: show it on light, dark, and
+  checkerboard backgrounds and pause for explicit visual approval before
+  downloading it into the repo or referencing it from application code.
 - Commit only scoped files. Push and production deployment require separate
   authorization after local verification and visual acceptance.
 
@@ -69,49 +66,44 @@ Get-FileHash 'D:\Motivational Speaker Caleb\V1\media-ready\images\IMG_1168.jpg' 
 npx vitest run src/components/accessible-video.test.tsx src/content/site.test.ts src/components/site-footer.test.tsx src/lib/metadata.test.ts src/lib/booking-schema.test.ts src/app/theme-contract.test.ts
 ```
 
-## Task 2 — Run the Higgsfield preflight and obtain spend authorization
+## Task 2 — Record the superseded Higgsfield generation
 
 **Files changed:** none
 
 **Steps:**
 
-1. Query the installed Higgsfield MCP for the live `soul_2` model schema and
-   confirm that reference-image editing and the approved 3:2 output remain
-   available.
-2. Upload and confirm the exact local `IMG_1168.jpg` source through the
-   provider's confirmed-media flow; compare the confirmed source identity with
-   the local checksum.
-3. Request a read-only estimate for one candidate and for the single optional
-   retry.
-4. Present the model ID, relevant schema constraints, first-attempt cost,
-   retry cost, available credits, and maximum possible total.
-5. Pause for explicit authorization of that maximum. If the live model,
-   schema, availability, or price differs from the approved estimate later,
-   stop and request fresh authorization.
+1. Record that Soul 2.0 job `c62c3e96-bc66-49ed-99ff-cf955a7e2af6`
+   consumed the first authorized credit but failed because it changed Caleb's
+   arm/hand pose and shirt stripe pattern.
+2. Exclude the rejected output from the repository and from every downstream
+   source list.
+3. Record that the user superseded the remaining generative retry with an
+   alpha-cutout-only instruction; retain the remaining credit.
 
-## Task 3 — Generate and visually approve the hero candidate
+## Task 3 — Produce and visually approve the non-generative cutout
 
 **Files changed before approval:** none
 
 **Steps:**
 
-1. Submit one 3:2 Soul 2.0 reference-image edit using the prompt and negative
-   constraints frozen in the approved design.
-2. Wait for completion and show the exact provider result in the Higgsfield
-   gallery.
-3. Inspect face, expression, hair, anatomy, pose, navy shirt, every white
-   stripe, skin texture, right-side composition, and left-side negative space.
-4. Pause for explicit user approval. If rejected for bounded drift, describe
-   the defect and request authorization for the one allowed targeted retry.
-5. Do not place an unapproved result in the repository or render it on the
+1. In the isolated Higgsfield media sandbox, segment/remove only the original
+   black background from the confirmed source; do not call a generation model.
+2. Preserve source RGB values for Caleb and change only the alpha matte. Permit
+   deterministic alpha-only feathering at hair/clothing edges.
+3. Render light, dark, and checkerboard inspection previews from the exact
+   cutout and compare face, hair, anatomy, pose, navy shirt, hands, and every
+   white stripe with the source.
+4. Pause for explicit user approval. If the matte removes or invents subject
+   detail, repair only the alpha matte and repeat the review.
+5. Do not place an unapproved cutout in the repository or render it on the
    website.
 
 ## Task 4 — Freeze the approved hero asset and provenance
 
 **Create:**
 
-- `media-review/higgsfield/H04-caleb-home-hero-editorial.png`
-- `public/media/people/caleb-home-hero-editorial.webp`
+- `media-review/higgsfield/H04-caleb-home-hero-cutout.png`
+- `public/media/people/caleb-home-hero-cutout.webp`
 
 **Modify:**
 
@@ -119,16 +111,16 @@ npx vitest run src/components/accessible-video.test.tsx src/content/site.test.ts
 
 **Steps:**
 
-1. Download the approved provider output without altering the provider master
-   and save it as the H04 review master.
-2. Create one color-managed 3:2 WebP production derivative without generative
-   additions, baked text, or a baked bottom fade.
-3. Verify decoded dimensions, color mode, alpha behavior, and source/output
-   hashes.
+1. Download the approved transparent PNG without altering it and save it as the
+   H04 review master.
+2. Create one lossless WebP production derivative without generative additions,
+   baked text, color adjustment, or a baked bottom fade.
+3. Verify decoded dimensions, color mode, alpha behavior, subject RGB
+   preservation, and source/output hashes.
 4. Add a new manifest revision recording the original local source and hash,
-   confirmed Higgsfield media ID, job ID, model, restrictions, review-master
-   hash, production-derivative hash, dimensions, classification, intended use,
-   and explicit user decision.
+   confirmed Higgsfield media ID, matte method, review-master hash,
+   production-derivative hash, dimensions, classification, intended use, and
+   explicit user decision.
 5. Leave H01-H03 and all previously approved manifest records unchanged.
 
 ## Task 5 — Add failing location and hero contracts
@@ -153,7 +145,7 @@ npx vitest run src/components/accessible-video.test.tsx src/content/site.test.ts
 3. The footer renders Atlanta from the centralized content object and does not
    retain a separate Rochester literal.
 4. rendered `Person.homeLocation.name` structured data is `Atlanta, Georgia`.
-5. the homepage uses `/media/people/caleb-home-hero-editorial.webp` with
+5. the homepage uses `/media/people/caleb-home-hero-cutout.webp` with
    truthful portrait alt text and preserves the existing headline and CTA
    hierarchy;
 6. the mobile hero rules include both `mask-image` and
@@ -292,7 +284,7 @@ npm run check
 1. Start the verified production build locally and use true browser viewport
    emulation.
 2. At 1440px, confirm Caleb stays right, copy remains readable, the hero has no
-   generated text/invented scene, the homepage requests the new landscape
+   invented text/pixels/event scene, the homepage requests the new landscape
    46-second video, native seeking reaches the complete audio end, and the
    transcript/captions are correct.
 3. At 768px, confirm the mobile mask and mobile object position no longer
@@ -324,9 +316,8 @@ reviewable and exclude all pre-existing user-owned files.
 
 ## Stop conditions
 
-- Higgsfield spend is not explicitly authorized after the live estimate.
-- The candidate is not explicitly approved or fails identity/detail review
-  after the one allowed retry.
+- The cutout is not explicitly approved or alpha matting cannot preserve the
+  photographed subject pixels and edge detail.
 - Video stream copy alters picture frames, loses or pads AAC content, is not
   seekable, or misses the endpoint tolerance.
 - Atlanta changes would require rewriting historical evidence rather than

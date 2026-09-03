@@ -13,13 +13,13 @@ Make three tightly scoped website changes:
    the final container/video tail may differ by no more than one frame of the
    23.976-fps desktop source (approximately 41.7 milliseconds) and must not
    create a perceptible silent tail.
-2. Replace the homepage hero photo with an identity-preserving Higgsfield edit
-   of the user-supplied `IMG_1168.jpg`. Keep the authentic smile, pose,
-   proportions, skin texture, hair, shirt, and striped details; refine the
-   harsh flash and dark background into the existing cinematic visual system.
-   At viewport widths up to and including 767px, position the new portrait so
-   Caleb remains balanced above the headline and fade its lower boundary
-   smoothly into the hero background.
+2. Replace the homepage hero photo with a non-generative background cutout of
+   the user-supplied `IMG_1168.jpg`. Preserve Caleb's photographed RGB pixels,
+   including his face, smile, pose, proportions, skin, hair, shirt, hands, and
+   every striped detail; change only the alpha matte that removes the original
+   background. At viewport widths up to and including 767px, position the new
+   cutout so Caleb remains balanced above the headline and fade its lower
+   boundary smoothly into the hero background.
 3. Replace current public-facing Rochester/New York location claims with
    `Atlanta, Georgia` in long-form contexts and `Atlanta, GA` in the compact
    hero line.
@@ -127,54 +127,54 @@ The no-JavaScript homepage fallback will link to the new homepage desktop
 derivative and its matching transcript. The poster, native controls,
 `playsInline`, preload behavior, and breakpoint remain unchanged.
 
-## Selected Higgsfield hero approach
+## Selected non-generative Higgsfield cutout approach
 
-Create one restrained 3:2 editorial master from `IMG_1168.jpg` through the
-installed Higgsfield MCP and its currently validated `soul_2` image model.
-Before submitting the job, inspect the live model schema with `models_get` and
-run a read-only cost estimate. Upload the exact source through Higgsfield's
-confirmed-media path and preserve its source checksum in the media manifest.
-Present the validated model ID, material schema constraints, one-candidate
-credit estimate, optional-retry credit estimate, and maximum possible total to
-the user. Obtain explicit authorization for that maximum before any paid
-generation. If the model ID, schema, availability, or cost differs when the job
-is submitted, stop and request a fresh authorization rather than silently
-changing the model, parameters, or spend.
+Process `IMG_1168.jpg` through the Higgsfield MCP's isolated media sandbox using
+background segmentation/matting only. Do not call an image-generation model,
+spend the remaining authorized credit, synthesize a replacement background, or
+change Caleb's photographed pixels. The original source remains the authority.
 
-The generation prompt must:
+The cutout workflow must:
 
-- preserve Caleb's face, hair, expression, pose, body proportions, realistic
-  skin texture, navy shirt, and every white stripe;
-- preserve the right-side subject and generous dark negative space on the
-  left for real HTML copy;
-- make only restrained editorial lighting, tonal cleanup, and background
-  refinement compatible with the site's Deep Ink Black, Warm Ivory, Joy Gold,
-  and Electric Cobalt visual system; and
-- prohibit text, logos, microphones, stages, audiences, awards, credentials,
-  new clothing, or any invented event setting.
+- create an alpha matte that removes only the original black backdrop;
+- preserve Caleb's exact face, hair silhouette, expression, pose, body
+  proportions, skin, hands, navy shirt, and every white stripe;
+- keep the source RGB channels unchanged wherever the subject remains visible;
+- avoid generative fill, relighting, skin retouching, anatomy repair, clothing
+  reconstruction, color decontamination, or invented edge detail; and
+- permit deterministic alpha-only feathering at the hair and clothing boundary
+  when needed to prevent a hard halo.
 
-Generate one candidate. Show the exact result in the Higgsfield gallery and
-obtain explicit user approval before it enters the repository or website. If
-the first candidate changes Caleb's identity, anatomy, clothing, stripes, or
-pose, permit one targeted retry against the same source and restrictions. If
-that retry also drifts, stop and retain the current production hero rather
-than shipping a synthetic likeness.
+Show the exact transparent cutout on light, dark, and checkerboard backgrounds
+and obtain explicit user approval before it enters the repository or website.
+If segmentation removes or invents hair, skin, clothing, fingers, or stripes,
+repair only the alpha matte and repeat the review. If a clean matte cannot be
+produced without changing Caleb's pixels, stop and retain the current
+production hero.
 
-After approval, retain the downloaded Higgsfield output as the review master
-and create a web-optimized production derivative. Record the source, confirmed
-Higgsfield media ID, generation job ID, model, restrictions, dimensions, and
-source/output hashes in a new media-manifest revision. The visible alt text
-must describe the resulting portrait truthfully and must not claim that Caleb
-is speaking or appearing at an event.
+After approval, retain the lossless RGBA cutout as the review master and create
+a lossless WebP production derivative. Record the original source and hash,
+confirmed Higgsfield media ID, matte method, review-master hash, production
+hash, alpha dimensions, and explicit user decision in a new media-manifest
+revision. The visible alt text must describe the resulting portrait truthfully
+and must not claim that Caleb is speaking or appearing at an event.
+
+### Rejected generative candidate
+
+The first authorized Soul 2.0 candidate, Higgsfield job
+`c62c3e96-bc66-49ed-99ff-cf955a7e2af6`, changed Caleb's arm/hand pose and shirt
+stripe pattern. It is rejected, must not enter the repository, and must not be
+used as source material. The user superseded the remaining generative-retry
+authorization on 2026-09-02 with the alpha-cutout-only instruction above.
 
 ## Hero integration and responsive treatment
 
-Use the approved 3:2 master as a full hero media layer behind the existing
-copy, preserving the current headline, calls to action, credential/location
+Use the approved transparent cutout as the hero subject layer over the existing
+stage, preserving the current headline, calls to action, credential/location
 lines, stage atmosphere, glow, noise, and microphone-cable treatment.
 
-- On desktop, keep Caleb on the right and retain the supplied dark negative
-  space behind the left-aligned copy. Apply only CSS overlays needed for text
+- On desktop, keep Caleb on the right and retain the existing stage/backdrop
+  negative space behind the left-aligned copy. Apply only CSS needed for text
   contrast and integration with the existing backdrop.
 - On mobile, use responsive object positioning to keep Caleb's head, hands,
   and upper torso visible above the headline without fabricating a second
@@ -207,8 +207,8 @@ At 768px, verify that the mobile-only positioning and mask no longer apply and
 the adjacent desktop/tablet treatment remains unchanged in both color schemes.
 
 At 1440×900, verify that the new subject remains on the right, the left-side
-headline and calls to action retain sufficient contrast, and no generated text
-or invented event details appear in the image.
+headline and calls to action retain sufficient contrast, and no invented text,
+pixels, or event details appear in the image.
 
 ## Atlanta location correction
 
@@ -246,23 +246,20 @@ Stitch/reference files.
 6. **Near-duplicate `IMG_1167.jpg`.** Viable, but `IMG_1168.jpg` provides
    stronger upper-body framing for the responsive fade while retaining the
    same joyful expression and dark negative space.
-7. **Deterministic color correction only.** Safest for literal pixel fidelity,
-   but it would not deliver the explicitly requested Higgsfield editorial
-   treatment. It is not an automatic fallback; using it would require a
-   separate design and user approval.
+7. **Generative editorial refinement.** Rejected after the first candidate
+   altered Caleb's pose and shirt. The user explicitly replaced it with
+   non-generative, alpha-only background removal.
 
 ## Failure and fallback behavior
 
 - If the new desktop derivative cannot be prepared or verified without visual
   alteration, retain the current production video and stop the release.
-- If Higgsfield is unavailable, reports insufficient authorized credits, or
-  cannot preserve Caleb's identity and source details after the single allowed
-  retry, retain the current production hero and stop that portion of the
-  release. Do not substitute a deterministic or different generative treatment
-  without separate approval.
-- A generated hero result is never treated as approved merely because the job
-  completed. It must be visually inspected and explicitly accepted by the
-  user before integration.
+- If the Higgsfield sandbox cannot produce a clean alpha matte without changing
+  Caleb's visible pixels, retain the current production hero and stop that
+  portion of the release. Do not substitute another generative treatment.
+- A cutout is never treated as approved merely because processing completed. It
+  must be reviewed on light, dark, and checkerboard backgrounds and explicitly
+  accepted by the user before integration.
 - If the media fails at runtime, native controls remain visible and the
   matching transcript remains available.
 - Before responsive selection is known, the homepage continues to render the
@@ -294,8 +291,9 @@ Follow red-green-refactor for behavior changes.
 7. Add a failing hero test proving the homepage references the approved new
    asset with truthful alternative text and preserves the existing copy/CTA
    hierarchy.
-8. Verify the approved hero master's source/job provenance, dimensions, hashes,
-   optimized derivative, and responsive focal-point behavior.
+8. Verify the approved cutout's source/media provenance, RGB preservation,
+   alpha matte, dimensions, hashes, lossless derivative, and responsive
+   focal-point behavior.
 9. Verify video output duration, dimensions, stream mapping, fast-start
    behavior, hashes, visual-frame preservation, complete AAC packet/sample
    preservation without padding or inserted silence, the exact approved audio
@@ -312,7 +310,7 @@ Follow red-green-refactor for behavior changes.
 ## Repository and release boundaries
 
 - Preserve the user's existing modifications and untracked source/output files.
-- Copy or transform the approved source only after the generated candidate is
+- Copy or transform the approved source only after the transparent cutout is
   explicitly accepted; do not modify the V1 source file in place.
 - Add a new provenance record for the user's confirmed 2026-09-02 Atlanta
   correction. Do not rewrite the older Rochester evidence or attribute Atlanta
