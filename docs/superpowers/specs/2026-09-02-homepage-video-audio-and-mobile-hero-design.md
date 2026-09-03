@@ -9,8 +9,10 @@ Make two tightly scoped homepage changes:
 
 1. In `WATCH CALEB SPEAK`, retain the current landscape desktop picture but
    replace its soundtrack with the approved mobile “Pain Comes To Develop”
-   audio and end desktop playback with that audio at approximately 46.613
-   seconds.
+   audio. Preserve the complete approved audio through its 46.613-second end;
+   the final container/video tail may differ by no more than one frame of the
+   23.976-fps desktop source (approximately 41.7 milliseconds) and must not
+   create a perceptible silent tail.
 2. At viewport widths up to and including 767px, reposition Caleb in the hero
    and fade the bottom of his existing portrait smoothly into the hero
    background, matching the visual treatment used on desktop.
@@ -43,20 +45,22 @@ Create a new homepage-only landscape derivative:
 
 The derivative will:
 
-- copy the existing homepage desktop video stream so its visible frames,
-  dimensions, crop, color, and encoded picture remain unchanged;
-- use the audio stream from the approved mobile video;
-- stop when the mobile audio ends, targeting the approved 46.613-second
-  runtime;
+- stream-copy the existing homepage desktop H.264 picture packets so its
+  visible frames, dimensions, crop, color, and encoded picture remain
+  unchanged;
+- stream-copy the approved AAC audio packets from the mobile video;
+- preserve the complete audio through its 46.613-second end, with any final
+  container/video-tail variance limited to one desktop-source frame
+  (approximately 41.7 milliseconds) and no perceptible silent tail;
 - retain a web-compatible MP4 container with fast-start metadata; and
 - be recorded with source and output hashes in a new media-manifest revision.
 
 The output must be verified by comparing the decoded desktop video frames to
-the corresponding first 46.613 seconds of the existing desktop source. A
-stream-copy result is preferred. If the available toolchain cannot produce a
-correctly seekable, exact-duration MP4 through stream copy, implementation
-stops for review rather than silently re-encoding or visually changing the
-desktop footage.
+the corresponding opening segment of the existing desktop source and by
+inspecting both output stream mappings. If the available toolchain cannot
+produce a correctly seekable MP4 within the stated one-frame tolerance through
+stream copy, implementation stops for review rather than silently re-encoding
+or visually changing the desktop footage.
 
 ### Accessibility pairing
 
@@ -69,6 +73,12 @@ approved mobile caption and transcript content:
 The transcript link label will describe the “Pain Comes To Develop” message,
 not call it a mobile transcript. The portrait mobile variant continues using
 the same approved caption and transcript files.
+
+The new media-manifest revision must also amend the existing V03 provenance
+statement that currently says these caption/transcript files are paired only
+with `V03-MOBILE`. The revised record must explicitly pair the approved text
+assets with both the unchanged portrait mobile derivative and the new
+homepage-only landscape derivative, without changing their reviewed content.
 
 ## Component boundary
 
@@ -112,7 +122,8 @@ Use mobile-only CSS; do not generate or modify an image asset.
 
 ### Mobile visual acceptance
 
-At 375x844 and 390x844:
+At 375x844, 390x844, and the 767px mobile breakpoint boundary, in both the
+default and original color schemes:
 
 - Caleb's head is not clipped by the header or viewport edge.
 - His face, microphone, hands, and upper torso remain visible.
@@ -121,6 +132,9 @@ At 375x844 and 390x844:
   boundary, rectangular edge, or sudden tonal band is visible.
 - The hero has no horizontal overflow and its existing calls to action remain
   usable.
+
+At 768px, verify that the mobile-only positioning and mask no longer apply and
+the adjacent desktop/tablet treatment remains unchanged in both color schemes.
 
 ## Alternatives considered
 
@@ -169,10 +183,12 @@ Follow red-green-refactor for behavior changes.
    hashes, and visual-frame preservation.
 7. Run targeted tests, the full unit suite, lint, typecheck, production build,
    and the repository's complete `npm run check` gate.
-8. Browser-verify at 1440x900, 390x844, and 375x844. Confirm the selected media
-   request, native playback controls, correct captions/transcript, mobile hero
-   fade, both color schemes, no broken assets, no framework overlay, no
-   relevant console errors, and no horizontal overflow.
+8. Browser-verify at 1440x900, 768px, 767px, 390x844, and 375x844. At both
+   breakpoint-boundary widths, check the default and original color schemes.
+   Confirm the selected media request, native playback controls, correct
+   captions/transcript, mobile hero fade, desktop isolation, no broken assets,
+   no framework overlay, no relevant console errors, and no horizontal
+   overflow.
 
 ## Repository and release boundaries
 
