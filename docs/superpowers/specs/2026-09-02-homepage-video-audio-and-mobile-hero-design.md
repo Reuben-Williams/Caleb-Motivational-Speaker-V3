@@ -1,7 +1,7 @@
 # Homepage Media, Hero, and Atlanta Content Design
 
 Date: 2026-09-02
-Status: Integrated design approved; pending written-spec review
+Status: Written integrated specification approved
 
 ## Goal
 
