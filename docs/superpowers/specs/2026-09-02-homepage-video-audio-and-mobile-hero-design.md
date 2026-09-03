@@ -79,10 +79,15 @@ The derivative will:
 
 The output must be verified by comparing the decoded desktop video frames to
 the corresponding opening segment of the existing desktop source and by
-inspecting both output stream mappings. If the available toolchain cannot
-produce a correctly seekable MP4 within the stated one-frame tolerance through
-stream copy, implementation stops for review rather than silently re-encoding
-or visually changing the desktop footage.
+inspecting both output stream mappings. Packet/sample-level verification must
+prove that every approved AAC packet/sample is preserved without trimming,
+padding, inserted silence, or replacement audio. The audio endpoint must match
+the approved 46.613-second source endpoint, and the final video/container
+endpoint may differ from it by no more than `1001/24000` seconds (one frame of
+the desktop source). If the available toolchain cannot produce a correctly
+seekable MP4 within this tolerance through stream copy, implementation stops
+for review rather than silently re-encoding or visually changing the desktop
+footage.
 
 ### Accessibility pairing
 
@@ -129,6 +134,12 @@ installed Higgsfield MCP and its currently validated `soul_2` image model.
 Before submitting the job, inspect the live model schema with `models_get` and
 run a read-only cost estimate. Upload the exact source through Higgsfield's
 confirmed-media path and preserve its source checksum in the media manifest.
+Present the validated model ID, material schema constraints, one-candidate
+credit estimate, optional-retry credit estimate, and maximum possible total to
+the user. Obtain explicit authorization for that maximum before any paid
+generation. If the model ID, schema, availability, or cost differs when the job
+is submitted, stop and request a fresh authorization rather than silently
+changing the model, parameters, or spend.
 
 The generation prompt must:
 
@@ -237,8 +248,8 @@ Stitch/reference files.
    same joyful expression and dark negative space.
 7. **Deterministic color correction only.** Safest for literal pixel fidelity,
    but it would not deliver the explicitly requested Higgsfield editorial
-   treatment. It remains the fallback if both identity-preserving generation
-   attempts fail.
+   treatment. It is not an automatic fallback; using it would require a
+   separate design and user approval.
 
 ## Failure and fallback behavior
 
@@ -246,7 +257,9 @@ Stitch/reference files.
   alteration, retain the current production video and stop the release.
 - If Higgsfield is unavailable, reports insufficient authorized credits, or
   cannot preserve Caleb's identity and source details after the single allowed
-  retry, retain the current hero and stop that portion of the release.
+  retry, retain the current production hero and stop that portion of the
+  release. Do not substitute a deterministic or different generative treatment
+  without separate approval.
 - A generated hero result is never treated as approved merely because the job
   completed. It must be visually inspected and explicitly accepted by the
   user before integration.
@@ -274,16 +287,19 @@ Follow red-green-refactor for behavior changes.
    homepage desktop media package.
 5. Add a focused style-contract test for the mobile portrait mask and its
    desktop isolation when compatible with the existing test conventions.
-6. Add failing content tests proving public runtime surfaces use
-   `Atlanta, Georgia`/`Atlanta, GA`, and that user-facing source files no longer
-   contain Rochester or New York location claims.
+6. Add failing content tests proving current public base-location surfaces,
+   rendered metadata, and structured data use `Atlanta, Georgia`/`Atlanta, GA`
+   and no longer expose the superseded `Rochester, New York` or `Rochester, NY`
+   base-location strings.
 7. Add a failing hero test proving the homepage references the approved new
    asset with truthful alternative text and preserves the existing copy/CTA
    hierarchy.
 8. Verify the approved hero master's source/job provenance, dimensions, hashes,
    optimized derivative, and responsive focal-point behavior.
-9. Verify video output duration, dimensions, stream mapping, fast-start behavior,
-   hashes, and visual-frame preservation.
+9. Verify video output duration, dimensions, stream mapping, fast-start
+   behavior, hashes, visual-frame preservation, complete AAC packet/sample
+   preservation without padding or inserted silence, the exact approved audio
+   endpoint, and a video/container endpoint within `1001/24000` seconds.
 10. Run targeted tests, the full unit suite, lint, typecheck, production build,
    and the repository's complete `npm run check` gate.
 11. Browser-verify at 1440x900, 768px, 767px, 390x844, and 375x844. At both
@@ -298,6 +314,13 @@ Follow red-green-refactor for behavior changes.
 - Preserve the user's existing modifications and untracked source/output files.
 - Copy or transform the approved source only after the generated candidate is
   explicitly accepted; do not modify the V1 source file in place.
+- Add a new provenance record for the user's confirmed 2026-09-02 Atlanta
+  correction. Do not rewrite the older Rochester evidence or attribute Atlanta
+  to that historical source.
+- Preserve legitimate Rochester/New York text that is not a current
+  base-location claim, including historical narrative, `University of
+  Rochester`, captions/transcripts, `src/content/evidence.ts`, archived
+  evidence/specifications, and raw Stitch imports.
 - Commit only the files created or changed for this approved work.
 - Do not alter booking, commerce, staff access, control-plane, DNS, provider,
   or environment-variable behavior.
