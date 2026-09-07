@@ -171,3 +171,17 @@ the approved V02 speaker reel.
 | 2026-08-18 | 3 | Project owner supplied V03 and approved using it as the homepage mobile default while retaining V02 on desktop. |
 | 2026-08-18 | 3 | Responsive implementation was authorized. V03 caption and transcript wording remains explicitly labeled for final human review. |
 | 2026-08-28 | 3 | User completed the final word-for-word video, caption, and transcript review and approved all three for production. |
+
+## Revision 5 — Atlanta homepage social preview
+
+Revision 5 replaces the homepage/fallback Open Graph card so shared links use
+the same approved smiling Caleb cutout and current Atlanta identity as the live
+homepage. The filename changes from `home.jpg` to `home-atlanta.jpg` so social
+crawlers are not asked to reuse the cached July asset.
+
+| ID | Approved sources | Production output and SHA-256 | Dimensions / contract | Classification | Transformation | Reviewer decision |
+|---|---|---|---|---|---|---|
+| OG-HOME-ATLANTA | H04-WEB `bd1ab0a91704e70301b6b1261b7be497738b821f642b450f7b38c04fd743d7fc` and H02-WEB `e880058eb06afc9f306573485f9e3a8217733c8fc89f1c5ce3655aee0d3425e3` | `public/og/home-atlanta.jpg`<br>`4b687fea4c0e5c93a98fdb8134965edb98a97ddc5f6becbaaf841eddb638710c` | 1200×630 JPEG, 118,709 bytes | Authentic, edited | Deterministic browser-rendered composite using the approved cutout unchanged, approved stage background, existing brand colors/type treatment, exact `PAIN HAS PURPOSE.` copy, and current `BASED IN ATLANTA, GA` line. No AI generation or likeness alteration. | Approved as the direct correction requested 2026-09-07 |
+
+Revision 5 supersedes OG-HOME for the homepage and fallback social metadata.
+The Revision 2 record remains unchanged as historical provenance.

@@ -1,3 +1,7 @@
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { createPageMetadata } from "@/lib/metadata";
@@ -6,10 +10,10 @@ describe("approved social metadata", () => {
   it("uses the approved route image and the homepage fallback", () => {
     expect(createPageMetadata("/").openGraph?.images).toEqual([
       {
-        url: "/og/home.jpg",
+        url: "/og/home-atlanta.jpg",
         width: 1200,
         height: 630,
-        alt: "Caleb Jakes — Pain Has Purpose",
+        alt: "Caleb Jakes smiling — Pain Has Purpose",
       },
     ]);
     expect(createPageMetadata("/speaking").openGraph?.images).toEqual([
@@ -30,10 +34,10 @@ describe("approved social metadata", () => {
     ]);
     expect(createPageMetadata("/faq").openGraph?.images).toEqual([
       {
-        url: "/og/home.jpg",
+        url: "/og/home-atlanta.jpg",
         width: 1200,
         height: 630,
-        alt: "Caleb Jakes — Pain Has Purpose",
+        alt: "Caleb Jakes smiling — Pain Has Purpose",
       },
     ]);
   });
@@ -43,5 +47,14 @@ describe("approved social metadata", () => {
       createPageMetadata("/thank-you", { noindex: true }).openGraph?.images,
     ).toBeUndefined();
   });
-});
 
+  it("pins the approved Atlanta homepage social card", () => {
+    const image = readFileSync(
+      join(process.cwd(), "public/og/home-atlanta.jpg"),
+    );
+
+    expect(createHash("sha256").update(image).digest("hex")).toBe(
+      "4b687fea4c0e5c93a98fdb8134965edb98a97ddc5f6becbaaf841eddb638710c",
+    );
+  });
+});

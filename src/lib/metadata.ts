@@ -28,10 +28,10 @@ type RouteKey = keyof typeof routeMetadata;
 
 const socialImages = {
   home: {
-    url: withBasePath("/og/home.jpg"),
+    url: withBasePath("/og/home-atlanta.jpg"),
     width: 1200,
     height: 630,
-    alt: "Caleb Jakes — Pain Has Purpose",
+    alt: "Caleb Jakes smiling — Pain Has Purpose",
   },
   speaking: {
     url: withBasePath("/og/speaking.jpg"),
