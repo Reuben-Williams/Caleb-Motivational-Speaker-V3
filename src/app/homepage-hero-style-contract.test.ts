@@ -25,8 +25,10 @@ describe("homepage hero portrait styles", () => {
     );
   });
 
-  it("keeps the mobile portrait positioning inside the 767px boundary", () => {
-    expect(mobileStyles).toMatch(/\.home-hero__portrait\s*\{[^}]*height:/s);
+  it("scales the mobile portrait down before a narrow viewport can crop Caleb's arms", () => {
+    expect(mobileStyles).toMatch(
+      /\.home-hero__portrait\s*\{[^}]*height:\s*min\(500px, 132vw\);/s,
+    );
   });
 
   it("keeps the desktop portrait inside the viewport without shifting Caleb off-center", () => {

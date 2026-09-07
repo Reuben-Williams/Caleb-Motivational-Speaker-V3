@@ -2756,7 +2756,7 @@ html[data-motion-mode="enhanced"] .home-hero__backdrop {
 
   .home-hero__portrait {
     top: 3.75rem;
-    height: 500px;
+    height: min(500px, 132vw);
   }
 
   .home-hero__cable {
