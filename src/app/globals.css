@@ -620,7 +620,7 @@ html[data-motion-mode="enhanced"] .home-hero__backdrop {
 .home-hero__portrait img {
   z-index: 2;
   object-fit: cover;
-  object-position: 70% bottom;
+  object-position: 55% bottom;
   filter: saturate(0.82) contrast(1.04);
 }
 
@@ -2500,7 +2500,7 @@ html[data-motion-mode="enhanced"] .home-hero__backdrop {
   }
 
   .home-hero__portrait {
-    right: -12%;
+    right: -4%;
     width: 72%;
   }
 
@@ -2512,6 +2512,10 @@ html[data-motion-mode="enhanced"] .home-hero__backdrop {
 @media (max-width: 900px) {
   :root {
     --header-height: 72px;
+  }
+
+  .home-hero {
+    min-height: auto;
   }
 
   .desktop-nav,
@@ -2596,17 +2600,53 @@ html[data-motion-mode="enhanced"] .home-hero__backdrop {
 
   .home-hero__inner {
     display: flex;
+    min-height: auto;
     align-items: flex-start;
   }
 
   .home-hero__copy {
-    width: 74%;
-    padding-top: 7rem;
+    z-index: 5;
+    width: 100%;
+    max-width: none;
+    padding: calc(min(67vw, 560px) + 2.5rem) 0 6rem;
   }
 
   .home-hero__portrait {
-    right: -20%;
-    width: 77%;
+    top: var(--header-height);
+    right: -8%;
+    bottom: auto;
+    left: -8%;
+    width: auto;
+    height: min(67vw, 560px);
+  }
+
+  .home-hero__portrait img {
+    object-position: center top;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      var(--theme-text) 0%,
+      var(--theme-text) 66%,
+      rgb(0 0 0 / 0.92) 72%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      var(--theme-text) 0%,
+      var(--theme-text) 66%,
+      rgb(0 0 0 / 0.92) 72%,
+      transparent 100%
+    );
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
+
+  .home-hero__portrait::after {
+    height: 38%;
+  }
+
+  .home-hero__edition,
+  .scroll-cue {
+    display: none;
   }
 
   .authority-strip__inner {
@@ -2691,9 +2731,6 @@ html[data-motion-mode="enhanced"] .home-hero__backdrop {
   }
 
   .home-hero__copy {
-    z-index: 5;
-    width: 100%;
-    max-width: none;
     padding: 25rem 0 5.8rem;
   }
 
@@ -2719,39 +2756,7 @@ html[data-motion-mode="enhanced"] .home-hero__backdrop {
 
   .home-hero__portrait {
     top: 3.75rem;
-    right: -8%;
-    bottom: auto;
-    width: 116%;
     height: 500px;
-  }
-
-  .home-hero__portrait img {
-    object-position: 69% top;
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      var(--theme-text) 0%,
-      var(--theme-text) 66%,
-      rgb(0 0 0 / 0.92) 72%,
-      transparent 100%
-    );
-    mask-image: linear-gradient(
-      to bottom,
-      var(--theme-text) 0%,
-      var(--theme-text) 66%,
-      rgb(0 0 0 / 0.92) 72%,
-      transparent 100%
-    );
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-  }
-
-  .home-hero__portrait::after {
-    height: 38%;
-  }
-
-  .home-hero__edition,
-  .scroll-cue {
-    display: none;
   }
 
   .home-hero__cable {
