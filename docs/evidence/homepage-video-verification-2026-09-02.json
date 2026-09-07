@@ -1,0 +1,56 @@
+{
+  "verifiedAt": "2026-09-02",
+  "toolchain": "Higgsfield isolated media sandbox with ffmpeg and ffprobe",
+  "sources": {
+    "desktopPicture": {
+      "path": "public/media/video/caleb-speaker-reel-720.mp4",
+      "sha256": "6174202b5f2f2401181bb5e43ec8df6a6f179d1ef41acd0ed43816b4fc10d8dc"
+    },
+    "approvedSoundtrack": {
+      "path": "public/media/video/caleb-pain-comes-to-develop-mobile.mp4",
+      "sha256": "96bf8c2ed798b1f0f79b7a6d824f46863d313b67e159cb869671e115dca3907d"
+    }
+  },
+  "output": {
+    "path": "public/media/video/caleb-pain-comes-to-develop-desktop.mp4",
+    "sha256": "02f1f03dae94f1745d7f961dfc9116fa1a4997b9a03f85ddd9ff892233734400",
+    "bytes": 21082610,
+    "higgsfieldMediaId": "611974ad-15a5-4bc7-98b5-127eb7ceb877",
+    "containerDurationSeconds": 46.613,
+    "fastStart": {
+      "moovOffset": 36,
+      "mdatOffset": 33762,
+      "moovBeforeMdat": true
+    },
+    "video": {
+      "codec": "h264",
+      "dimensions": [1280, 720],
+      "frameRate": "24000/1001",
+      "frames": 1117,
+      "packetEndpointSeconds": 46.588208,
+      "elementaryStreamSha256": "6113d2d1c904fee4de1fb5a46dfb7f9f4b6af016c2957690e2d2e1ba27671f77",
+      "sourcePrefixElementaryStreamSha256": "6113d2d1c904fee4de1fb5a46dfb7f9f4b6af016c2957690e2d2e1ba27671f77",
+      "decodedFrameHashDiff": "identical"
+    },
+    "audio": {
+      "codec": "aac",
+      "sampleRate": 48000,
+      "packets": 2186,
+      "endpointSeconds": 46.613,
+      "adtsSha256": "23ce60353a1480f2b8adc54c5c3410de793ad9aef1750c2cab8b216c1b7c347b",
+      "sourceAdtsSha256": "23ce60353a1480f2b8adc54c5c3410de793ad9aef1750c2cab8b216c1b7c347b",
+      "decodedPcmSha256": "47910a71b47d976ab3558aba050b7874f8cd0d5f135300da746d73cd685387e3",
+      "sourceDecodedPcmSha256": "47910a71b47d976ab3558aba050b7874f8cd0d5f135300da746d73cd685387e3"
+    }
+  },
+  "endpointToleranceSeconds": 0.04170833333333333,
+  "videoToAudioEndpointDeltaSeconds": 0.024792,
+  "containerToAudioEndpointDeltaSeconds": 0,
+  "verification": {
+    "picturePacketsCopiedWithoutReencoding": true,
+    "decodedPictureFramesMatchSourcePrefix": true,
+    "allApprovedAacPacketsPreserved": true,
+    "decodedAudioSamplesMatch": true,
+    "endpointWithinOneDesktopFrame": true
+  }
+}

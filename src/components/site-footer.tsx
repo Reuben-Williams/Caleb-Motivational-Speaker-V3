@@ -44,7 +44,7 @@ export function SiteFooter() {
       </div>
       <div className="container site-footer__bottom">
         <p>© {new Date().getFullYear()} Joyionaire™ Enterprises.</p>
-        <p>Rochester, New York · Available for engagements worldwide</p>
+        <p>{contact.location} · Available for engagements worldwide</p>
       </div>
     </footer>
   );

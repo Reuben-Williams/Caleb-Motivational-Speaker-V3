@@ -13,7 +13,7 @@ export const validBooking: BookingInput = {
   preferredDateStart: "2099-06-20",
   preferredDateEnd: "2099-06-21",
   estimatedAudienceSize: 450,
-  eventLocation: "Rochester, New York",
+  eventLocation: "Atlanta, Georgia",
   attendanceMode: "in-person",
   programLength: "45-60-min",
   eventGoals:
@@ -31,4 +31,3 @@ export const validBooking: BookingInput = {
   utmContent: "",
   referrerPath: "/speaking",
 };
-

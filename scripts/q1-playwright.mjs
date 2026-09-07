@@ -215,7 +215,7 @@ const fullValues = {
   "Preferred date or range": "2099-06-20",
   "End date, if applicable": "2099-06-21",
   "Estimated audience size": "450",
-  "Event location": "Rochester, New York",
+  "Event location": "Atlanta, Georgia",
   "Event goals":
     "Help students connect resilience, identity, and purpose with practical next steps.",
 };

@@ -1,6 +1,6 @@
 # Homepage Video, Hero, and Atlanta Implementation Plan
 
-**Status:** Pending implementation-plan approval  
+**Status:** Implemented and verified locally; release not authorized
 **Design source:** `docs/superpowers/specs/2026-09-02-homepage-video-audio-and-mobile-hero-design.md`  
 **Framework:** Next.js 16 App Router, React 19, TypeScript, Vitest 4  
 **Release boundary:** Local implementation only; no push, deployment, DNS change, provider mutation, form submission, or commerce order

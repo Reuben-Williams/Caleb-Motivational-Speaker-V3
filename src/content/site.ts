@@ -16,7 +16,7 @@ export const contact = {
   phoneHref: "tel:+14049415670",
   email: "info@calebjakes.com",
   emailHref: "mailto:info@calebjakes.com",
-  location: "Rochester, New York",
+  location: "Atlanta, Georgia",
   facebook: "https://www.facebook.com/caleb.jakes.7/",
   instagram: "https://www.instagram.com/therealcaleb.j/",
 } as const;
@@ -40,7 +40,7 @@ export const hero = {
   credential:
     "IAPO Certified Motivational Speaker • RTF Deliverance Minister",
   location:
-    "Based in Rochester, NY • Available for engagements worldwide",
+    "Based in Atlanta, GA • Available for engagements worldwide",
 } as const;
 
 export const siteFacts: readonly SiteFact[] = [

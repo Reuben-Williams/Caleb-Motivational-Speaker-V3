@@ -1,0 +1,48 @@
+{
+  "verifiedAt": "2026-09-02",
+  "source": {
+    "path": "D:/Motivational Speaker Caleb/V1/media-ready/images/IMG_1168.jpg",
+    "sha256": "70182ecb8ff32bad17ba0132e42c9d603f415b7be218c3e38c9d014e0fc0abde",
+    "dimensions": [3240, 2160],
+    "mode": "RGB",
+    "exifOrientation": null,
+    "decodedRgbSha256": "ff3015dbe06eae1d4b517162479f3d27fe83e55496e4e099e8d414978a644948",
+    "iccProfileSha256": "2b3aa1645779a9e634744faf9b01e9102b0c9b88fd6deced7934df86b949af7e"
+  },
+  "higgsfieldInput": {
+    "mediaId": "a68cd89f-e489-4a73-86a5-44ceec707f25",
+    "providerResizeSha256": "44f507c152882ed89ea054d3d87d2ceb77980547042109d137dd39a8d18c593e",
+    "providerResizeDimensions": [2048, 1365]
+  },
+  "reviewMaster": {
+    "mediaId": "99bbf62b-a8b2-4fbe-888d-617e9568269f",
+    "path": "media-review/higgsfield/H04-caleb-home-hero-cutout.png",
+    "sha256": "90cf355479d17702e413df3bfb9fbefb51deca715340c6a688d59be207b162a1",
+    "dimensions": [2048, 1365],
+    "mode": "RGBA",
+    "alphaSha256": "64189dd2037711511de7a1cf419383856867a7652cfd8d8e5d9bd3dae5ed51f6",
+    "alphaBoundingBox": [585, 14, 1553, 1365],
+    "alphaPixels": {
+      "transparent": 2032575,
+      "partial": 111933,
+      "opaque": 651012
+    },
+    "visibleRgbMismatchCountAgainstProviderInput": 0
+  },
+  "reviewBoard": {
+    "mediaId": "57abd2a1-8a3e-4875-97cf-d2f624b14245",
+    "path": "media-review/higgsfield/H04-cutout-review-board.png",
+    "sha256": "9507414477d26d05e310ffbe55dc8c35cb7706644b1a2d0d90f235eb4435784f",
+    "backgrounds": ["light", "dark", "checkerboard"],
+    "userApproved": true
+  },
+  "productionAsset": {
+    "path": "public/media/people/caleb-home-hero-cutout.webp",
+    "sha256": "bd1ab0a91704e70301b6b1261b7be497738b821f642b450f7b38c04fd743d7fc",
+    "dimensions": [2048, 1365],
+    "encoding": "lossless WebP",
+    "decodedRgbaMatchesReviewMaster": true
+  },
+  "method": "Higgsfield isolated-sandbox foreground segmentation produced an alpha matte; the approved input RGB channels were copied unchanged and only alpha was replaced. No generative model was used.",
+  "rejectedGenerativeJob": "c62c3e96-bc66-49ed-99ff-cf955a7e2af6"
+}

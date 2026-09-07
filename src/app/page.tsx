@@ -58,11 +58,12 @@ export default function HomePage() {
 
           <div className="home-hero__portrait">
             <Image
-              alt="Caleb Jakes speaking into a handheld microphone"
+              alt="Caleb Jakes smiling in a navy shirt with white stripes"
               fill
               priority
+              unoptimized
               sizes="(max-width: 767px) 100vw, 58vw"
-              src={withBasePath("/media/people/caleb-speaking-cutout.webp")}
+              src={withBasePath("/media/people/caleb-home-hero-cutout.webp")}
             />
             <div className="home-hero__portrait-glow" />
           </div>

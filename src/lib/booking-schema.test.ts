@@ -40,7 +40,7 @@ describe("bookingSchema", () => {
     }
   });
 
-  it("rejects a preferred start date before the supplied New York date", () => {
+  it("rejects a preferred start date before the supplied Eastern date", () => {
     const result = bookingSchema.safeParse(
       {
         ...validBooking,

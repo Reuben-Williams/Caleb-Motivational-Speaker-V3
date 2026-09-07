@@ -619,8 +619,8 @@ html[data-motion-mode="enhanced"] .home-hero__backdrop {
 
 .home-hero__portrait img {
   z-index: 2;
-  object-fit: contain;
-  object-position: 68% bottom;
+  object-fit: cover;
+  object-position: 70% bottom;
   filter: saturate(0.82) contrast(1.04);
 }
 
@@ -2718,19 +2718,35 @@ html[data-motion-mode="enhanced"] .home-hero__backdrop {
   }
 
   .home-hero__portrait {
-    top: 3.5rem;
-    right: -34%;
+    top: 3.75rem;
+    right: -8%;
     bottom: auto;
-    width: 132%;
-    height: 470px;
+    width: 116%;
+    height: 500px;
   }
 
   .home-hero__portrait img {
-    object-position: center top;
+    object-position: 69% top;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      var(--theme-text) 0%,
+      var(--theme-text) 66%,
+      rgb(0 0 0 / 0.92) 72%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      var(--theme-text) 0%,
+      var(--theme-text) 66%,
+      rgb(0 0 0 / 0.92) 72%,
+      transparent 100%
+    );
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
   }
 
   .home-hero__portrait::after {
-    height: 45%;
+    height: 38%;
   }
 
   .home-hero__edition,

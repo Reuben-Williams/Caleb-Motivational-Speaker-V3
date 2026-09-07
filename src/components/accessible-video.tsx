@@ -13,18 +13,26 @@ type VideoVariant = {
   video: string;
 };
 
-const DESKTOP_VARIANT: VideoVariant = {
+const BOOK_MEDIA_VARIANT: VideoVariant = {
   captions: "/media/video/caleb-speaker-reel.en.vtt",
   transcript: "/media/video/caleb-speaker-reel-transcript.txt",
   transcriptLabel: "Read the speaker reel transcript",
   video: "/media/video/caleb-speaker-reel-720.mp4",
 };
 
-const MOBILE_VARIANT: VideoVariant = {
+const HOMEPAGE_DESKTOP_VARIANT: VideoVariant = {
   captions: "/media/video/caleb-pain-comes-to-develop-mobile.en.vtt",
   transcript:
     "/media/video/caleb-pain-comes-to-develop-mobile-transcript.txt",
-  transcriptLabel: "Read the mobile video transcript",
+  transcriptLabel: "Read the Pain Comes To Develop transcript",
+  video: "/media/video/caleb-pain-comes-to-develop-desktop.mp4",
+};
+
+const HOMEPAGE_MOBILE_VARIANT: VideoVariant = {
+  captions: "/media/video/caleb-pain-comes-to-develop-mobile.en.vtt",
+  transcript:
+    "/media/video/caleb-pain-comes-to-develop-mobile-transcript.txt",
+  transcriptLabel: "Read the Pain Comes To Develop transcript",
   video: "/media/video/caleb-pain-comes-to-develop-mobile.mp4",
 };
 
@@ -88,9 +96,9 @@ export function AccessibleVideo({
     ? isMobile === null
       ? null
       : isMobile
-        ? MOBILE_VARIANT
-        : DESKTOP_VARIANT
-    : DESKTOP_VARIANT;
+        ? HOMEPAGE_MOBILE_VARIANT
+        : HOMEPAGE_DESKTOP_VARIANT
+    : BOOK_MEDIA_VARIANT;
   const frameClassName = [
     "video-frame",
     compact ? "video-frame--compact" : null,
@@ -137,15 +145,15 @@ export function AccessibleVideo({
         <noscript>
           <a
             className="transcript-link"
-            href={withBasePath(DESKTOP_VARIANT.video)}
+            href={withBasePath(HOMEPAGE_DESKTOP_VARIANT.video)}
           >
-            Watch the speaker reel
+            Watch the Pain Comes To Develop message
           </a>{" "}
           <a
             className="transcript-link"
-            href={withBasePath(DESKTOP_VARIANT.transcript)}
+            href={withBasePath(HOMEPAGE_DESKTOP_VARIANT.transcript)}
           >
-            {DESKTOP_VARIANT.transcriptLabel}
+            {HOMEPAGE_DESKTOP_VARIANT.transcriptLabel}
           </a>
         </noscript>
       ) : null}

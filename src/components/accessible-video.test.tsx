@@ -54,6 +54,7 @@ function getSelectedMedia(container: HTMLElement) {
     source: source?.getAttribute("src"),
     track: track?.getAttribute("src"),
     transcript: transcript?.getAttribute("href"),
+    transcriptLabel: transcript?.textContent,
   };
 }
 
@@ -70,8 +71,14 @@ describe("AccessibleVideo", () => {
 
     expect(html).toContain('preload="none"');
     expect(html).not.toContain("<source");
-    expect(html).toContain("Watch the speaker reel");
-    expect(html).toContain("Read the speaker reel transcript");
+    expect(html).toContain(
+      "/media/video/caleb-pain-comes-to-develop-desktop.mp4",
+    );
+    expect(html).toContain(
+      "/media/video/caleb-pain-comes-to-develop-mobile-transcript.txt",
+    );
+    expect(html).toContain("Watch the Pain Comes To Develop message");
+    expect(html).toContain("Read the Pain Comes To Develop transcript");
   });
 
   it("selects the portrait media package for the homepage on mobile", async () => {
@@ -89,6 +96,23 @@ describe("AccessibleVideo", () => {
           "/media/video/caleb-pain-comes-to-develop-mobile.en.vtt",
         transcript:
           "/media/video/caleb-pain-comes-to-develop-mobile-transcript.txt",
+        transcriptLabel: "Read the Pain Comes To Develop transcript",
+      });
+    });
+  });
+
+  it("falls back to the homepage desktop package when matchMedia is unavailable", async () => {
+    vi.stubGlobal("matchMedia", undefined);
+
+    const { container } = render(<AccessibleVideo responsiveHomepage />);
+
+    await waitFor(() => {
+      expect(getSelectedMedia(container)).toEqual({
+        source: "/media/video/caleb-pain-comes-to-develop-desktop.mp4",
+        track: "/media/video/caleb-pain-comes-to-develop-mobile.en.vtt",
+        transcript:
+          "/media/video/caleb-pain-comes-to-develop-mobile-transcript.txt",
+        transcriptLabel: "Read the Pain Comes To Develop transcript",
       });
     });
   });
@@ -100,9 +124,11 @@ describe("AccessibleVideo", () => {
 
     await waitFor(() => {
       expect(getSelectedMedia(container)).toEqual({
-        source: "/media/video/caleb-speaker-reel-720.mp4",
-        track: "/media/video/caleb-speaker-reel.en.vtt",
-        transcript: "/media/video/caleb-speaker-reel-transcript.txt",
+        source: "/media/video/caleb-pain-comes-to-develop-desktop.mp4",
+        track: "/media/video/caleb-pain-comes-to-develop-mobile.en.vtt",
+        transcript:
+          "/media/video/caleb-pain-comes-to-develop-mobile-transcript.txt",
+        transcriptLabel: "Read the Pain Comes To Develop transcript",
       });
     });
   });
@@ -116,6 +142,7 @@ describe("AccessibleVideo", () => {
       source: "/media/video/caleb-speaker-reel-720.mp4",
       track: "/media/video/caleb-speaker-reel.en.vtt",
       transcript: "/media/video/caleb-speaker-reel-transcript.txt",
+      transcriptLabel: "Read the speaker reel transcript",
     });
     expect(matchMedia).not.toHaveBeenCalled();
   });
@@ -126,7 +153,7 @@ describe("AccessibleVideo", () => {
 
     await waitFor(() => {
       expect(getSelectedMedia(view.container).source).toBe(
-        "/media/video/caleb-speaker-reel-720.mp4",
+        "/media/video/caleb-pain-comes-to-develop-desktop.mp4",
       );
     });
 
@@ -139,6 +166,7 @@ describe("AccessibleVideo", () => {
           "/media/video/caleb-pain-comes-to-develop-mobile.en.vtt",
         transcript:
           "/media/video/caleb-pain-comes-to-develop-mobile-transcript.txt",
+        transcriptLabel: "Read the Pain Comes To Develop transcript",
       });
     });
 

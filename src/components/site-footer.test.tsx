@@ -18,4 +18,11 @@ describe("SiteFooter", () => {
       document.querySelector('a[href="/admin/editor/speaking-engagements"]'),
     ).not.toBeInTheDocument();
   });
+
+  it("renders the centralized Atlanta location without a stale Rochester literal", () => {
+    const { container } = render(<SiteFooter />);
+
+    expect(screen.getAllByText(/Atlanta, Georgia/)).toHaveLength(2);
+    expect(container).not.toHaveTextContent(/Rochester/i);
+  });
 });

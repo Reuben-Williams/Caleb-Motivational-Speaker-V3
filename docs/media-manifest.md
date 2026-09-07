@@ -46,6 +46,36 @@ on `2026-07-25`.
 | H03-REVIEW | Same G01 input and H03 job above | `media-review/higgsfield/H03-stage-mobile.png`<br>`129a4f629c5f68b675fd26147a40ed539e63087dd9bde0f6a86ae85290931829` | 1600×2000 RGB PNG | Generated, edited | Exact-size mobile review master with safe negative space.<br>Decorative | Center fit/crop plus deterministic feather-to-black seam cleanup; no content generation | Approved 2026-07-25 |
 | H03-WEB | Same G01 input and H03 job above | `public/media/backgrounds/stage-mobile.webp`<br>`10c1c102d0241458b333566f3d0fe9d8145628a378d983dfc77079a7e67ef6e8` | 1600×2000 WebP | Generated, edited | Homepage cinematic mobile stage background.<br>Decorative | WebP quality 90 from the exact cleaned review master | Approved 2026-07-25 |
 
+## Revision 4 — homepage hero, Atlanta correction, and desktop message cut
+
+Revision 4 replaces only the homepage hero subject and the homepage desktop
+speaker-video package. It adds the project owner's 2026-09-02 Atlanta
+correction as separate evidence and leaves all earlier source records intact.
+
+| ID | Exact source and source SHA-256 | Reviewed output and output SHA-256 | Dimensions / media contract | Classification | Intended use and alternative text | Transformation | Reviewer decision |
+|---|---|---|---|---|---|---|---|
+| H04-RAW | `D:\Motivational Speaker Caleb\V1\media-ready\images\IMG_1168.jpg`<br>`70182ecb8ff32bad17ba0132e42c9d603f415b7be218c3e38c9d014e0fc0abde`<br>Confirmed Higgsfield input: `a68cd89f-e489-4a73-86a5-44ceec707f25`<br>Provider 2048×1365 input resize: `44f507c152882ed89ea054d3d87d2ceb77980547042109d137dd39a8d18c593e` | `media-review/higgsfield/H04-caleb-home-hero-cutout.png`<br>`90cf355479d17702e413df3bfb9fbefb51deca715340c6a688d59be207b162a1`<br>Confirmed output: `99bbf62b-a8b2-4fbe-888d-617e9568269f` | 2048×1365 RGBA PNG; alpha SHA-256 `64189dd2037711511de7a1cf419383856867a7652cfd8d8e5d9bd3dae5ed51f6` | Authentic, edited | Lossless homepage-hero review master.<br>Alt: `Caleb Jakes smiling in a navy shirt with white stripes.` | Higgsfield isolated-sandbox foreground segmentation/matting only. The provider-resized source RGB channels were copied with zero visible-pixel mismatches; only alpha changed. No generative model, relighting, retouching, anatomy repair, or credit spend. | Approved 2026-09-02 on the exact light/dark/checkerboard review board |
+| H04-WEB | Same H04 source, confirmed input, and approved review master above | `public/media/people/caleb-home-hero-cutout.webp`<br>`bd1ab0a91704e70301b6b1261b7be497738b821f642b450f7b38c04fd743d7fc` | 2048×1365 lossless RGBA WebP; decoded RGBA byte-identical to H04-RAW | Authentic, edited | Homepage hero only.<br>Alt: `Caleb Jakes smiling in a navy shirt with white stripes.` | Lossless WebP derivative with transparent RGB preservation; delivered unoptimized so the browser requests this exact file | Approved derivative of H04-RAW 2026-09-02 |
+| V04-DESKTOP | Picture: V02-720 `6174202b5f2f2401181bb5e43ec8df6a6f179d1ef41acd0ed43816b4fc10d8dc`<br>Soundtrack: V03-MOBILE `96bf8c2ed798b1f0f79b7a6d824f46863d313b67e159cb869671e115dca3907d` | `public/media/video/caleb-pain-comes-to-develop-desktop.mp4`<br>`02f1f03dae94f1745d7f961dfc9116fa1a4997b9a03f85ddd9ff892233734400` | 1280×720, 46.613s MP4; H.264 `24000/1001`, 1,117 frames; AAC 48 kHz, 2,186 packets; 21,082,610 bytes | Authentic, edited | Homepage desktop `WATCH CALEB SPEAK` video only | Stream-copy of the first 1,117 V02-720 picture frames plus the complete approved V03 AAC stream; no picture or audio re-encode; fast-start MP4; video/audio endpoint delta 0.024792s, within one 23.976-fps frame | Technically verified 2026-09-02; responsive QA passed 2026-09-07 at 1440, 768, 767, 390, and 375 pixels in both color schemes |
+| V04-TEXT-PAIRING | Approved V03-VTT and V03-TXT records remain byte-identical | `caleb-pain-comes-to-develop-mobile.en.vtt` `73ec07e3e752f99c490467ff85231be0add00c55b6034da73586776fa4640a09`<br>`caleb-pain-comes-to-develop-mobile-transcript.txt` `1dff6ebf54cd565c415687ebc80ec757c76f71f2ba9cefb7134467b7962b7d79` | Existing reviewed WebVTT and UTF-8 text | Authentic, reviewed edit | Accessibility pairing for both V03-MOBILE and V04-DESKTOP | No text change; Revision 4 expands the approved pairing to the new landscape derivative because it uses the same complete soundtrack | Approved wording retained 2026-09-02 |
+
+### Revision 4 review evidence
+
+| Evidence | SHA-256 | Purpose |
+|---|---|---|
+| `media-review/higgsfield/H04-cutout-review-board.png` | `9507414477d26d05e310ffbe55dc8c35cb7706644b1a2d0d90f235eb4435784f` | Exact H04 review on light, dark, and checkerboard backgrounds |
+| `docs/evidence/homepage-hero-cutout-verification-2026-09-02.json` | Hash frozen in the implementation commit | Machine-readable source, alpha, RGB-preservation, and lossless-derivative evidence |
+| `docs/evidence/homepage-video-verification-2026-09-02.json` | Hash frozen in the implementation commit | Machine-readable stream, frame, sample, endpoint, and fast-start evidence |
+| `docs/evidence/atlanta-location-correction-2026-09-02.md` | Hash frozen in the implementation commit | Additive authority for current Atlanta base-location copy |
+
+### Revision 4 decision log
+
+| Date | Revision | Decision |
+|---|---:|---|
+| 2026-09-02 | 4 | The project owner corrected current public base-location copy to Atlanta, Georgia; historical Rochester evidence remains unchanged. |
+| 2026-09-02 | 4 | Soul 2.0 job `c62c3e96-bc66-49ed-99ff-cf955a7e2af6` was rejected because it changed Caleb's pose and shirt. It was excluded and never used as source material. |
+| 2026-09-02 | 4 | The project owner explicitly approved the exact non-generative H04 background cutout. The remaining authorized Higgsfield generation credit was not used. |
+
 ## Caption and transcript review notes
 
 The complete video, captions, and transcript must be reviewed together before
