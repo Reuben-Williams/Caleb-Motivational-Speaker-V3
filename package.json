@@ -30,6 +30,8 @@
     "@reuben-williams/growth-leads": "0.5.0",
     "@reuben-williams/growth-messaging": "0.5.0",
     "@reuben-williams/next": "0.5.0",
+    "@reuben-williams/editor": "0.5.0",
+    "@reuben-williams/content": "0.5.0",
     "@upstash/redis": "1.38.0",
     "framer-motion": "12.42.2",
     "gsap": "3.15.0",

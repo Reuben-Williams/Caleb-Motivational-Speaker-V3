@@ -1,7 +1,9 @@
-import { copyFile, mkdir, mkdtemp, rm } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+
+import { installationManifestSha256 } from "@reuben-williams/entitlements/trust";
 
 import { runInstallationRuntimePreflight } from "./preflight-installation-runtime.mjs";
 
@@ -48,8 +50,31 @@ describe("managed installation preflight", () => {
   });
 
   it("preflights the attached editor schema and routes", async () => {
-    const result = await withPreRegistrationProject((projectDir) =>
-      runInstallationRuntimePreflight({ projectDir, env: {} }));
+    const result = await withPreRegistrationProject(async (projectDir) => {
+      const manifestPath = join(projectDir, ".builder/installation-manifest.json");
+      const runtimePath = join(projectDir, ".builder/site-runtime.json");
+      const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+      manifest.packages["@reuben-williams/editor"] = "0.5.0";
+      manifest.packages["@reuben-williams/content"] = "0.5.0";
+      manifest.schemas = { builder: 2, forms: 2, growth: 1 };
+      manifest.routes = [
+        "/admin/editor",
+        "/admin/editor/speaking-engagements",
+        "/admin/editor/website",
+        "/admin/editor/preview/[[...page]]",
+        "/api/builder/content",
+        "/api/builder/media",
+        "/api/builder/revalidation",
+        "/api/builder/workers/installation",
+        "/api/builder/workers/revalidation",
+        "/api/site-media/[mediaId]",
+      ];
+      const runtime = JSON.parse(await readFile(runtimePath, "utf8"));
+      runtime.installationManifestSha256 = installationManifestSha256(manifest);
+      await writeFile(manifestPath, `${JSON.stringify(manifest)}\n`, "utf8");
+      await writeFile(runtimePath, `${JSON.stringify(runtime)}\n`, "utf8");
+      return runInstallationRuntimePreflight({ projectDir, env: {} });
+    });
 
     expect(result.installationManifest?.schemas).toEqual({ builder: 2, forms: 2, growth: 1 });
     expect(result.installationManifest?.routes).toEqual([

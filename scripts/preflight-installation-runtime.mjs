@@ -19,6 +19,21 @@ const EXACT_PACKAGES = [
   "@reuben-williams/growth-leads",
   "@reuben-williams/growth-messaging",
   "@reuben-williams/next",
+  "@reuben-williams/editor",
+  "@reuben-williams/content",
+];
+const EXACT_SCHEMAS = { builder: 2, forms: 2, growth: 1 };
+const EXACT_ROUTES = [
+  "/admin/editor",
+  "/admin/editor/speaking-engagements",
+  "/admin/editor/website",
+  "/admin/editor/preview/[[...page]]",
+  "/api/builder/content",
+  "/api/builder/media",
+  "/api/builder/revalidation",
+  "/api/builder/workers/installation",
+  "/api/builder/workers/revalidation",
+  "/api/site-media/[mediaId]",
 ];
 
 function record(value) {
@@ -65,6 +80,13 @@ export async function runInstallationRuntimePreflight({ projectDir, env }) {
   if (!record(manifest) || !record(runtime) || !record(policy)) {
     codes.push("INSTALLATION_MANIFESTS_INVALID");
   } else {
+    if (canonical(manifest.schemas) !== canonical(EXACT_SCHEMAS) ||
+        canonical(manifest.routes) !== canonical(EXACT_ROUTES) ||
+        canonical(manifest.packages) !== canonical(Object.fromEntries(
+          EXACT_PACKAGES.map((name) => [name, "0.5.0"]),
+        ))) {
+      codes.push("INSTALLATION_MANIFEST_CONTRACT_INVALID");
+    }
     if (runtime.reachabilityEvidenceRevision === null) {
       codes.push("INSTALLATION_REACHABILITY_NOT_VERIFIED");
     }
@@ -92,6 +114,9 @@ export async function runInstallationRuntimePreflight({ projectDir, env }) {
     ok: codes.length === 0,
     codes: [...new Set(codes)].sort(),
     environmentNames,
+    installationManifest: record(manifest)
+      ? { schemas: manifest.schemas, routes: manifest.routes }
+      : null,
     safeDigests: record(runtime) && typeof runtime.installationManifestSha256 === "string"
       ? { installationManifestSha256: runtime.installationManifestSha256 }
       : {},
