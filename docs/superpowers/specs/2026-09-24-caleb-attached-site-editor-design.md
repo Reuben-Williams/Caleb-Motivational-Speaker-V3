@@ -258,8 +258,9 @@ horizontal rules, and manual URL fields are not accepted.
 ## Neon Data Model
 
 The additive migration is named exactly
-`0014_caleb_attached_site_editor.sql`, after the installed managed-runtime
-`0013` lineage. It advances only the installation manifest's `builder` schema
+`0015_caleb_attached_site_editor.sql`, after the platform's existing
+`0014_managed_growth_catalog_versions.sql` lineage. It advances only the
+installation manifest's `builder` schema
 from `1` to `2`; `forms: 2` and `growth: 1` remain unchanged. The SQL file's
 SHA-256 cannot truthfully be invented before the SQL is authored. The
 implementation plan must record the computed checksum, an independent review
@@ -267,7 +268,7 @@ must approve that exact file/checksum, and Preview/Production audits must match
 it before either apply step. Any SQL change after review changes the checksum
 and returns to review.
 
-Migration `0014` adds these site-scoped tables compatible with
+Migration `0015` adds these site-scoped tables compatible with
 `BuilderContentAdapter`:
 
 ### `builder_draft_pages`
@@ -722,7 +723,7 @@ browser checks and is not claimed unless performed.
    then regenerate `.builder/site-runtime.json` and
    `.builder/installation-key-binding.json` against the new manifest digest.
    The manifest/test evidence must bind `builder: 2` to reviewed migration
-   `0014_caleb_attached_site_editor.sql` and its exact SHA-256. Run installation
+   `0015_caleb_attached_site_editor.sql` and its exact SHA-256. Run installation
    preflight and capture new signed reachability/health evidence tied to that
    digest.
 8. Run the full repository checks and responsive route matrix.
