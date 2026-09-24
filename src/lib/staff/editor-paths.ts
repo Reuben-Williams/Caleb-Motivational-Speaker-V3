@@ -1,4 +1,6 @@
 export const STAFF_EDITOR_PATH = "/admin/editor";
+export const STAFF_WEBSITE_EDITOR_PATH = "/admin/editor/website";
+export const STAFF_SPEAKING_ENGAGEMENTS_PATH = "/admin/editor/speaking-engagements";
 
 export function resolveStaffEditorReturnPath(
   candidate: string | string[] | null | undefined,

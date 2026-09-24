@@ -2,12 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import {
   STAFF_EDITOR_PATH,
+  STAFF_SPEAKING_ENGAGEMENTS_PATH,
+  STAFF_WEBSITE_EDITOR_PATH,
   resolveStaffEditorReturnPath,
   staffLoginPath,
 } from "@/lib/staff/editor-paths";
 
 describe("staff editor paths", () => {
   it("keeps the canonical editor route as the only approved return path", () => {
+    expect(STAFF_WEBSITE_EDITOR_PATH).toBe("/admin/editor/website");
+    expect(STAFF_SPEAKING_ENGAGEMENTS_PATH).toBe("/admin/editor/speaking-engagements");
     expect(resolveStaffEditorReturnPath(STAFF_EDITOR_PATH)).toBe(
       STAFF_EDITOR_PATH,
     );

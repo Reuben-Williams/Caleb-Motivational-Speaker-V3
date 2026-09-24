@@ -3,6 +3,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { SpeakingEngagementsWorkspace } from "@/components/admin/speaking-engagements-workspace";
+import { StaffWorkspaceShell } from "@/components/admin/staff-workspace-shell";
 import { nextCookieAdapter } from "@/lib/staff/next-cookies";
 import { staffLoginPath } from "@/lib/staff/editor-paths";
 import { createCalebStaffRuntime } from "@/lib/staff/runtime";
@@ -36,5 +37,5 @@ export default async function SpeakingEngagementsPage() {
     redirect(staffLoginPath());
   }
   const leads = await authorized.repository.list();
-  return <SpeakingEngagementsWorkspace initialLeads={leads} />;
+  return <StaffWorkspaceShell activeWorkspace="growth.leads"><SpeakingEngagementsWorkspace initialLeads={leads} /></StaffWorkspaceShell>;
 }

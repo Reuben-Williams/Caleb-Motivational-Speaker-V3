@@ -18,14 +18,14 @@ vi.mock("@/lib/staff/next-cookies", () => ({
   nextCookieAdapter: () => ({}),
 }));
 
-vi.mock("@/lib/staff/runtime", () => ({
-  createCalebStaffRuntime: () => ({
+vi.mock("@/lib/staff/website-runtime", () => ({
+  createCalebWebsiteRuntime: () => ({
     authorizeRead: authorizeReadMock,
   }),
 }));
 
 import CanonicalEditorPage from "@/app/admin/editor/page";
-import SpeakingEngagementsPage from "@/app/admin/editor/speaking-engagements/page";
+import WebsiteEditorPage from "@/app/admin/editor/website/page";
 
 describe("canonical staff editor entry", () => {
   beforeEach(() => {
@@ -34,8 +34,8 @@ describe("canonical staff editor entry", () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://calebjakes.com";
   });
 
-  it("uses the speaking-engagements workspace as the canonical editor page", () => {
-    expect(CanonicalEditorPage).toBe(SpeakingEngagementsPage);
+  it("uses the Website workspace as the canonical editor page", () => {
+    expect(CanonicalEditorPage).toBe(WebsiteEditorPage);
   });
 
   it("sends unauthenticated users to login with a safe canonical return", async () => {
