@@ -351,7 +351,7 @@ The local API contract is frozen as follows:
 
 - `GET /api/builder/content?path=<declared>&mode=draft` returns
   `{ content, draftVersionId, publishedVersionId }`.
-- `GET /api/builder/content/history?path=<declared>` requires
+- `GET /api/builder/content?path=<declared>&resource=history` requires
   `website.history.read` and returns
   `{ versions: VersionRecord[], audit: AuditEvent[] }` for that fixed site/page.
 - Draft save uses `POST /api/builder/content` with
