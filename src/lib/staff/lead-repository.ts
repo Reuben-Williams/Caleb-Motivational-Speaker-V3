@@ -65,6 +65,19 @@ function requiredText(row: Record<string, unknown>, key: string): string {
   return value;
 }
 
+function requiredTimestamp(row: Record<string, unknown>, key: string): string {
+  const value = row[key];
+  const date = value instanceof Date
+    ? value
+    : typeof value === "string"
+      ? new Date(value)
+      : null;
+  if (!date || Number.isNaN(date.getTime())) {
+    throw new Error("Speaking lead projection was invalid.");
+  }
+  return date.toISOString();
+}
+
 function listItem(row: Record<string, unknown>): SpeakingLeadListItem {
   const id = requiredText(row, "id");
   const contactId = requiredText(row, "contact_id");
@@ -84,8 +97,8 @@ function listItem(row: Record<string, unknown>): SpeakingLeadListItem {
     title: requiredText(row, "title"),
     status: status as SpeakingLeadStatus,
     pipeline: "Speaking Engagements",
-    createdAt: new Date(requiredText(row, "created_at")).toISOString(),
-    updatedAt: new Date(requiredText(row, "updated_at")).toISOString(),
+    createdAt: requiredTimestamp(row, "created_at"),
+    updatedAt: requiredTimestamp(row, "updated_at"),
     version,
   });
 }

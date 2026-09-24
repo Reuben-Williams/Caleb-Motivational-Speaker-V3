@@ -29,8 +29,8 @@ describe("Speaking Engagements lead repository", () => {
         organization: "North Star College",
         title: "Keynote — North Star College",
         status: "new",
-        created_at: "2026-08-29T12:00:00.000Z",
-        updated_at: "2026-08-29T12:00:00.000Z",
+        created_at: new Date("2026-08-29T12:00:00.000Z"),
+        updated_at: new Date("2026-08-29T12:00:00.000Z"),
         version: "42",
       },
     ]);
