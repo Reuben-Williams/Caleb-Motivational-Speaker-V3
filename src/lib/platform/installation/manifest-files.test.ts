@@ -32,4 +32,25 @@ describe("committed managed installation manifest files", () => {
       "node scripts/generate-installation-manifests.mjs",
     );
   });
+
+  it("commits the attached editor schema and route inventory", async () => {
+    const manifest = await json(".builder/installation-manifest.json") as {
+      schemas?: Record<string, number>;
+      routes?: string[];
+    };
+
+    expect(manifest.schemas).toEqual({ builder: 2, forms: 2, growth: 1 });
+    expect(manifest.routes).toEqual([
+      "/admin/editor",
+      "/admin/editor/speaking-engagements",
+      "/admin/editor/website",
+      "/admin/editor/preview/[[...page]]",
+      "/api/builder/content",
+      "/api/builder/media",
+      "/api/builder/revalidation",
+      "/api/builder/workers/installation",
+      "/api/builder/workers/revalidation",
+      "/api/site-media/[mediaId]",
+    ]);
+  });
 });

@@ -46,4 +46,23 @@ describe("managed installation preflight", () => {
     expect(result.environmentNames).not.toContain("BUILDER_EXCHANGE_TOKEN");
     expect(JSON.stringify(result)).not.toContain("must-not-be-read");
   });
+
+  it("preflights the attached editor schema and routes", async () => {
+    const result = await withPreRegistrationProject((projectDir) =>
+      runInstallationRuntimePreflight({ projectDir, env: {} }));
+
+    expect(result.installationManifest?.schemas).toEqual({ builder: 2, forms: 2, growth: 1 });
+    expect(result.installationManifest?.routes).toEqual([
+      "/admin/editor",
+      "/admin/editor/speaking-engagements",
+      "/admin/editor/website",
+      "/admin/editor/preview/[[...page]]",
+      "/api/builder/content",
+      "/api/builder/media",
+      "/api/builder/revalidation",
+      "/api/builder/workers/installation",
+      "/api/builder/workers/revalidation",
+      "/api/site-media/[mediaId]",
+    ]);
+  });
 });

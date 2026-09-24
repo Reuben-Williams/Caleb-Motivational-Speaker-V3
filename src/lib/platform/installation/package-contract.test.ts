@@ -11,6 +11,8 @@ const runtimePackages = [
   "@reuben-williams/growth-leads",
   "@reuben-williams/growth-messaging",
   "@reuben-williams/next",
+  "@reuben-williams/editor",
+  "@reuben-williams/content",
 ] as const;
 
 describe("managed installation package contract", () => {

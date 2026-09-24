@@ -22,8 +22,22 @@ describe("Caleb managed installation manifests", () => {
       "@reuben-williams/growth-leads": "0.5.0",
       "@reuben-williams/growth-messaging": "0.5.0",
       "@reuben-williams/next": "0.5.0",
+      "@reuben-williams/editor": "0.5.0",
+      "@reuben-williams/content": "0.5.0",
     });
-    expect(installationManifest.schemas).toEqual({ builder: 1, forms: 2, growth: 1 });
+    expect(installationManifest.schemas).toEqual({ builder: 2, forms: 2, growth: 1 });
+    expect(installationManifest.routes).toEqual([
+      "/admin/editor",
+      "/admin/editor/speaking-engagements",
+      "/admin/editor/website",
+      "/admin/editor/preview/[[...page]]",
+      "/api/builder/content",
+      "/api/builder/media",
+      "/api/builder/revalidation",
+      "/api/builder/workers/installation",
+      "/api/builder/workers/revalidation",
+      "/api/site-media/[mediaId]",
+    ]);
     expect(installationManifest.workerVersion).toBe("0.5.0");
   });
 

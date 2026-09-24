@@ -1,0 +1,40 @@
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+import { describe, expect, it } from "vitest";
+
+const SITE_CONFIG_PATH = resolve("src/lib/site-editor/site-config.ts");
+
+function siteConfigSource(): string {
+  return existsSync(SITE_CONFIG_PATH) ? readFileSync(SITE_CONFIG_PATH, "utf8") : "";
+}
+
+describe("Caleb attached editor approved contract", () => {
+  it("defines the reviewed migration and schema identity", () => {
+    const source = siteConfigSource();
+
+    expect(source).toContain("0015_caleb_attached_site_editor.sql");
+    expect(source).toContain("builder: 2");
+    expect(source).toContain("forms: 2");
+    expect(source).toContain("growth: 1");
+  });
+
+  it("keeps global regions empty and limits values to text and images", () => {
+    const source = siteConfigSource();
+
+    expect(source).toMatch(/globalRegions\s*:\s*\[\s*\]/);
+    expect(source).toContain('type: "text"');
+    expect(source).toContain('type: "image"');
+    expect(source).not.toContain('type: "rich-text"');
+    expect(source).not.toContain('type: "video"');
+    expect(source).not.toContain('type: "link"');
+  });
+
+  it("keeps privacy view-only and locks receipt-state content", () => {
+    const source = siteConfigSource();
+
+    expect(source).toContain('path: "/privacy"');
+    expect(source).toContain("regions: []");
+    expect(source).not.toContain("thankYou.accepted");
+  });
+});
