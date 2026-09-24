@@ -15,6 +15,12 @@ import { Pool } from "pg";
 
 import { normalizePostgresConnectionString } from "@/lib/postgres/connection-string";
 import { CalebPostgresContentAdapter } from "@/lib/site-editor/postgres-content-adapter";
+import {
+  CalebMediaStoreError,
+  PostgresMediaStore,
+  createSupabaseMediaStorage,
+  type CalebMediaStorage,
+} from "@/lib/site-editor/media-store";
 import { PostgresRevalidationStore } from "@/lib/site-editor/revalidation-store";
 import { CALEB_EDITOR_SITE_CONFIG } from "@/lib/site-editor/site-config";
 import { createCalebStaffSessionVerifier } from "@/lib/staff/session";
@@ -143,6 +149,7 @@ export function createPostgresCalebWebsiteAuthorizationStore(
 function siteSession(
   database: DataPlaneDatabase,
   grant: Readonly<{ siteId: string; subject: string; capability: string }>,
+  storage: CalebMediaStorage,
 ) {
   const session = createDataPlaneSession({
     siteId: grant.siteId,
@@ -151,8 +158,23 @@ function siteSession(
   });
   return Object.freeze({
     adapter: new CalebPostgresContentAdapter({ database, session }),
+    media: new PostgresMediaStore({ database, session, storage }),
     revalidation: new PostgresRevalidationStore({ database, session }),
   });
+}
+
+const unavailableMediaStorage: CalebMediaStorage = Object.freeze({
+  async upload() { throw new CalebMediaStoreError("MEDIA_STORE_INVALID", 503); },
+  async remove() { throw new CalebMediaStoreError("MEDIA_STORE_INVALID", 503); },
+  async download() { throw new CalebMediaStoreError("MEDIA_STORE_INVALID", 503); },
+});
+
+function mediaStorage(environment: Environment): CalebMediaStorage {
+  const url = environment.SITE_MEDIA_SUPABASE_URL?.trim();
+  const serviceRoleKey = environment.SITE_MEDIA_SUPABASE_SERVICE_ROLE_KEY?.trim();
+  const bucket = environment.SITE_MEDIA_SUPABASE_BUCKET?.trim();
+  if (!url || !serviceRoleKey || !bucket) return unavailableMediaStorage;
+  return createSupabaseMediaStorage({ url, serviceRoleKey, bucket });
 }
 
 export function createCalebWebsiteRuntime(
@@ -168,6 +190,7 @@ export function createCalebWebsiteRuntime(
   }
   try {
     const { pool, database } = resources(environment.DATABASE_URL!);
+    const storage = mediaStorage(environment);
     const store = createPostgresCalebWebsiteAuthorizationStore(pool);
     const client = createBuilderServerClient({
       url: environment.STAFF_AUTH_URL!,
@@ -193,7 +216,7 @@ export function createCalebWebsiteRuntime(
           operation,
           correlationId: randomUUID(),
         });
-        return Object.freeze({ grant, ...siteSession(database, grant) });
+        return Object.freeze({ grant, ...siteSession(database, grant, storage) });
       },
       async authorizeMutation(
         request: Request,
@@ -212,12 +235,32 @@ export function createCalebWebsiteRuntime(
         });
         return Object.freeze({
           ...result,
-          ...siteSession(database, result.grant),
+          ...siteSession(database, result.grant, storage),
         });
       },
     });
   } catch {
     reportDiagnostic({ code: "invalid_configuration", component: "website_runtime" });
+    return null;
+  }
+}
+
+const MEDIA_DELIVERY_MEMBER_ID = "00000000-0000-4000-8000-000000000016";
+
+export function createCalebPublicMediaStore(environment: Environment) {
+  if (!environment.DATABASE_URL?.trim() ||
+    !environment.SITE_MEDIA_SUPABASE_URL?.trim() ||
+    !environment.SITE_MEDIA_SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+    !environment.SITE_MEDIA_SUPABASE_BUCKET?.trim()) return null;
+  try {
+    const { database } = resources(environment.DATABASE_URL);
+    const session = createDataPlaneSession({
+      siteId: CALEB_EDITOR_SITE_CONFIG.siteId,
+      memberId: MEDIA_DELIVERY_MEMBER_ID,
+      capabilities: ["preview.read"],
+    });
+    return new PostgresMediaStore({ database, session, storage: mediaStorage(environment) });
+  } catch {
     return null;
   }
 }
