@@ -351,27 +351,42 @@ The local API contract is frozen as follows:
 
 - `GET /api/builder/content?path=<declared>&mode=draft` returns
   `{ content, draftVersionId, publishedVersionId }`.
+- `GET /api/builder/content/history?path=<declared>` requires
+  `website.history.read` and returns
+  `{ versions: VersionRecord[], audit: AuditEvent[] }` for that fixed site/page.
 - Draft save uses `POST /api/builder/content` with
-  `{ pagePath, regionId, value, expectedDraftVersionId }`.
+  `{ action: "saveDraft", pagePath, regionId, value, expectedDraftVersionId }`.
 - Publish uses `PUT /api/builder/content` with
   `{ pagePath, expectedDraftVersionId, expectedPublishedVersionId }`.
 - Rollback uses `PATCH /api/builder/content` with
-  `{ pagePath, versionId, expectedPublishedVersionId }`; undo uses the same
-  optimistic rule and creates another version.
+  `{ action: "rollback", pagePath, versionId, expectedPublishedVersionId }`.
+  Undo uses the same method with
+  `{ action: "undoRollback", pagePath, rollbackVersionId,
+  expectedPublishedVersionId }` and creates another version.
+- `GET /api/builder/media` requires `website.preview.read` and returns
+  `{ assets: MediaAsset[] }` for the fixed site.
 - `GET /api/builder/revalidation?correlationId=<authorized-command>` returns
   `{ revalidation: "pending" | "complete" | "failed" }` for the current actor's
   site-scoped command without exposing worker details.
-- Media upload uses multipart fields `file`, `label`, required `alt`, and
-  optional declared `regionId`.
+- `POST /api/builder/revalidation` uses
+  `{ action: "retry", correlationId }`; it requires
+  `website.revalidation.retry`, recent AAL2, CSRF, and a new idempotency key. It
+  moves only that fixed site's failed job back to pending and returns
+  `{ status: "applied" | "replayed", revalidation: "pending", correlationId }`.
+- `POST /api/builder/media` uses multipart fields `file`, `label`, required
+  `alt`, and optional declared `regionId`; it returns
+  `{ status: "applied" | "replayed", asset: MediaAsset }`.
 
 Every mutation carries the exact existing privileged-request headers
 `x-csrf-token` and `idempotency-key`; there is no `x-builder-csrf` alias. A
 successful mutation returns
 `{ status: "applied" | "replayed", version, ...relevantVersionIds }`.
-Publish, rollback, and undo also return
-`revalidation: "complete" | "pending"`; a synchronous successful refresh may
-complete the queued job before response. A stale token returns
-`409 CONTENT_VERSION_CONFLICT` with no write.
+Publish, rollback, and undo always persist and return
+`revalidation: "pending"` in their exact immutable command receipt. After
+commit, the request may make one best-effort bounded attempt to process the job,
+but it still replays the stored `pending` result. Only the authorized status
+route reports the job's later `complete` or `failed` transition. A stale token
+returns `409 CONTENT_VERSION_CONFLICT` with no write.
 
 The signed `/api/builder/workers/revalidation` route claims due jobs with
 `FOR UPDATE SKIP LOCKED`, gives each claim a short expiring lease, reclaims an
@@ -381,6 +396,13 @@ and expose a safe Staff retry action that returns the same command correlation
 to pending; it never advances the content pointer again. The controller polls
 the authorized status route to move from `revalidation_pending` to `success` or
 an actionable `error`.
+
+`vercel.json` registers `/api/builder/workers/revalidation` at
+`*/5 * * * *`. Vercel invokes it with `Authorization: Bearer <CRON_SECRET>`;
+the handler uses the existing server-only `CRON_SECRET` verifier and rejects a
+missing or mismatched value. No new browser-visible configuration is added.
+This recurring claimant is the crash-recovery path even when the post-commit
+best-effort attempt never runs.
 
 The stock `0.5.0` route handler is not used for these writes because it cannot
 carry this complete wire contract. Caleb's typed local controller calls the
@@ -400,12 +422,16 @@ there is no manual image-URL field. The server:
 2. limits the original upload to 10 MiB;
 3. verifies file signatures and decodes the image rather than trusting the
    filename or browser MIME value;
-4. rejects malformed images and dimensions above 12000 by 12000 pixels;
+4. rejects malformed images, either dimension above 8192 pixels, or decoded
+   pixel area above 40,000,000 pixels before any expensive transformation;
 5. requires useful alternative text;
 6. creates a random immutable object key under the canonical Caleb site ID;
 7. uploads the bytes before inserting metadata;
-8. returns a canonical `MediaAsset` with `id`, site-local
-   `/api/site-media/[mediaId]` URL, label, alt, type, size, and dimensions; and
+8. returns the exact published `MediaAsset` shape: `id`, fixed `siteId`, safe
+   logical `path`, first-party `url`, `alt`, `label`, `mimeType`, `source`,
+   optional `width`/`height`, server-derived `userId`, and `createdAt`; both
+   `path` and `url` resolve through `/api/site-media/[mediaId]`, while byte size
+   remains internal metadata; and
 9. removes an orphaned newly uploaded object if the metadata transaction fails.
 
 An image-region snapshot persists the published platform-compatible value
@@ -419,8 +445,9 @@ returning `EditableValue`. A missing/cross-site ID, wrong `type`, noncanonical
 deterministic seeded `mediaId` mapping; the absolute URL observed in the DOM is
 never written back as content.
 
-The browser never receives the Supabase service credential or arbitrary object
-keys. Published pages reference the first-party
+The physical private-bucket object key is stored separately from the published
+`MediaAsset.path`; the browser never receives the Supabase service credential
+or an object key. Published pages reference the first-party
 `/api/site-media/[mediaId]` URL. Unauthenticated requests receive an asset only
 when it is seeded or referenced by a published snapshot; those immutable bytes
 use `Cache-Control: public, max-age=31536000, immutable`. An authenticated draft
@@ -482,9 +509,12 @@ The exact site-local operation policy is:
 | `website.publish` | `post.publish` | `write` | Owner, Administrator/Operator | Yes |
 | `website.rollback` | `post.rollback` | `write` | Owner, Administrator/Operator | Yes |
 | `website.media.upload` | `media.upload` | `write` | Owner, Administrator/Operator | Yes |
+| `website.revalidation.retry` | `post.publish` | `write` | Owner, Administrator/Operator | Yes |
 
 Media listing is covered by `website.preview.read`; undo is covered by
-`website.rollback`. Recent AAL2 uses the same bounded recency rule as other
+`website.rollback`. Revalidation retry does not republish content; it only
+requeues the existing failed refresh job and therefore reuses the stricter
+publish authority. Recent AAL2 uses the same bounded recency rule as other
 privileged Staff operations. No role outside the two listed roles is admitted
 even if a stale or malformed capability value appears in a token.
 
@@ -593,6 +623,7 @@ but the configuration boundary includes:
 - existing Staff Supabase URL, publishable key, issuer, and audience values;
 - a server-only Supabase credential authorized to the dedicated media bucket;
 - the fixed media bucket name; and
+- the existing server-only `CRON_SECRET` used by the revalidation worker; and
 - existing canonical Caleb public-site URL.
 
 All environment values are scoped independently for Preview and Production.
@@ -624,6 +655,8 @@ includes:
    access;
 6. route tests proving public reads cannot request drafts and browser input
    cannot choose the site, actor, role, capabilities, bucket, or object key;
+   contract tests cover history, media list/upload, rollback/undo discriminators,
+   revalidation status/retry, exact headers, and immutable replay bodies;
 7. component tests for the two-destination workspace, page selection, region
    selection, plain-text/image-only controls, Save Draft, Publish confirmation,
    preserved local text on conflict, `revalidation_pending`, media selection,
@@ -642,7 +675,8 @@ includes:
     `core.website` read/write actions and AAL2 policy are enforced; and
 11. full lint, typecheck, unit suite, production build, secret scan,
     `git diff --check`, installation preflight, and responsive browser checks at
-    desktop, tablet, and representative mobile widths.
+    desktop, tablet, and representative mobile widths; `vercel.json` tests also
+    prove the signed five-minute revalidation worker schedule.
 
 The protected Preview acceptance uses one clearly labeled text region and one
 test image. It verifies draft isolation, publish, rollback, audit attribution,
@@ -670,7 +704,8 @@ browser checks and is not claimed unless performed.
 6. Deploy Preview and complete the labeled draft, publish, media, history,
    rollback, concurrency, authorization, and outage acceptance.
 7. Update `src/lib/platform/installation/manifest.ts`, its tests, and
-   `scripts/preflight-installation-runtime.mjs`. The exact runtime-package
+   `scripts/preflight-installation-runtime.mjs`; update `vercel.json` with the
+   signed five-minute revalidation worker schedule. The exact runtime-package
    allowlist becomes `@reuben-williams/core`, `@reuben-williams/forms`,
    `@reuben-williams/growth-core`, `@reuben-williams/growth-customers`,
    `@reuben-williams/growth-leads`, `@reuben-williams/growth-messaging`,
