@@ -1,0 +1,220 @@
+import "server-only";
+
+import { randomUUID } from "node:crypto";
+
+import {
+  createBuilderServerClient,
+  type BuilderCookieAdapter,
+} from "@reuben-williams/next/auth";
+import {
+  createDataPlaneSession,
+  type DataPlaneDatabase,
+} from "@reuben-williams/next/database";
+import { createPostgresDataPlane } from "@reuben-williams/next/database/server";
+import { Pool } from "pg";
+
+import { normalizePostgresConnectionString } from "@/lib/postgres/connection-string";
+import { CalebPostgresContentAdapter } from "@/lib/site-editor/postgres-content-adapter";
+import { createCalebStaffSessionVerifier } from "@/lib/staff/session";
+import {
+  authorizeCalebWebsiteStaff,
+  authorizePrivilegedCalebWebsiteRequest,
+  createCalebWebsiteAuthorizer,
+  type CalebWebsiteAuthorizationDenial,
+  type CalebWebsiteAuthorizationStore,
+  type CalebWebsiteOperation,
+  type CalebWebsiteReplayReceipt,
+} from "@/lib/staff/website-authorization";
+
+type Environment = Record<string, string | undefined>;
+type Diagnostic = Readonly<{
+  code: "missing_configuration" | "invalid_configuration";
+  component: string;
+}>;
+
+interface AuthorizationClient {
+  query(
+    sql: string,
+    values?: readonly unknown[],
+  ): Promise<Readonly<{ rows: Record<string, unknown>[]; rowCount: number | null }>>;
+  release(): void;
+}
+
+interface AuthorizationPool {
+  connect(): Promise<AuthorizationClient>;
+}
+
+const requiredKeys = [
+  "DATABASE_URL",
+  "STAFF_AUTH_URL",
+  "STAFF_AUTH_PUBLISHABLE_KEY",
+  "STAFF_AUTH_EXPECTED_ISSUER",
+  "STAFF_AUTH_EXPECTED_AUDIENCE",
+  "NEXT_PUBLIC_SITE_URL",
+] as const;
+
+let cachedConnectionString: string | undefined;
+let cachedPool: Pool | undefined;
+let cachedDatabase: DataPlaneDatabase | undefined;
+
+function resources(connectionString: string) {
+  const normalized = normalizePostgresConnectionString(connectionString);
+  if (!cachedPool || !cachedDatabase || cachedConnectionString !== normalized) {
+    cachedPool = new Pool({
+      connectionString: normalized,
+      max: 4,
+      connectionTimeoutMillis: 5_000,
+      idleTimeoutMillis: 10_000,
+      allowExitOnIdle: true,
+    });
+    cachedDatabase = createPostgresDataPlane({
+      connectionString: normalized,
+      maximumPoolSize: 4,
+    });
+    cachedConnectionString = normalized;
+  }
+  return { pool: cachedPool, database: cachedDatabase };
+}
+
+export function createPostgresCalebWebsiteAuthorizationStore(
+  pool: AuthorizationPool,
+): CalebWebsiteAuthorizationStore {
+  const query = async (sql: string, values: readonly unknown[]) => {
+    let client: AuthorizationClient | undefined;
+    try {
+      client = await pool.connect();
+      return (await client.query(sql, values)).rows;
+    } finally {
+      client?.release();
+    }
+  };
+  return Object.freeze({
+    async loadContext(
+      siteKey: string,
+      subject: string,
+      action: Readonly<{ moduleId: "core.website"; action: "read" | "write" }>,
+    ) {
+      if (action.moduleId !== "core.website") {
+        throw new TypeError("Website authorization requires core.website.");
+      }
+      const rows = await query(
+        "select builder_private.staff_authorization_context_v1($1, $2::uuid, $3, $4) as context",
+        [siteKey, subject, "core.website", action.action],
+      );
+      return rows[0]?.context ?? null;
+    },
+    async isSessionRevoked(sessionId: string, subject: string) {
+      const rows = await query(
+        "select builder_private.staff_session_revoked_v1($1, $2::uuid) as result",
+        [sessionId, subject],
+      );
+      if (typeof rows[0]?.result !== "boolean") {
+        throw new Error("Website authorization revocation state is unavailable.");
+      }
+      return rows[0].result;
+    },
+    async writeDenial(event: CalebWebsiteAuthorizationDenial) {
+      await query(
+        "select builder_private.record_staff_authorization_denial_v1($1::jsonb)",
+        [JSON.stringify(event)],
+      );
+    },
+    async reservePrivilegedRequest(receipt: CalebWebsiteReplayReceipt) {
+      const rows = await query(
+        "select builder_private.reserve_staff_privileged_request_v1($1, $2::uuid, $3, $4, $5) as result",
+        [
+          receipt.siteKey,
+          receipt.subject,
+          receipt.operation,
+          receipt.idempotencyKey,
+          receipt.fingerprint,
+        ],
+      );
+      const result = rows[0]?.result;
+      return result === "reserved" || result === "replay" || result === "conflict"
+        ? result
+        : "conflict";
+    },
+  });
+}
+
+function adapter(
+  database: DataPlaneDatabase,
+  grant: Readonly<{ siteId: string; subject: string; capability: string }>,
+) {
+  return new CalebPostgresContentAdapter({
+    database,
+    session: createDataPlaneSession({
+      siteId: grant.siteId,
+      memberId: grant.subject,
+      capabilities: [grant.capability],
+    }),
+  });
+}
+
+export function createCalebWebsiteRuntime(
+  environment: Environment,
+  cookies: BuilderCookieAdapter,
+  reportDiagnostic: (diagnostic: Diagnostic) => void = (diagnostic) =>
+    console.error("Caleb website runtime configuration", diagnostic),
+) {
+  const missing = requiredKeys.find((key) => !environment[key]?.trim());
+  if (missing) {
+    reportDiagnostic({ code: "missing_configuration", component: missing });
+    return null;
+  }
+  try {
+    const { pool, database } = resources(environment.DATABASE_URL!);
+    const store = createPostgresCalebWebsiteAuthorizationStore(pool);
+    const client = createBuilderServerClient({
+      url: environment.STAFF_AUTH_URL!,
+      publishableKey: environment.STAFF_AUTH_PUBLISHABLE_KEY!,
+      cookies,
+    });
+    const verifier = createCalebStaffSessionVerifier({
+      client,
+      expectedIssuer: environment.STAFF_AUTH_EXPECTED_ISSUER!,
+      expectedAudience: environment.STAFF_AUTH_EXPECTED_AUDIENCE!,
+      revocations: { isRevoked: store.isSessionRevoked },
+    });
+    const authorizer = createCalebWebsiteAuthorizer({ repository: store, audit: store });
+    return Object.freeze({
+      async authorizeRead(
+        request: Request,
+        operation: Extract<CalebWebsiteOperation, "website.preview.read" | "website.history.read">,
+      ) {
+        const grant = await authorizeCalebWebsiteStaff({
+          request,
+          verifier,
+          authorizer,
+          operation,
+          correlationId: randomUUID(),
+        });
+        return Object.freeze({ grant, adapter: adapter(database, grant) });
+      },
+      async authorizeMutation(
+        request: Request,
+        operation: Exclude<CalebWebsiteOperation, "website.preview.read" | "website.history.read">,
+        untrustedInput: unknown,
+      ) {
+        const result = await authorizePrivilegedCalebWebsiteRequest({
+          request,
+          allowedOrigin: environment.NEXT_PUBLIC_SITE_URL!,
+          operation,
+          correlationId: randomUUID(),
+          untrustedInput,
+          verifier,
+          authorizer,
+          replayGuard: store,
+        });
+        return Object.freeze({
+          ...result,
+          adapter: adapter(database, result.grant),
+        });
+      },
+    });
+  } catch {
+    reportDiagnostic({ code: "invalid_configuration", component: "website_runtime" });
+    return null;
+  }
+}
