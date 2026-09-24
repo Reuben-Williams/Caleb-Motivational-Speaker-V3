@@ -157,7 +157,13 @@ function siteSession(
     capabilities: [grant.capability],
   });
   return Object.freeze({
-    adapter: new CalebPostgresContentAdapter({ database, session }),
+    adapter: new CalebPostgresContentAdapter({
+      database,
+      session,
+      resolveMedia: (mediaId) => /^[A-Za-z0-9][A-Za-z0-9._-]{0,159}$/.test(mediaId)
+        ? { path: `/api/site-media/${mediaId}` }
+        : undefined,
+    }),
     media: new PostgresMediaStore({ database, session, storage }),
     revalidation: new PostgresRevalidationStore({ database, session }),
   });

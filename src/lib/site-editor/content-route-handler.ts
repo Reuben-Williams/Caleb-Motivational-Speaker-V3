@@ -1,6 +1,8 @@
 import "server-only";
 
 import type { CalebPostgresContentAdapter } from "./postgres-content-adapter";
+import type { PostgresMediaStore } from "./media-store";
+import { getCalebSeedMedia } from "./media-seed-catalog";
 
 const PRIVATE_HEADERS = Object.freeze({ "Cache-Control": "private, no-store" });
 const MAX_JSON_BYTES = 64 * 1024;
@@ -25,6 +27,7 @@ interface AuthorizedMutation {
     CalebPostgresContentAdapter,
     "saveDraftCommand" | "publishCommand" | "rollbackCommand" | "undoRollbackCommand"
   >;
+  media: Pick<PostgresMediaStore, "delivery">;
   idempotencyKey: string;
   replay: boolean;
 }
@@ -147,6 +150,13 @@ export function createCalebContentRouteHandler(input: {
           return response({ code: "invalid_request" }, 400);
         }
         const authorized = await runtime.authorizeMutation(request, "website.draft.save", body);
+        if (body.value && typeof body.value === "object" && !Array.isArray(body.value) &&
+          "type" in body.value && body.value.type === "image") {
+          const mediaId = "mediaId" in body.value && typeof body.value.mediaId === "string" ? body.value.mediaId : "";
+          if (!getCalebSeedMedia(mediaId) && !await authorized.media.delivery(mediaId)) {
+            return response({ code: "CONTENT_MEDIA_NOT_FOUND" }, 400);
+          }
+        }
         return response(await authorized.adapter.saveDraftCommand({
           pagePath: body.pagePath,
           regionId: body.regionId,
@@ -209,4 +219,3 @@ export function createCalebContentRouteHandler(input: {
     }
   };
 }
-

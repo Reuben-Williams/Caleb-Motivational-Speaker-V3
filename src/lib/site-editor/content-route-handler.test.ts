@@ -49,6 +49,7 @@ function fixture() {
     authorizeMutation: vi.fn().mockResolvedValue({
       grant,
       adapter,
+      media: { delivery: vi.fn().mockResolvedValue({ asset: { id: "media-a" } }) },
       idempotencyKey: "command-a",
       replay: false,
     }),
@@ -191,4 +192,3 @@ describe("Caleb content route", () => {
     expect(await response.json()).toEqual({ code: "CONTENT_VERSION_CONFLICT" });
   });
 });
-

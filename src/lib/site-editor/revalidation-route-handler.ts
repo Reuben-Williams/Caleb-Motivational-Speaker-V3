@@ -42,8 +42,9 @@ function safeError(error: unknown): Response {
   return json({
     code: status === 401 ? "authentication_required" :
       status === 403 ? "not_authorized" :
-        status === 409 ? "conflict" : "service_unavailable",
-  }, [401, 403, 409].includes(status) ? status : 503);
+        status === 404 ? "not_found" :
+          status === 409 ? "conflict" : "service_unavailable",
+  }, [401, 403, 404, 409].includes(status) ? status : 503);
 }
 
 export function createCalebRevalidationRouteHandler(input: {
@@ -90,4 +91,3 @@ export function createCalebRevalidationRouteHandler(input: {
     }
   };
 }
-
