@@ -23,11 +23,11 @@ describe("Caleb attached editor approved contract", () => {
     const source = siteConfigSource();
 
     expect(source).toMatch(/globalRegions\s*:\s*\[\s*\]/);
-    expect(source).toContain('type: "text"');
-    expect(source).toContain('type: "image"');
-    expect(source).not.toContain('type: "rich-text"');
-    expect(source).not.toContain('type: "video"');
-    expect(source).not.toContain('type: "link"');
+    expect(source).toContain('kind: "text"');
+    expect(source).toContain('kind: "image"');
+    expect(source).not.toContain('kind: "richText"');
+    expect(source).not.toContain('kind: "video"');
+    expect(source).not.toContain('kind: "link"');
   });
 
   it("keeps privacy view-only and locks receipt-state content", () => {

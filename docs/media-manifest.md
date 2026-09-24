@@ -185,3 +185,25 @@ crawlers are not asked to reuse the cached July asset.
 
 Revision 5 supersedes OG-HOME for the homepage and fallback social metadata.
 The Revision 2 record remains unchanged as historical provenance.
+
+## Site editor seed identities
+
+The attached site editor uses the stable IDs below to seed its first-party
+media library. These are identity aliases for already approved files; they do
+not create a new transform, binary, approval, or provenance record. The source
+hashes and approval decisions above remain authoritative.
+
+| Stable seed ID | Existing approved asset |
+| --- | --- |
+| `seed-home-hero-cutout-v1` | `public/media/people/caleb-home-hero-cutout.webp` |
+| `seed-home-story-primary-v1` | `public/media/photos/caleb-book-portrait.webp` |
+| `seed-home-story-secondary-v1` | `public/media/photos/caleb-book-wide-02.webp` |
+| `seed-book-cover-v1` | `public/media/book/caleb-book-front.webp` |
+| `seed-about-hero-v1` | `public/media/photos/caleb-book-portrait.webp` |
+| `seed-about-collage-v1` | `public/media/photos/caleb-book-wide-01.webp` |
+| `seed-speaking-hero-v1` | `public/media/photos/caleb-speaking-wide.webp` |
+| `seed-schools-hero-v1` | `public/media/photos/caleb-speaking-mobile.webp` |
+| `seed-faith-hero-v1` | `public/media/photos/caleb-book-wide-03.webp` |
+| `seed-conferences-hero-v1` | `public/media/photos/caleb-speaking-wide.webp` |
+| `seed-book-media-hero-v1` | `public/media/book/caleb-book-amazon.webp` |
+| `seed-faq-hero-v1` | `public/media/photos/caleb-book-wide-02.webp` |
