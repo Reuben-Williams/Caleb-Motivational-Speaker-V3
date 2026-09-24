@@ -105,7 +105,7 @@ export class PostgresSpeakingLeadRepository {
     return this.input.database.withSession(this.input.session, async (transaction) => {
       const response = await transaction.query(
         `select lead.id,lead.contact_id,contact.display_name,contact.organization,
-          lead.title,lead.status,lead.created_at,lead.updated_at,xmin::text as version
+          lead.title,lead.status,lead.created_at,lead.updated_at,lead.xmin::text as version
          from public.builder_leads lead
          join public.builder_contacts contact on contact.site_id=lead.site_id and contact.id=lead.contact_id
          where lead.service_key=$1
@@ -121,7 +121,7 @@ export class PostgresSpeakingLeadRepository {
     return this.input.database.withSession(this.input.session, async (transaction) => {
       const response = await transaction.query(
         `select lead.id,lead.contact_id,contact.display_name,contact.organization,
-          lead.title,lead.status,lead.created_at,lead.updated_at,xmin::text as version,
+          lead.title,lead.status,lead.created_at,lead.updated_at,lead.xmin::text as version,
           result.submission_id,submission.payload,
           coalesce((select jsonb_agg(jsonb_build_object('kind',identity.identity_type,'value',identity.normalized_value) order by identity.created_at)
             from public.builder_contact_identities identity where identity.site_id=lead.site_id and identity.contact_id=lead.contact_id),'[]'::jsonb) identities,

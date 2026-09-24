@@ -43,10 +43,11 @@ describe("Speaking Engagements lead repository", () => {
       }),
     ]);
     expect(query.mock.calls[0]?.[1]).toEqual(["speaking-engagement"]);
+    expect(query.mock.calls[0]?.[0]).toContain("lead.xmin::text as version");
   });
 
   it("loads the submitted event, identities, timeline, and safe notification state", async () => {
-    const { repository: leads } = repository([
+    const { repository: leads, query } = repository([
       {
         id: "33333333-3333-4333-8333-333333333333",
         contact_id: "44444444-4444-4444-8444-444444444444",
@@ -71,6 +72,7 @@ describe("Speaking Engagements lead repository", () => {
       submission: { payload: { eventType: "keynote" } },
       notifications: [{ state: "delivered" }],
     });
+    expect(query.mock.calls[0]?.[0]).toContain("lead.xmin::text as version");
   });
 
   it("changes status with optimistic concurrency and appends a status event", async () => {
