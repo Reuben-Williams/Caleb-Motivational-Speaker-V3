@@ -100,7 +100,8 @@ the existing Caleb Staff sign-in flow without revealing editor or lead data.
 
 - `/admin/editor/website` hosts `CalebAttachedWebsiteEditor`, composed from the
   published editor package shell and workspace primitives.
-- `/admin/editor/preview/[...page]` renders the selected public page in private
+- `/admin/editor/preview/[[...page]]` renders every selected public page,
+  including the homepage when the optional catch-all is empty, in private
   draft mode for the editor iframe and normalizes the preview pathname back to
   its canonical public path.
 - `/api/builder/content` serves content, audit, publish, and rollback operations.
@@ -141,18 +142,20 @@ The server implements `BuilderContentAdapter` as the persistence boundary and
 uses the package route-operation vocabulary only as an input to Caleb's explicit
 authorization map.
 
-`BuilderSiteConfig.adapter` is set to `"central"` because the `0.5.0` field
-describes the editor's server-route transport: the browser talks to Caleb's
-same-origin central API boundary. It does **not** mean the Site Editor control
-plane and does not select the database adapter. The generic Supabase content
-adapter is not used because Caleb's approved content system of record is Neon.
-A focused `CalebPostgresContentAdapter` behind that same-origin route implements
-the published `BuilderContentAdapter` record shapes. No cast, false `"memory"`
-value, or undeclared `"postgres"` value is permitted.
+Caleb does not construct or pass `BuilderSiteConfig`, because its required
+`adapter` field selects one of the package's central/Supabase/memory adapter
+factories and none truthfully represents this site-local Neon boundary. The
+composed shell primitives do not require that type. A local
+`CalebEditorSiteConfig` imports and reuses only compatible published types such
+as `BuilderPage`, `BuilderRegionDefinition`, and `EditableValue`, and pairs them
+with a typed same-origin controller. A focused `CalebPostgresContentAdapter`
+behind those routes implements the published `BuilderContentAdapter` record
+shapes. No false `"central"`/`"memory"` value, cast, or undeclared `"postgres"`
+value is permitted.
 
 ## Site Configuration and Editable Regions
 
-A single `BuilderSiteConfig` defines the stable site identity, public pages,
+A single `CalebEditorSiteConfig` defines the stable site identity, public pages,
 an empty global-region list, and the type of every editable region. The server resolves the
 canonical Caleb site ID from the fixed stable key `caleb-jakes-v3`; neither the
 browser nor a URL parameter supplies tenant identity.
@@ -254,8 +257,18 @@ horizontal rules, and manual URL fields are not accepted.
 
 ## Neon Data Model
 
-The next additive Caleb migration after the deployed native-booking manifest
-adds site-scoped content tables compatible with `BuilderContentAdapter`:
+The additive migration is named exactly
+`0014_caleb_attached_site_editor.sql`, after the installed managed-runtime
+`0013` lineage. It advances only the installation manifest's `builder` schema
+from `1` to `2`; `forms: 2` and `growth: 1` remain unchanged. The SQL file's
+SHA-256 cannot truthfully be invented before the SQL is authored. The
+implementation plan must record the computed checksum, an independent review
+must approve that exact file/checksum, and Preview/Production audits must match
+it before either apply step. Any SQL change after review changes the checksum
+and returns to review.
+
+Migration `0014` adds these site-scoped tables compatible with
+`BuilderContentAdapter`:
 
 ### `builder_draft_pages`
 
@@ -297,13 +310,24 @@ that recorded result; the same key with a different digest fails closed. These
 receipts make a lost HTTP response safe to retry without repeating a publish,
 rollback, undo, or media mutation.
 
+### `builder_content_revalidation_jobs`
+
+A durable outbox row for every public-pointer advance, uniquely keyed by
+`(site_id, page_path, published_version_id)`. It records operation
+(`publish`, `rollback`, or `undoRollback`), status
+(`pending`, `processing`, `completed`, or `failed`), attempt count,
+`next_attempt_at`, lease owner/expiry, last safe error code, correlation ID, and
+timestamps. The job is inserted in the same transaction that advances the
+published pointer and writes its audit/command receipt.
+
 Every primary and foreign key includes or verifies `site_id`. Direct public and
 browser table access is denied. Site-local Postgres functions or transactions
 derive tenant and actor from the verified data-plane session.
 
-Draft save, publish, rollback, and undo are atomic. A publish creates the
-immutable version and advances the published pointer in the same transaction.
-An audit row is written in that transaction. A failure changes nothing.
+Draft save, publish, rollback, and undo are atomic. Every public mutation
+creates the immutable version, advances the published pointer, writes its audit
+row and command receipt, and enqueues its revalidation job in the same
+transaction. A failure changes nothing.
 
 ## Concurrency and Idempotency
 
@@ -334,6 +358,9 @@ The local API contract is frozen as follows:
 - Rollback uses `PATCH /api/builder/content` with
   `{ pagePath, versionId, expectedPublishedVersionId }`; undo uses the same
   optimistic rule and creates another version.
+- `GET /api/builder/revalidation?correlationId=<authorized-command>` returns
+  `{ revalidation: "pending" | "complete" | "failed" }` for the current actor's
+  site-scoped command without exposing worker details.
 - Media upload uses multipart fields `file`, `label`, required `alt`, and
   optional declared `regionId`.
 
@@ -341,8 +368,19 @@ Every mutation carries the exact existing privileged-request headers
 `x-csrf-token` and `idempotency-key`; there is no `x-builder-csrf` alias. A
 successful mutation returns
 `{ status: "applied" | "replayed", version, ...relevantVersionIds }`.
-Publish also returns `revalidation: "complete" | "pending"`. A stale token
-returns `409 CONTENT_VERSION_CONFLICT` with no write.
+Publish, rollback, and undo also return
+`revalidation: "complete" | "pending"`; a synchronous successful refresh may
+complete the queued job before response. A stale token returns
+`409 CONTENT_VERSION_CONFLICT` with no write.
+
+The signed `/api/builder/workers/revalidation` route claims due jobs with
+`FOR UPDATE SKIP LOCKED`, gives each claim a short expiring lease, reclaims an
+expired lease after a serverless crash, and retries with bounded exponential
+backoff. Success marks the row `completed`. Exhausted attempts mark it `failed`
+and expose a safe Staff retry action that returns the same command correlation
+to pending; it never advances the content pointer again. The controller polls
+the authorized status route to move from `revalidation_pending` to `success` or
+an actionable `error`.
 
 The stock `0.5.0` route handler is not used for these writes because it cannot
 carry this complete wire contract. Caleb's typed local controller calls the
@@ -370,11 +408,16 @@ there is no manual image-URL field. The server:
    `/api/site-media/[mediaId]` URL, label, alt, type, size, and dimensions; and
 9. removes an orphaned newly uploaded object if the metadata transaction fails.
 
-An image-region value persists `mediaId` and `alt`, never an arbitrary source
-URL. The server verifies the media row belongs to the fixed Caleb site and
-canonicalizes `src` from that row. A missing, cross-site, or arbitrary URL value
-is rejected. Every seeded fallback image has a deterministic seeded `mediaId`
-mapping; the absolute URL observed in the DOM is never written back as content.
+An image-region snapshot persists the published platform-compatible value
+`{ type: "image", mediaId, src, alt }`, never a smaller private shape or an
+arbitrary source URL. At every adapter write boundary, the server ignores any
+client `src`, verifies that `mediaId` belongs to the fixed Caleb site, and
+derives canonical `src` as `/api/site-media/[mediaId]`; `alt` is validated
+against the declared region. Adapter reads validate the same invariant before
+returning `EditableValue`. A missing/cross-site ID, wrong `type`, noncanonical
+`src`, or link metadata is rejected. Every seeded fallback image has a
+deterministic seeded `mediaId` mapping; the absolute URL observed in the DOM is
+never written back as content.
 
 The browser never receives the Supabase service credential or arbitrary object
 keys. Published pages reference the first-party
@@ -420,9 +463,12 @@ The existing Speaking Engagements authorization path remains unchanged.
 Caleb adds a parallel site-local website request context and privileged guard
 that reuse the existing verified session, membership, role, authorization
 version, revocation, exact origin check, CSRF cookie/header comparison, and
-idempotency/replay semantics. Its parser accepts only published
-`WEBSITE_CAPABILITIES`; it cannot parse Growth or arbitrary strings. The fixed
-entitlement is module ID `core.website`. Read operations require the
+idempotency/replay semantics. A membership may correctly contain both Growth
+and website grants. The website loader first selects grants scoped to fixed
+module ID `core.website`, then parses only published `WEBSITE_CAPABILITIES` from
+those rows. Growth rows remain available to the unchanged Speaking Engagements
+loader; an unknown or malformed `core.website` row fails the website request
+closed. Read operations require the
 `core.website/read` entitlement action and mutations require
 `core.website/write`.
 
@@ -449,13 +495,22 @@ cookie boundary, `idempotency-key`, JSON or multipart size limits, and a
 correlation ID. The browser cannot provide a site ID, actor ID, role,
 capability list, bucket, object key, or public-state flag.
 
-The ordinary public site and Staff shell retain `frame-ancestors 'none'` and
-`X-Frame-Options: DENY`. The Website Editor shell adds `frame-src 'self'` so it
-can host its own preview while remaining non-frameable itself. Only
-`/admin/editor/preview/[...page]` receives `frame-ancestors 'self'`,
-`X-Frame-Options: SAMEORIGIN`, `private, no-store`, and `noindex`. The global
-header rule must exclude that preview route so contradictory duplicate CSP
-headers cannot preserve `frame-ancestors 'none'` there.
+The ordinary public site and non-website Staff routes retain the current global
+CSP, `frame-ancestors 'none'`, and `X-Frame-Options: DENY`. Both website-editor
+route families are excluded from that global header rule and receive exactly
+one consolidated CSP, rather than an additive second CSP whose intersection
+would remain blocked:
+
+- `/admin/editor/website` copies the ordinary directives but sets
+  `frame-src 'self'` plus the already approved external frame origins, retains
+  `frame-ancestors 'none'`, and retains `X-Frame-Options: DENY`; and
+- `/admin/editor/preview/[[...page]]` receives the ordinary directives with
+  `frame-ancestors 'self'`, `X-Frame-Options: SAMEORIGIN`, `private, no-store`,
+  and `noindex`.
+
+Header tests assert one effective CSP for each route and prove the ordinary
+site cannot be framed, the editor host cannot be framed, the host can frame only
+its same-origin preview, and the preview cannot be framed cross-origin.
 
 The site-local `CalebPreviewBridge` strips the private preview prefix and emits
 the canonical public pathname expected by the package selection protocol. It
@@ -491,8 +546,10 @@ The typed operation controller exposes
 the user's unsaved local field value and offers a refresh/compare action; it
 never retries over newer work. A committed publish whose route refresh is still
 pending displays exactly **“Published; public refresh is still being
-completed.”** The client retries only with the same idempotency key, which
-returns the recorded result, and never creates a second publish command.
+completed.”** Rollback/undo use the corresponding **“Restored; public refresh
+is still being completed.”** state. The client retries only with the same
+idempotency key, which returns the recorded result, and never creates a second
+content command.
 
 History shows actor, time, page, action, and a concise change summary. Restore
 creates a new rollback version rather than deleting history. Undo restore also
@@ -516,10 +573,11 @@ warning.
 - **Stale editor:** return a conflict without changing data.
 - **Partial media upload:** clean up an unreferenced new object when safe and
   retain an auditable failure code without exposing provider details.
-- **Publish invalidation failure after database commit:** the publish remains
-  authoritative, returns `revalidation: "pending"`, and enters the explicit
-  `revalidation_pending` state. A bounded background reconciliation revalidates
-  the route. It is not published twice.
+- **Publish/rollback/undo invalidation failure after database commit:** the
+  public-pointer change remains authoritative, returns
+  `revalidation: "pending"`, and enters the explicit
+  `revalidation_pending` state. The durable leased worker completes or surfaces
+  the queued reconciliation. The content mutation is not performed twice.
 - **Package/editor JavaScript failure:** the public site remains readable and
   uses code or published server content; Staff mutations are unavailable rather
   than falling back to insecure direct edits.
@@ -553,13 +611,17 @@ includes:
    mismatches;
 3. Neon adapter tests for empty state, draft save, publish, rollback, undo,
    audit, site isolation, atomic failure, durable idempotent replay, receipt
-   payload-digest mismatch, and separate draft/published stale-token conflicts;
+   payload-digest mismatch, separate draft/published stale-token conflicts,
+   transactional revalidation outbox insertion, lease-expiry recovery, bounded
+   retry, and completion/failure transitions;
 4. authorization tests for Owner, Administrator/Operator, missing capability,
    inactive membership, revocation, wrong site, wrong issuer/audience, expired
    session, CSRF, origin, and replay failure;
 5. media tests for accepted formats, magic-byte mismatch, malformed decode,
    size/dimension limits, required alt text, immutable paths, failed metadata
-   cleanup, private draft access, and published-only public access;
+   cleanup, package-compatible canonical `EditableValue` mapping, rejection of
+   client `src`/link metadata, private draft access, and published-only public
+   access;
 6. route tests proving public reads cannot request drafts and browser input
    cannot choose the site, actor, role, capabilities, bucket, or object key;
 7. component tests for the two-destination workspace, page selection, region
@@ -568,13 +630,16 @@ includes:
    history, restore, and responsive navigation;
 8. browser tests proving a draft changes only the authenticated preview, publish
    changes only the selected public page, rollback creates a new version,
-   preview messages use the canonical public path, the iframe policy is
-   route-limited, and no draft or draft-only media leaks through caches;
+   publish/rollback/undo survive a simulated refresh-worker crash, homepage and
+   nested preview messages use the canonical public path, exactly one effective
+   CSP applies per route, the iframe policy is route-limited, and no draft or
+   draft-only media leaks through caches;
 9. public outage tests proving every route renders its current code fallback
    when Neon content reads fail; and
 10. tests proving the existing Growth-only Speaking Engagements guard is
-    unchanged while the website parser rejects Growth/unknown capabilities and
-    enforces `core.website` read/write actions and AAL2 policy; and
+    unchanged while one membership can hold both Growth and website grants,
+    each loader selects only its module, unknown website rows fail closed, and
+    `core.website` read/write actions and AAL2 policy are enforced; and
 11. full lint, typecheck, unit suite, production build, secret scan,
     `git diff --check`, installation preflight, and responsive browser checks at
     desktop, tablet, and representative mobile widths.
@@ -606,14 +671,25 @@ browser checks and is not claimed unless performed.
    rollback, concurrency, authorization, and outage acceptance.
 7. Update `src/lib/platform/installation/manifest.ts`, its tests, and
    `scripts/preflight-installation-runtime.mjs`. The exact runtime-package
-   allowlist becomes `core`, `forms`, `growth-core`, `growth-customers`,
-   `growth-leads`, `growth-messaging`, `next`, `editor`, and `content`, all at
-   `0.5.0`; no transitive package counts as installed. Add the editor/API/preview
-   routes and content schema. Regenerate `.builder/installation-manifest.json`
-   rather than hand-editing it, then regenerate `.builder/site-runtime.json` and
+   allowlist becomes `@reuben-williams/core`, `@reuben-williams/forms`,
+   `@reuben-williams/growth-core`, `@reuben-williams/growth-customers`,
+   `@reuben-williams/growth-leads`, `@reuben-williams/growth-messaging`,
+   `@reuben-williams/next`, `@reuben-williams/editor`, and
+   `@reuben-williams/content`, all at `0.5.0`; no
+   transitive package counts as installed. The exact resulting schema map is
+   `{ builder: 2, forms: 2, growth: 1 }`. The exact sorted route inventory is:
+   `/admin/editor`, `/admin/editor/speaking-engagements`,
+   `/admin/editor/website`, `/admin/editor/preview/[[...page]]`,
+   `/api/builder/content`, `/api/builder/media`,
+   `/api/builder/revalidation`, `/api/builder/workers/installation`,
+   `/api/builder/workers/revalidation`, and `/api/site-media/[mediaId]`.
+   Regenerate `.builder/installation-manifest.json` rather than hand-editing it,
+   then regenerate `.builder/site-runtime.json` and
    `.builder/installation-key-binding.json` against the new manifest digest.
-   Run installation preflight and capture new signed reachability/health
-   evidence tied to that digest.
+   The manifest/test evidence must bind `builder: 2` to reviewed migration
+   `0014_caleb_attached_site_editor.sql` and its exact SHA-256. Run installation
+   preflight and capture new signed reachability/health evidence tied to that
+   digest.
 8. Run the full repository checks and responsive route matrix.
 9. Create a Production Neon backup branch, verify the migration manifest and
    checksums, and require explicit user authorization before applying it.
@@ -650,8 +726,9 @@ This appendix is the allowlist. A route or DOM element not listed here is not
 editable. All entries are page-scoped, `linkable=false`, and required at
 publish time unless marked optional. Text limits count Unicode code points:
 eyebrow 120, title 160, body 600, quote 300, FAQ question 220, FAQ answer 1200,
-and image alt 240. An image value is `{ mediaId, alt }`; its fallback source is
-seeded to the exact media ID shown. Tests snapshot the exact fallback value at
+and image alt 240. An image value is the canonical platform
+`{ type: "image", mediaId, src, alt }` shape, with server-derived first-party
+`src`; its fallback source is seeded to the exact media ID shown. Tests snapshot the exact fallback value at
 the named source element, so changing code-authored copy does not silently
 change the content contract.
 
@@ -792,13 +869,13 @@ its links remain locked.
 | `/thank-you` | `thankYou.empty.eyebrow` | text / eyebrow | `src/components/thank-you-state.tsx` no-receipt eyebrow |
 | `/thank-you` | `thankYou.empty.title` | text / title | same component no-receipt heading |
 | `/thank-you` | `thankYou.empty.body` | text / body | same component first no-receipt sentence only; contact links remain code-controlled |
-| `/thank-you` | `thankYou.received.title` | text / title | same component accepted heading |
-| `/thank-you` | `thankYou.received.body` | text / body | same component accepted follow-up paragraph |
 
 `/privacy` intentionally has no editable regions in the first release; it is
 present in the page selector as a view-only preview. The booking form, contact
 facts/links, Turnstile, form headings and instructions, receipt/inquiry IDs,
-accepted-at state, assistance text, and all legal/privacy copy remain locked.
+accepted receipt branch (including its title and body), accepted-at state,
+assistance text, and all legal/privacy copy remain locked. This avoids a fake or
+real receipt in the Staff iframe merely to reach editable content.
 
 ### Global inventory
 
