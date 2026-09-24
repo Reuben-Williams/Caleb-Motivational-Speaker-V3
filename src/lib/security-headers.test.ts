@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import nextConfig from "../../next.config";
-import { productionSecurityHeaders } from "@/lib/security-headers";
+import {
+  productionSecurityHeaders,
+  websiteEditorSecurityHeaders,
+  websitePreviewSecurityHeaders,
+} from "@/lib/security-headers";
 
 function headerValue(key: string): string | undefined {
   return productionSecurityHeaders.find((header) => header.key === key)?.value;
@@ -32,11 +36,23 @@ describe("production security headers", () => {
     expect(nextConfig.headers).toBeTypeOf("function");
     const rules = await nextConfig.headers!();
 
-    expect(rules).toEqual([
-      {
-        source: "/(.*)",
-        headers: productionSecurityHeaders,
-      },
-    ]);
+    expect(rules).toHaveLength(3);
+    expect(rules[0]?.headers).toBe(productionSecurityHeaders);
+    expect(rules[1]).toEqual({ source: "/admin/editor/website/:path*", headers: websiteEditorSecurityHeaders });
+    expect(rules[2]).toEqual({ source: "/admin/editor/preview/:path*", headers: websitePreviewSecurityHeaders });
+  });
+
+  it("uses one non-frameable editor CSP and one same-origin-only preview CSP", () => {
+    const editorCsp = websiteEditorSecurityHeaders.find((item) => item.key === "Content-Security-Policy")?.value;
+    const previewCsp = websitePreviewSecurityHeaders.find((item) => item.key === "Content-Security-Policy")?.value;
+    expect(websiteEditorSecurityHeaders.filter((item) => item.key === "Content-Security-Policy")).toHaveLength(1);
+    expect(websitePreviewSecurityHeaders.filter((item) => item.key === "Content-Security-Policy")).toHaveLength(1);
+    expect(editorCsp).toContain("frame-src 'self' https://challenges.cloudflare.com");
+    expect(editorCsp).toContain("frame-ancestors 'none'");
+    expect(websiteEditorSecurityHeaders).toContainEqual({ key: "X-Frame-Options", value: "DENY" });
+    expect(previewCsp).toContain("frame-ancestors 'self'");
+    expect(websitePreviewSecurityHeaders).toContainEqual({ key: "X-Frame-Options", value: "SAMEORIGIN" });
+    expect(websitePreviewSecurityHeaders).toContainEqual({ key: "Cache-Control", value: "private, no-store" });
+    expect(websitePreviewSecurityHeaders).toContainEqual({ key: "X-Robots-Tag", value: "noindex, nofollow" });
   });
 });

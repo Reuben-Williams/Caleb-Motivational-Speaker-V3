@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
-import { productionSecurityHeaders } from "./src/lib/security-headers";
+import {
+  productionSecurityHeaders,
+  websiteEditorSecurityHeaders,
+  websitePreviewSecurityHeaders,
+} from "./src/lib/security-headers";
 
 const isGitHubPages = process.env.GITHUB_PAGES === "true";
 const githubPagesBasePath = isGitHubPages
@@ -32,8 +36,16 @@ const serverRedirects: NonNullable<NextConfig["redirects"]> = async () => [
 
 const serverHeaders: NonNullable<NextConfig["headers"]> = async () => [
   {
-    source: "/(.*)",
+    source: "/((?!admin/editor/(?:website|preview)(?:/|$)).*)",
     headers: productionSecurityHeaders,
+  },
+  {
+    source: "/admin/editor/website/:path*",
+    headers: websiteEditorSecurityHeaders,
+  },
+  {
+    source: "/admin/editor/preview/:path*",
+    headers: websitePreviewSecurityHeaders,
   },
 ];
 
