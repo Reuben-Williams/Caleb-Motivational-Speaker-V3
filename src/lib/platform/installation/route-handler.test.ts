@@ -118,6 +118,7 @@ describe("Caleb installation worker route", () => {
       { path: "/api/cron/inquiries-email", schedule: "*/5 * * * *" },
       { path: "/api/cron/inquiries-retention", schedule: "15 6 * * *" },
       { path: "/api/builder/workers/installation", schedule: "*/5 * * * *" },
+      { path: "/api/builder/workers/revalidation", schedule: "*/5 * * * *" },
     ]));
   });
 });

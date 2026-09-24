@@ -15,6 +15,8 @@ import { Pool } from "pg";
 
 import { normalizePostgresConnectionString } from "@/lib/postgres/connection-string";
 import { CalebPostgresContentAdapter } from "@/lib/site-editor/postgres-content-adapter";
+import { PostgresRevalidationStore } from "@/lib/site-editor/revalidation-store";
+import { CALEB_EDITOR_SITE_CONFIG } from "@/lib/site-editor/site-config";
 import { createCalebStaffSessionVerifier } from "@/lib/staff/session";
 import {
   authorizeCalebWebsiteStaff,
@@ -138,17 +140,18 @@ export function createPostgresCalebWebsiteAuthorizationStore(
   });
 }
 
-function adapter(
+function siteSession(
   database: DataPlaneDatabase,
   grant: Readonly<{ siteId: string; subject: string; capability: string }>,
 ) {
-  return new CalebPostgresContentAdapter({
-    database,
-    session: createDataPlaneSession({
-      siteId: grant.siteId,
-      memberId: grant.subject,
-      capabilities: [grant.capability],
-    }),
+  const session = createDataPlaneSession({
+    siteId: grant.siteId,
+    memberId: grant.subject,
+    capabilities: [grant.capability],
+  });
+  return Object.freeze({
+    adapter: new CalebPostgresContentAdapter({ database, session }),
+    revalidation: new PostgresRevalidationStore({ database, session }),
   });
 }
 
@@ -190,7 +193,7 @@ export function createCalebWebsiteRuntime(
           operation,
           correlationId: randomUUID(),
         });
-        return Object.freeze({ grant, adapter: adapter(database, grant) });
+        return Object.freeze({ grant, ...siteSession(database, grant) });
       },
       async authorizeMutation(
         request: Request,
@@ -209,12 +212,29 @@ export function createCalebWebsiteRuntime(
         });
         return Object.freeze({
           ...result,
-          adapter: adapter(database, result.grant),
+          ...siteSession(database, result.grant),
         });
       },
     });
   } catch {
     reportDiagnostic({ code: "invalid_configuration", component: "website_runtime" });
+    return null;
+  }
+}
+
+const REVALIDATION_WORKER_ID = "00000000-0000-4000-8000-000000000015";
+
+export function createCalebRevalidationWorkerStore(environment: Environment) {
+  if (!environment.DATABASE_URL?.trim()) return null;
+  try {
+    const { database } = resources(environment.DATABASE_URL);
+    const session = createDataPlaneSession({
+      siteId: CALEB_EDITOR_SITE_CONFIG.siteId,
+      memberId: REVALIDATION_WORKER_ID,
+      capabilities: ["post.publish"],
+    });
+    return new PostgresRevalidationStore({ database, session });
+  } catch {
     return null;
   }
 }

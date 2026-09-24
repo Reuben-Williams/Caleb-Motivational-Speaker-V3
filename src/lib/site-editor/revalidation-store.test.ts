@@ -4,6 +4,7 @@ import {
   PostgresRevalidationStore,
   enqueueContentRevalidation,
 } from "./revalidation-store";
+import { canonicalContentPayloadDigest } from "./content-command-store";
 
 const session = {
   siteId: "ce607bf6-2959-4d7e-b52a-31a8d21b1db2",
@@ -116,5 +117,69 @@ describe("Postgres content revalidation store", () => {
       store.retryFailed("628652df-e333-4dd4-bdda-d5b7c3d2cc89"),
     ).resolves.toBe(true);
     expect(query.mock.calls[1]?.[0]).toContain("builder_retry_content_revalidation_job_v1");
+  });
+
+  it("records retry audit and an immutable command receipt in the same transaction", async () => {
+    const query = vi.fn()
+      .mockResolvedValueOnce({ rows: [], rowCount: null })
+      .mockResolvedValueOnce({ rows: [{ locked: true }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 })
+      .mockResolvedValueOnce({ rows: [{ page_path: "/about", status: "failed" }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [], rowCount: 1 });
+    const store = new PostgresRevalidationStore({ database: database(query), session });
+
+    await expect(store.retryFailedCommand({
+      targetCorrelationId: "628652df-e333-4dd4-bdda-d5b7c3d2cc89",
+      idempotencyKey: "retry-a",
+      commandCorrelationId: "93fc7a7d-d271-4558-9324-27699e698776",
+    })).resolves.toEqual({
+      status: "applied",
+      revalidation: "pending",
+      correlationId: "628652df-e333-4dd4-bdda-d5b7c3d2cc89",
+    });
+    expect(query.mock.calls[3]?.[0]).toContain("receipt.actor_id=$2::uuid");
+    expect(query.mock.calls[4]?.[0]).toContain("status='pending'");
+    expect(query.mock.calls[5]?.[0]).toContain("'retryRevalidation'");
+    expect(query.mock.calls[6]?.[0]).toContain("builder_content_command_receipts");
+  });
+
+  it("replays the durable pending result without updating the job twice", async () => {
+    const digest = canonicalContentPayloadDigest({
+      action: "retry",
+      correlationId: "628652df-e333-4dd4-bdda-d5b7c3d2cc89",
+    });
+    const query = vi.fn()
+      .mockResolvedValueOnce({ rows: [], rowCount: null })
+      .mockResolvedValueOnce({ rows: [{ locked: true }], rowCount: 1 })
+      .mockResolvedValueOnce({
+        rows: [{
+          payload_digest: digest,
+          response_body: {
+            status: "applied",
+            revalidation: "pending",
+            correlationId: "628652df-e333-4dd4-bdda-d5b7c3d2cc89",
+          },
+          http_status: 200,
+          result_status: "applied",
+          correlation_id: "93fc7a7d-d271-4558-9324-27699e698776",
+          created_at: "2026-09-24T16:00:00.000Z",
+          completed_at: "2026-09-24T16:00:00.000Z",
+        }],
+        rowCount: 1,
+      });
+    const store = new PostgresRevalidationStore({ database: database(query), session });
+
+    await expect(store.retryFailedCommand({
+      targetCorrelationId: "628652df-e333-4dd4-bdda-d5b7c3d2cc89",
+      idempotencyKey: "retry-a",
+      commandCorrelationId: "93fc7a7d-d271-4558-9324-27699e698776",
+    })).resolves.toEqual({
+      status: "replayed",
+      revalidation: "pending",
+      correlationId: "628652df-e333-4dd4-bdda-d5b7c3d2cc89",
+    });
+    expect(query).toHaveBeenCalledTimes(3);
   });
 });
