@@ -36,10 +36,11 @@ describe("production security headers", () => {
     expect(nextConfig.headers).toBeTypeOf("function");
     const rules = await nextConfig.headers!();
 
-    expect(rules).toHaveLength(3);
+    expect(rules).toHaveLength(4);
     expect(rules[0]?.headers).toBe(productionSecurityHeaders);
-    expect(rules[1]).toEqual({ source: "/admin/editor/website/:path*", headers: websiteEditorSecurityHeaders });
-    expect(rules[2]).toEqual({ source: "/admin/editor/preview/:path*", headers: websitePreviewSecurityHeaders });
+    expect(rules[1]).toEqual({ source: "/admin/editor", headers: websiteEditorSecurityHeaders });
+    expect(rules[2]).toEqual({ source: "/admin/editor/website/:path*", headers: websiteEditorSecurityHeaders });
+    expect(rules[3]).toEqual({ source: "/admin/editor/preview/:path*", headers: websitePreviewSecurityHeaders });
   });
 
   it("uses one non-frameable editor CSP and one same-origin-only preview CSP", () => {

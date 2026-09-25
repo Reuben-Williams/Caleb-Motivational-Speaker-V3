@@ -41,8 +41,12 @@ const serverRedirects: NonNullable<NextConfig["redirects"]> = async () => [
 
 const serverHeaders: NonNullable<NextConfig["headers"]> = async () => [
   {
-    source: "/((?!admin/editor/(?:website|preview)(?:/|$)).*)",
+    source: "/((?!admin/editor(?:$|/(?:website|preview)(?:/|$))).*)",
     headers: productionSecurityHeaders,
+  },
+  {
+    source: "/admin/editor",
+    headers: websiteEditorSecurityHeaders,
   },
   {
     source: "/admin/editor/website/:path*",
