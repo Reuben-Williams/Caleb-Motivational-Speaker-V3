@@ -75,4 +75,16 @@ describe("Caleb builder media route", () => {
     expect(response.status).toBe(400);
     expect(media.upload).not.toHaveBeenCalled();
   });
+
+  it("returns authentication required when the staff session is absent", async () => {
+    const { handler, runtime } = fixture();
+    runtime.authorizeRead.mockRejectedValueOnce(Object.assign(new Error("authentication_required"), {
+      status: 401,
+    }));
+
+    const response = await handler(new Request("https://calebjakes.com/api/builder/media"));
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ code: "authentication_required" });
+  });
 });

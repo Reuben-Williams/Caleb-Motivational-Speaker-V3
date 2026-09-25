@@ -27,7 +27,10 @@ function response(body: unknown, status = 200) {
 
 function safeError(error: unknown) {
   const status = error && typeof error === "object" && "httpStatus" in error && typeof error.httpStatus === "number"
-    ? error.httpStatus : 503;
+    ? error.httpStatus
+    : error && typeof error === "object" && "status" in error && typeof error.status === "number"
+      ? error.status
+      : 503;
   const code = error && typeof error === "object" && "code" in error && typeof error.code === "string" && error.code.startsWith("MEDIA_")
     ? error.code : status === 401 ? "authentication_required" : status === 403 ? "not_authorized" : "service_unavailable";
   return response({ code }, [400, 401, 403, 409, 413].includes(status) ? status : 503);
