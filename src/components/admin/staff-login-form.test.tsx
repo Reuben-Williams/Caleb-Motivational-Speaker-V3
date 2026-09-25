@@ -20,7 +20,6 @@ describe("StaffLoginForm", () => {
     signInWithOtpMock.mockResolvedValue({ error: null });
     vi.stubEnv("NEXT_PUBLIC_STAFF_AUTH_URL", "https://auth.example.test");
     vi.stubEnv("NEXT_PUBLIC_STAFF_AUTH_PUBLISHABLE_KEY", "public-test-key");
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://calebjakes.com");
   });
 
   afterEach(() => {
@@ -44,7 +43,7 @@ describe("StaffLoginForm", () => {
         email: "staff@example.test",
         options: {
           emailRedirectTo:
-            "https://calebjakes.com/admin/auth/callback?next=%2Fadmin%2Feditor",
+            `${window.location.origin}/admin/auth/callback?next=%2Fadmin%2Feditor`,
           shouldCreateUser: false,
         },
       });
@@ -68,7 +67,7 @@ describe("StaffLoginForm", () => {
         expect.objectContaining({
           options: expect.objectContaining({
             emailRedirectTo:
-              "https://calebjakes.com/admin/auth/callback?next=%2Fadmin%2Feditor",
+              `${window.location.origin}/admin/auth/callback?next=%2Fadmin%2Feditor`,
           }),
         }),
       );

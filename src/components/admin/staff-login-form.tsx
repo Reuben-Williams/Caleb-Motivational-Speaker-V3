@@ -23,10 +23,9 @@ export function StaffLoginForm({
     try {
       const url = process.env.NEXT_PUBLIC_STAFF_AUTH_URL;
       const publishableKey = process.env.NEXT_PUBLIC_STAFF_AUTH_PUBLISHABLE_KEY;
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-      if (!url || !publishableKey || !siteUrl) throw new Error("not_configured");
+      if (!url || !publishableKey) throw new Error("not_configured");
       const client = createBuilderBrowserClient({ url, publishableKey });
-      const callback = new URL("/admin/auth/callback", siteUrl);
+      const callback = new URL("/admin/auth/callback", window.location.origin);
       callback.searchParams.set(
         "next",
         resolveStaffEditorReturnPath(nextPath),
