@@ -252,6 +252,28 @@ export function createCalebWebsiteRuntime(
 }
 
 const MEDIA_DELIVERY_MEMBER_ID = "00000000-0000-4000-8000-000000000016";
+const PUBLIC_CONTENT_MEMBER_ID = "00000000-0000-4000-8000-000000000017";
+
+export function createCalebPublicContentAdapter(environment: Environment) {
+  if (!environment.DATABASE_URL?.trim()) return null;
+  try {
+    const { database } = resources(environment.DATABASE_URL);
+    const session = createDataPlaneSession({
+      siteId: CALEB_EDITOR_SITE_CONFIG.siteId,
+      memberId: PUBLIC_CONTENT_MEMBER_ID,
+      capabilities: ["preview.read"],
+    });
+    return new CalebPostgresContentAdapter({
+      database,
+      session,
+      resolveMedia: (mediaId) => /^[A-Za-z0-9][A-Za-z0-9._-]{0,159}$/.test(mediaId)
+        ? { path: `/api/site-media/${mediaId}` }
+        : undefined,
+    });
+  } catch {
+    return null;
+  }
+}
 
 export function createCalebPublicMediaStore(environment: Environment) {
   if (!environment.DATABASE_URL?.trim() ||

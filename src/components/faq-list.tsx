@@ -10,9 +10,11 @@ type FaqItem = {
 export function FaqList({
   items,
   allowMultiple = true,
+  regionIds,
 }: {
   items: readonly FaqItem[];
   allowMultiple?: boolean;
+  regionIds?: readonly { question: string; answer: string }[];
 }) {
   const baseId = useId();
   const [openItems, setOpenItems] = useState<Set<number>>(() => new Set());
@@ -43,7 +45,13 @@ export function FaqList({
                 onClick={() => toggleItem(index)}
                 type="button"
               >
-                <span>{item.question}</span>
+                <span
+                  {...(regionIds?.[index] ? {
+                    "data-builder-region-id": regionIds[index].question,
+                    "data-builder-region-kind": "text",
+                    "data-builder-region-value": item.question,
+                  } : {})}
+                >{item.question}</span>
                 <span aria-hidden="true" className="faq-item__symbol">
                   {isOpen ? "−" : "+"}
                 </span>
@@ -54,7 +62,13 @@ export function FaqList({
               hidden={!isOpen}
               id={panelId}
             >
-              <p>{item.answer}</p>
+              <p
+                {...(regionIds?.[index] ? {
+                  "data-builder-region-id": regionIds[index].answer,
+                  "data-builder-region-kind": "text",
+                  "data-builder-region-value": item.answer,
+                } : {})}
+              >{item.answer}</p>
             </div>
           </article>
         );

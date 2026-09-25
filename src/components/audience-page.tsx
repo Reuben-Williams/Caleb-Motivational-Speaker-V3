@@ -3,6 +3,8 @@ import { LinkButton } from "@/components/link-button";
 import { PageHero } from "@/components/page-hero";
 import { Reveal } from "@/components/reveal";
 import { SectionHeading } from "@/components/section-heading";
+import { EditableText } from "@/components/site-content/editable-text";
+import type { CalebResolvedPageContent } from "@/components/site-content/site-page-content";
 import { engagementFormats, organizerOutcomes } from "@/content/site";
 
 export type AudiencePageProps = {
@@ -17,6 +19,8 @@ export type AudiencePageProps = {
   outcomes: readonly string[];
   formatIndexes: readonly number[];
   accent: "cobalt" | "gold" | "burgundy";
+  content?: CalebResolvedPageContent;
+  regionPrefix?: "schools" | "faith" | "conferences";
 };
 
 export function AudiencePage({
@@ -31,6 +35,8 @@ export function AudiencePage({
   outcomes,
   formatIndexes,
   accent,
+  content,
+  regionPrefix,
 }: AudiencePageProps) {
   return (
     <>
@@ -41,6 +47,13 @@ export function AudiencePage({
         imageAlt={imageAlt}
         intro={intro}
         title={title}
+        content={content}
+        regions={content && regionPrefix ? {
+          eyebrow: `${regionPrefix}.hero.eyebrow`,
+          title: `${regionPrefix}.hero.title`,
+          intro: `${regionPrefix}.hero.intro`,
+          image: `${regionPrefix}.hero.image`,
+        } : undefined}
       />
       <section className={`audience-detail audience-detail--${accent}`}>
         <div className="container audience-detail__intro">
@@ -49,7 +62,9 @@ export function AudiencePage({
             <h2>THE CHALLENGE IS PERSONAL. THE PATH FORWARD CAN BE SHARED.</h2>
           </Reveal>
           <Reveal className="audience-detail__note" delay={0.08}>
-            <p>{note}</p>
+            {content && regionPrefix
+              ? <EditableText as="p" content={content} regionId={`${regionPrefix}.audience.note`} />
+              : <p>{note}</p>}
           </Reveal>
         </div>
         <div className="container two-column-lists">

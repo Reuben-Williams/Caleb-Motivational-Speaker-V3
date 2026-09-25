@@ -1,7 +1,13 @@
 import { book, contact, faqs } from "@/content/site";
 import { getSiteBaseUrl } from "@/lib/metadata";
 
-export function StructuredData({ faq = false }: { faq?: boolean }) {
+export function StructuredData({
+  faq = false,
+  faqItems = faqs,
+}: {
+  faq?: boolean;
+  faqItems?: readonly { question: string; answer: string }[];
+}) {
   const origin = getSiteBaseUrl();
   const graph: object[] = [
     {
@@ -36,7 +42,7 @@ export function StructuredData({ faq = false }: { faq?: boolean }) {
   if (faq) {
     graph.push({
       "@type": "FAQPage",
-      mainEntity: faqs.map((item) => ({
+      mainEntity: faqItems.map((item) => ({
         "@type": "Question",
         name: item.question,
         acceptedAnswer: {

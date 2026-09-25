@@ -5,7 +5,10 @@ import { describe, expect, it } from "vitest";
 
 describe("public inquiry privacy disclosure", () => {
   it("describes the native storage, security, email, retention, and request path", () => {
-    const source = readFileSync(resolve("src/app/privacy/page.tsx"), "utf8");
+    const source = readFileSync(
+      resolve("src/components/site-pages/privacy-page-view.tsx"),
+      "utf8",
+    );
     for (const phrase of [
       "Caleb&apos;s website database",
       "Cloudflare Turnstile",

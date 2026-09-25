@@ -70,6 +70,12 @@ export function CalebPreviewBridge({
       pagePath,
       regionId,
       kind,
+      ...(target.dataset.builderRegionValue !== undefined
+        ? { value: target.dataset.builderRegionValue }
+        : {}),
+      ...(kind === "image" && target.dataset.builderRegionAlt !== undefined
+        ? { alt: target.dataset.builderRegionAlt }
+        : {}),
     }), window.location.origin);
   };
 

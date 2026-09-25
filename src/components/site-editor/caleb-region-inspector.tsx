@@ -1,4 +1,5 @@
 import type { MediaAsset } from "@reuben-williams/core";
+import Image from "next/image";
 
 import styles from "./caleb-attached-website-editor.module.css";
 
@@ -31,7 +32,7 @@ export function CalebRegionInspector({ region, value, alt, media, busy, onValue,
         <>
           <label>Alternative text<textarea value={alt} onChange={(event) => onAlt(event.target.value)} /></label>
           <div className={styles.mediaChoices}>
-            {media.map((asset) => <button type="button" key={asset.id} onClick={() => onChoose(asset)}><img src={asset.url} alt="" /><span>{asset.label}</span></button>)}
+            {media.map((asset) => <button type="button" key={asset.id} onClick={() => onChoose(asset)}><Image unoptimized width={320} height={240} src={asset.url} alt="" /><span>{asset.label}</span></button>)}
           </div>
         </>
       )}

@@ -6,6 +6,8 @@ import {
   BOOKING_RECEIPT_KEY,
 } from "@/components/booking-form";
 import { LinkButton } from "@/components/link-button";
+import { EditableText } from "@/components/site-content/editable-text";
+import type { CalebResolvedPageContent } from "@/components/site-content/site-page-content";
 import { contact } from "@/content/site";
 
 type Receipt = {
@@ -31,7 +33,7 @@ function parseReceipt(raw: string | null): Receipt | false {
   return false;
 }
 
-export function ThankYouState() {
+export function ThankYouState({ content }: Readonly<{ content?: CalebResolvedPageContent }>) {
   const rawReceipt = useSyncExternalStore(
     () => () => undefined,
     () => window.sessionStorage.getItem(BOOKING_RECEIPT_KEY),
@@ -42,11 +44,11 @@ export function ThankYouState() {
   if (!receipt) {
     return (
       <section className="simple-state">
-        <p className="eyebrow">SPEAKING INQUIRY</p>
-        <h1>READY TO START THE CONVERSATION?</h1>
+        {content ? <EditableText as="p" className="eyebrow" content={content} regionId="thankYou.empty.eyebrow" /> : <p className="eyebrow">SPEAKING INQUIRY</p>}
+        {content ? <EditableText as="h1" content={content} regionId="thankYou.empty.title" /> : <h1>READY TO START THE CONVERSATION?</h1>}
         <p>
-          No accepted inquiry is associated with this page. Use the booking
-          page, call <a href={contact.phoneHref}>{contact.phoneDisplay}</a>, or
+          {content ? <EditableText as="span" content={content} regionId="thankYou.empty.body" /> : "No accepted inquiry is associated with this page."}{" "}
+          Use the booking page, call <a href={contact.phoneHref}>{contact.phoneDisplay}</a>, or
           email <a href={contact.emailHref}>{contact.email}</a>.
         </p>
         <LinkButton href="/book-caleb">Book Caleb</LinkButton>

@@ -38,7 +38,11 @@ describe("CalebPreviewBridge", () => {
     const postMessage = vi.spyOn(window.parent, "postMessage");
     const { getByText } = render(
       <CalebPreviewBridge pagePath="/">
-        <button data-builder-region-id="home.hero.title.line1" data-builder-region-kind="text">Title</button>
+        <button
+          data-builder-region-id="home.hero.title.line1"
+          data-builder-region-kind="text"
+          data-builder-region-value="PAIN HAS"
+        >Title</button>
         <button data-builder-region-id="locked.contact.email" data-builder-region-kind="text">Locked</button>
       </CalebPreviewBridge>,
     );
@@ -47,7 +51,7 @@ describe("CalebPreviewBridge", () => {
     }), window.location.origin);
     fireEvent.click(getByText("Title"));
     expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({
-      type: "builder:select-region", pagePath: "/", regionId: "home.hero.title.line1", kind: "text",
+      type: "builder:select-region", pagePath: "/", regionId: "home.hero.title.line1", kind: "text", value: "PAIN HAS",
     }), window.location.origin);
     const count = postMessage.mock.calls.length;
     fireEvent.click(getByText("Locked"));

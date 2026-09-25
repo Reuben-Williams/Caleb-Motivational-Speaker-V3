@@ -1,6 +1,7 @@
 "use client";
 
 import type { MediaAsset } from "@reuben-williams/core";
+import Image from "next/image";
 import { useState } from "react";
 import styles from "./caleb-attached-website-editor.module.css";
 
@@ -20,6 +21,6 @@ export function CalebMediaWorkspace({ assets, busy, onUpload }: Readonly<{
       <label>Alternative text<textarea value={alt} maxLength={240} required onChange={(event) => setAlt(event.target.value)} /></label>
       <button className={styles.primary} disabled={busy || !file || !label.trim() || !alt.trim()}>Upload image</button>
     </form>
-    <div className={styles.libraryGrid}>{assets.map((asset) => <article key={asset.id}><img src={asset.url} alt={asset.alt} /><strong>{asset.label}</strong><span>{asset.alt}</span></article>)}</div>
+    <div className={styles.libraryGrid}>{assets.map((asset) => <article key={asset.id}><Image unoptimized width={640} height={480} src={asset.url} alt={asset.alt} /><strong>{asset.label}</strong><span>{asset.alt}</span></article>)}</div>
   </section>;
 }
