@@ -11,6 +11,11 @@ const githubPagesBasePath = isGitHubPages
   ? "/Caleb-Motivational-Speaker-V3"
   : "";
 
+const sharpLinuxRuntimeFiles = [
+  "./node_modules/@img/sharp-linux-x64/**/*",
+  "./node_modules/@img/sharp-libvips-linux-x64/**/*",
+];
+
 const serverRedirects: NonNullable<NextConfig["redirects"]> = async () => [
   {
     source: "/motivational-speaking-events",
@@ -78,6 +83,14 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_BASE_PATH: githubPagesBasePath,
   },
   outputFileTracingIncludes: {
+    "/admin/editor": sharpLinuxRuntimeFiles,
+    "/admin/editor/website": sharpLinuxRuntimeFiles,
+    "/admin/editor/preview/**": sharpLinuxRuntimeFiles,
+    "/api/builder/content": sharpLinuxRuntimeFiles,
+    "/api/builder/media": sharpLinuxRuntimeFiles,
+    "/api/builder/revalidation": sharpLinuxRuntimeFiles,
+    "/api/builder/workers/revalidation": sharpLinuxRuntimeFiles,
+    "/api/site-media/**": sharpLinuxRuntimeFiles,
     "/api/builder/workers/installation": ["./.builder/**/*"],
   },
   ...(isGitHubPages
