@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { createBuilderBrowserClient } from "@reuben-williams/next/auth";
+import styles from "./staff-security-verification.module.css";
 
 export function StaffSecurityVerification() {
   const [open, setOpen] = useState(false);
@@ -38,9 +39,9 @@ export function StaffSecurityVerification() {
     }
   }
 
-  return <section aria-label="Staff security verification">
+  return <section className={styles.security} aria-label="Staff security verification">
     <button type="button" onClick={() => setOpen((current) => !current)} disabled={busy}>Verify publishing access</button>
-    {open ? <form onSubmit={verify} style={{ display: "grid", gap: ".6rem", maxWidth: 360, marginTop: ".75rem" }}>
+    {open ? <form onSubmit={verify}>
       <label>Authenticator code<input aria-label="Authenticator code" value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required /></label>
       <p>Enter the six-digit code from your authenticator app.</p>
       <button type="submit" disabled={busy || code.length !== 6}>{busy ? "Verifying…" : "Verify security"}</button>

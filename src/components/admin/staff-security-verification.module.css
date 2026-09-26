@@ -1,0 +1,8 @@
+.security { margin: 1rem 0; color: #17191b; font-family: Arial, sans-serif; }
+.security form { display: grid; gap: .6rem; max-width: 360px; margin-top: .75rem; padding: 1rem; border: 1px solid #c9c7bf; border-radius: 12px; background: #fff; }
+.security label { display: grid; gap: .4rem; font-size: .9rem; font-weight: 600; }
+.security input { width: 100%; min-height: 44px; border: 1px solid #777; border-radius: 6px; padding: .65rem; background: #fff; color: #17191b; font-size: 1.1rem; letter-spacing: .15em; }
+.security button { min-height: 44px; padding: .6rem 1rem; border: 1px solid #343434; border-radius: 8px; background: #17191b; color: #fff; cursor: pointer; font: inherit; }
+.security button:disabled { opacity: .55; cursor: not-allowed; }
+.security input:focus-visible, .security button:focus-visible { outline: 3px solid #bd971d; outline-offset: 3px; }
+.security p { font-size: .9rem; line-height: 1.5; }
