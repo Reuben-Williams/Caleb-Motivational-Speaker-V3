@@ -50,6 +50,11 @@ function response(body: unknown, status = 200): Response {
 }
 
 function safeError(error: unknown): Response {
+  // Emit only bounded machine codes, never exception messages or request data.
+  if (error && typeof error === "object" && "code" in error && typeof error.code === "string" &&
+    /^(?:DATA_PLANE_[A-Z_]+|CONTENT_[A-Z_]+|[0-9]{5})$/.test(error.code)) {
+    console.warn("website_content_command_failed", { code: error.code });
+  }
   if (websiteSecurityErrorCode(error)) return response({ code: "security_verification_required" }, 403);
   if (error && typeof error === "object") {
     const status = "httpStatus" in error && typeof error.httpStatus === "number"
