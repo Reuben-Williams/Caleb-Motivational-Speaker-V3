@@ -2,9 +2,56 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CalebAttachedWebsiteEditor } from "./caleb-attached-website-editor";
+import { createBuilderPreviewMessage } from "@reuben-williams/core";
 
 describe("Caleb attached website editor", () => {
   afterEach(() => vi.unstubAllGlobals());
+
+  it("obtains a CSRF token and refreshes the private preview after saving a draft", async () => {
+    document.cookie = "builder_csrf=; max-age=0; path=/";
+    const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      const body = url === "/api/admin/csrf" ? { token: "test-csrf" }
+        : init?.method === "POST" ? { draftVersionId: "draft-one" }
+          : url.includes("/media") ? { assets: [] }
+            : { draftVersionId: null, publishedVersionId: null };
+      return Response.json(body);
+    });
+    vi.stubGlobal("fetch", fetch);
+    render(<CalebAttachedWebsiteEditor />);
+    await screen.findByText("Draft loaded.");
+    const frame = screen.getByTitle("/ draft preview") as HTMLIFrameElement;
+    fireEvent(window, new MessageEvent("message", {
+      origin: window.location.origin, source: frame.contentWindow,
+      data: createBuilderPreviewMessage("ce607bf6-2959-4d7e-b52a-31a8d21b1db2", {
+        type: "builder:select-region", pagePath: "/", regionId: "home.hero.title.line1", kind: "text", value: "PAIN HAS",
+      }),
+    }));
+    fireEvent.change(screen.getByRole("textbox", { name: /^Text$/ }), { target: { value: "PREVIEW TEST" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    await screen.findByText("Draft saved. The public site has not changed.");
+    expect(fetch).toHaveBeenCalledWith("/api/admin/csrf", expect.any(Object));
+    expect(fetch).toHaveBeenCalledWith("/api/builder/content", expect.objectContaining({
+      method: "POST", headers: expect.objectContaining({ "x-csrf-token": "test-csrf" }),
+    }));
+    expect(screen.getByTitle("/ draft preview")).not.toBe(frame);
+  });
+
+  it("rejects region selections from another window or a wrong region kind", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => Response.json(
+      String(input).includes("/media") ? { assets: [] } : { draftVersionId: null, publishedVersionId: null },
+    )));
+    render(<CalebAttachedWebsiteEditor />);
+    await screen.findByText("Draft loaded.");
+    const frame = screen.getByTitle("/ draft preview") as HTMLIFrameElement;
+    const data = createBuilderPreviewMessage("ce607bf6-2959-4d7e-b52a-31a8d21b1db2", {
+      type: "builder:select-region", pagePath: "/", regionId: "home.hero.title.line1", kind: "text", value: "Injected",
+    });
+    fireEvent(window, new MessageEvent("message", { origin: window.location.origin, source: window, data }));
+    expect(screen.queryByRole("textbox", { name: /^Text$/ })).not.toBeInTheDocument();
+    fireEvent(window, new MessageEvent("message", { origin: window.location.origin, source: frame.contentWindow, data: { ...data, kind: "image" } }));
+    expect(screen.queryByLabelText("Alternative text")).not.toBeInTheDocument();
+  });
 
   it("makes Website the default while preserving Speaking Engagements and responsive navigation", async () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
@@ -40,6 +87,7 @@ describe("Caleb attached website editor", () => {
     vi.stubGlobal("confirm", vi.fn(() => true));
     const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
       const url = String(input);
+      if (url === "/api/admin/csrf") return Response.json({ token: "test-csrf" });
       if (url.includes("resource=history")) return new Response(JSON.stringify({
         versions: [{
           id: "11111111-1111-4111-8111-111111111111", siteId: "ce607bf6-2959-4d7e-b52a-31a8d21b1db2",

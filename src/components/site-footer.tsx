@@ -39,7 +39,8 @@ export function SiteFooter() {
             Facebook
           </a>
           <Link href="/privacy">Privacy</Link>
-          <Link href="/admin/editor">Staff Login</Link>
+          {/* A full navigation applies the editor document's dedicated CSP. */}
+          <a href="/admin/editor">Staff Login</a>
         </div>
       </div>
       <div className="container site-footer__bottom">

@@ -3,6 +3,7 @@ import "server-only";
 import type { CalebPostgresContentAdapter } from "./postgres-content-adapter";
 import type { PostgresMediaStore } from "./media-store";
 import { getCalebSeedMedia } from "./media-seed-catalog";
+import { websiteSecurityErrorCode } from "./security-error";
 
 const PRIVATE_HEADERS = Object.freeze({ "Cache-Control": "private, no-store" });
 const MAX_JSON_BYTES = 64 * 1024;
@@ -49,6 +50,7 @@ function response(body: unknown, status = 200): Response {
 }
 
 function safeError(error: unknown): Response {
+  if (websiteSecurityErrorCode(error)) return response({ code: "security_verification_required" }, 403);
   if (error && typeof error === "object") {
     const status = "httpStatus" in error && typeof error.httpStatus === "number"
       ? error.httpStatus

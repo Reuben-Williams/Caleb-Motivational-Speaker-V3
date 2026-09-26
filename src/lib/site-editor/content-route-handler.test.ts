@@ -75,6 +75,19 @@ function mutation(method: string, body: unknown, headers: Record<string, string>
 }
 
 describe("Caleb content route", () => {
+  it("requires authenticator verification before publishing without exposing internal errors", async () => {
+    const test = fixture();
+    test.runtime.authorizeMutation.mockRejectedValueOnce(Object.assign(new Error("private authentication detail"), {
+      code: "RECENT_AAL2_REQUIRED",
+    }));
+    const response = await test.handler(mutation("PUT", {
+      pagePath: "/", expectedDraftVersionId: VERSION.id, expectedPublishedVersionId: null,
+    }));
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ code: "security_verification_required" });
+    expect(test.adapter.publishCommand).not.toHaveBeenCalled();
+  });
+
   it("reads draft state and history through separate Website operations", async () => {
     const draft = fixture();
     const draftResponse = await draft.handler(new Request(

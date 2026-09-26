@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { PostgresMediaStore } from "./media-store";
+import { websiteSecurityErrorCode } from "./security-error";
 
 const PRIVATE_HEADERS = { "Cache-Control": "private, no-store" };
 
@@ -26,6 +27,7 @@ function response(body: unknown, status = 200) {
 }
 
 function safeError(error: unknown) {
+  if (websiteSecurityErrorCode(error)) return response({ code: "security_verification_required" }, 403);
   const status = error && typeof error === "object" && "httpStatus" in error && typeof error.httpStatus === "number"
     ? error.httpStatus
     : error && typeof error === "object" && "status" in error && typeof error.status === "number"

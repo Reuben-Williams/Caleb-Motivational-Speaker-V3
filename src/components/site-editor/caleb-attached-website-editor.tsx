@@ -4,16 +4,22 @@ import type { BuilderPreviewMessage, MediaAsset, VersionRecord } from "@reuben-w
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 import { StaffWorkspaceShell } from "@/components/admin/staff-workspace-shell";
+import { StaffSecurityVerification } from "@/components/admin/staff-security-verification";
 import { calebEditorReducer, initialCalebEditorState } from "./caleb-editor-controller";
 import { type CalebSelectedRegion, CalebRegionInspector } from "./caleb-region-inspector";
 import { CalebMediaWorkspace } from "./caleb-media-workspace";
 import { CalebHistoryWorkspace } from "./caleb-history-workspace";
+import { isAllowedCalebPreviewMessage } from "./caleb-preview-bridge";
 import { calebPreviewPath } from "@/lib/site-editor/preview-paths";
 import { CALEB_EDITOR_SITE_CONFIG } from "@/lib/site-editor/site-config";
 import styles from "./caleb-attached-website-editor.module.css";
 
-function csrf() {
-  return document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith("builder_csrf="))?.slice(13) ?? "";
+async function csrf() {
+  const existing = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith("builder_csrf="))?.slice(13);
+  if (existing) return existing;
+  const result = await command("/api/admin/csrf");
+  if (typeof result.token !== "string" || !result.token) throw new Error("csrf_unavailable");
+  return result.token;
 }
 
 async function command(path: string, init?: RequestInit) {
@@ -21,6 +27,12 @@ async function command(path: string, init?: RequestInit) {
   const body = await response.json();
   if (!response.ok) throw Object.assign(new Error(String(body.code ?? "request_failed")), { status: response.status });
   return body;
+}
+
+function mutationFailure(error: unknown, fallback: string) {
+  return error instanceof Error && error.message === "security_verification_required"
+    ? "Verify publishing access with your authenticator, then try this action again."
+    : fallback;
 }
 
 export function CalebAttachedWebsiteEditor() {
@@ -36,6 +48,7 @@ export function CalebAttachedWebsiteEditor() {
   const [state, dispatch] = useReducer(calebEditorReducer, initialCalebEditorState);
   const busy = ["loading", "saving", "publishing", "restoring", "uploading"].includes(state.status);
   const revalidationTimer = useRef<number | null>(null);
+  const previewFrame = useRef<HTMLIFrameElement | null>(null);
 
   const pollRevalidation = useCallback(async function checkRevalidation(correlationId: string) {
     if (revalidationTimer.current !== null) window.clearTimeout(revalidationTimer.current);
@@ -91,7 +104,9 @@ export function CalebAttachedWebsiteEditor() {
   }, []);
   useEffect(() => {
     const receive = (event: MessageEvent<BuilderPreviewMessage>) => {
-      if (event.origin !== window.location.origin || event.data?.type !== "builder:select-region" || event.data.pagePath !== pagePath) return;
+      if (event.source !== previewFrame.current?.contentWindow ||
+        !isAllowedCalebPreviewMessage(event.data, { origin: event.origin, expectedOrigin: window.location.origin, pagePath }) ||
+        event.data.type !== "builder:select-region") return;
       const message = event.data;
       const region = CALEB_EDITOR_SITE_CONFIG.pages.find((page) => page.path === pagePath)?.regions.find((item) => item.id === message.regionId);
       if (!region || (message.kind !== "text" && message.kind !== "image")) return;
@@ -111,7 +126,7 @@ export function CalebAttachedWebsiteEditor() {
     if (!value) return dispatch({ type: "error", message: "Choose an image first." });
     try {
       const result = await command("/api/builder/content", {
-        method: "POST", headers: { "content-type": "application/json", "x-csrf-token": csrf(), "idempotency-key": crypto.randomUUID() },
+        method: "POST", headers: { "content-type": "application/json", "x-csrf-token": await csrf(), "idempotency-key": crypto.randomUUID() },
         body: JSON.stringify({ action: "saveDraft", pagePath, regionId: selected.id, value, expectedDraftVersionId: content.draftVersionId }),
       });
       setContent((current) => ({ ...current, draftVersionId: result.draftVersionId }));
@@ -126,13 +141,13 @@ export function CalebAttachedWebsiteEditor() {
     dispatch({ type: "publishing" });
     try {
       const result = await command("/api/builder/content", {
-        method: "PUT", headers: { "content-type": "application/json", "x-csrf-token": csrf(), "idempotency-key": crypto.randomUUID() },
+        method: "PUT", headers: { "content-type": "application/json", "x-csrf-token": await csrf(), "idempotency-key": crypto.randomUUID() },
         body: JSON.stringify({ pagePath, expectedDraftVersionId: content.draftVersionId, expectedPublishedVersionId: content.publishedVersionId }),
       });
       setContent((current) => ({ ...current, publishedVersionId: result.publishedVersionId }));
       dispatch({ type: "revalidation_pending", correlationId: result.correlationId });
       void pollRevalidation(result.correlationId);
-    } catch { dispatch({ type: "error", message: "Nothing was published." }); }
+    } catch (error) { dispatch({ type: "error", message: mutationFailure(error, "Nothing was published.") }); }
   }
 
   async function changePublishedVersion(version: VersionRecord, action: "rollback" | "undoRollback") {
@@ -142,7 +157,7 @@ export function CalebAttachedWebsiteEditor() {
     try {
       const result = await command("/api/builder/content", {
         method: "PATCH",
-        headers: { "content-type": "application/json", "x-csrf-token": csrf(), "idempotency-key": crypto.randomUUID() },
+        headers: { "content-type": "application/json", "x-csrf-token": await csrf(), "idempotency-key": crypto.randomUUID() },
         body: JSON.stringify(action === "rollback" ? {
           action,
           pagePath,
@@ -162,7 +177,7 @@ export function CalebAttachedWebsiteEditor() {
     } catch (error) {
       dispatch(error && typeof error === "object" && "status" in error && error.status === 409
         ? { type: "conflict" }
-        : { type: "error", message: "The selected version was not restored." });
+        : { type: "error", message: mutationFailure(error, "The selected version was not restored.") });
     }
   }
 
@@ -172,12 +187,12 @@ export function CalebAttachedWebsiteEditor() {
     try {
       await command("/api/builder/revalidation", {
         method: "POST",
-        headers: { "content-type": "application/json", "x-csrf-token": csrf(), "idempotency-key": crypto.randomUUID() },
+        headers: { "content-type": "application/json", "x-csrf-token": await csrf(), "idempotency-key": crypto.randomUUID() },
         body: JSON.stringify({ action: "retry", correlationId: state.correlationId }),
       });
       void pollRevalidation(state.correlationId);
-    } catch {
-      dispatch({ type: "revalidation_failed", correlationId: state.correlationId, message: "The public refresh retry failed. Verify security and try again." });
+    } catch (error) {
+      dispatch({ type: "revalidation_failed", correlationId: state.correlationId, message: mutationFailure(error, "The public refresh retry failed. Verify security and try again.") });
     }
   }
 
@@ -190,13 +205,13 @@ export function CalebAttachedWebsiteEditor() {
     try {
       const result = await command("/api/builder/media", {
         method: "POST",
-        headers: { "x-csrf-token": csrf(), "idempotency-key": crypto.randomUUID() },
+        headers: { "x-csrf-token": await csrf(), "idempotency-key": crypto.randomUUID() },
         body: form,
       });
       setMedia((current) => [result.asset, ...current]);
       dispatch({ type: "success", message: "Image uploaded privately. It will not appear publicly until used in a published page." });
-    } catch {
-      dispatch({ type: "error", message: "The image was not uploaded." });
+    } catch (error) {
+      dispatch({ type: "error", message: mutationFailure(error, "The image was not uploaded.") });
     }
   }
 
@@ -217,6 +232,7 @@ export function CalebAttachedWebsiteEditor() {
           <div><span className={styles.eyebrow}>Website editor</span><h1>Edit the live Caleb Jakes website</h1><p>Save private drafts, review them at three sizes, then publish one page at a time.</p></div>
           <div className={styles.actions}><a href={pagePath} target="_blank">View public page</a><button type="button" className={styles.publish} onClick={publish} disabled={busy}>Publish page</button></div>
         </header>
+        <StaffSecurityVerification />
         <nav className={styles.pages} aria-label="Website pages">{CALEB_EDITOR_SITE_CONFIG.pages.map((page) => <button key={page.path} aria-current={page.path === pagePath ? "page" : undefined} onClick={() => {
           setPagePath(page.path);
           setSelected(null);
@@ -233,7 +249,7 @@ export function CalebAttachedWebsiteEditor() {
               {(["desktop", "tablet", "mobile"] as const).map((size) => <button key={size} type="button" aria-label={`${size.charAt(0).toUpperCase()}${size.slice(1)} preview`} aria-pressed={viewport === size} onClick={() => setViewport(size)}>{size}</button>)}
             </div>
             <div className={styles.previewFrame} data-testid="website-preview-frame" data-viewport={viewport}>
-              <iframe title={`${pagePath} draft preview`} src={calebPreviewPath(pagePath)} />
+              <iframe ref={previewFrame} key={`${pagePath}:${content.draftVersionId}:${content.publishedVersionId}`} title={`${pagePath} draft preview`} src={calebPreviewPath(pagePath)} />
             </div>
           </section>
           <CalebRegionInspector region={selected} value={state.localValue} alt={alt} media={media} busy={busy} onValue={(value) => dispatch({ type: "local", value })} onAlt={setAlt} onChoose={(asset) => { setChosen(asset); setAlt(asset.alt); }} onSave={save} />

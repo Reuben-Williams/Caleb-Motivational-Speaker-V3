@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
@@ -25,4 +26,9 @@ describe("SiteFooter", () => {
     expect(screen.getAllByText(/Atlanta, Georgia/)).toHaveLength(2);
     expect(container).not.toHaveTextContent(/Rochester/i);
   });
+});
+it("loads the staff document fully so the editor CSP is applied", () => {
+  const source = readFileSync("src/components/site-footer.tsx", "utf8");
+  expect(source).toContain('<a href="/admin/editor">Staff Login</a>');
+  expect(source).not.toContain('<Link href="/admin/editor">');
 });

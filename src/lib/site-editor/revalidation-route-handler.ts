@@ -1,4 +1,5 @@
 import "server-only";
+import { websiteSecurityErrorCode } from "./security-error";
 
 const PRIVATE_HEADERS = Object.freeze({ "Cache-Control": "private, no-store" });
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -37,6 +38,7 @@ function json(body: unknown, status = 200): Response {
 }
 
 function safeError(error: unknown): Response {
+  if (websiteSecurityErrorCode(error)) return json({ code: "security_verification_required" }, 403);
   const status = error && typeof error === "object" && "status" in error &&
     typeof error.status === "number" ? error.status : 503;
   return json({
