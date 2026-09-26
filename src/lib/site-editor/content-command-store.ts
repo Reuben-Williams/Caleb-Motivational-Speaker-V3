@@ -159,7 +159,7 @@ export class ContentCommandStore {
       `insert into public.builder_content_command_receipts(
         site_id,actor_id,operation,idempotency_key,payload_digest,response_body,
         http_status,result_status,correlation_id,completed_at
-      ) values($1::uuid,$2::uuid,$3,$4,$5,$6::jsonb,$7,$8,$9::uuid,$10::timestamptz)`,
+      ) values($1::uuid,$2::uuid,$3,$4,$5,$6::jsonb,$7,$8,$9::uuid,greatest($10::timestamptz,clock_timestamp()))`,
       [
         input.siteId,
         input.actorId,

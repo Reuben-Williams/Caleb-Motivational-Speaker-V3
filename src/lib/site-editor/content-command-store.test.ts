@@ -102,6 +102,7 @@ describe("content command receipts", () => {
 
     expect(query).toHaveBeenCalledTimes(1);
     expect(query.mock.calls[0]?.[0]).toContain("insert into public.builder_content_command_receipts");
+    expect(query.mock.calls[0]?.[0]).toContain("greatest($10::timestamptz,clock_timestamp())");
     expect(query.mock.calls[0]?.[1]).toEqual([
       receipt.siteId,
       receipt.actorId,
