@@ -222,8 +222,15 @@ export class CalebPostgresContentAdapter implements BuilderContentAdapter {
     operation: (transaction: DataPlaneTransaction) => Promise<Result>,
   ): Promise<Result> {
     return this.input.database.withSession(this.input.session, async (transaction) => {
-      await transaction.query("set local role builder_content_runtime");
-      return operation(transaction);
+      try {
+        await transaction.query("set local role builder_content_runtime");
+        return await operation(transaction);
+      } catch (error) {
+        const code = error && typeof error === "object" && "code" in error && typeof error.code === "string" && /^[A-Z0-9_]{2,64}$/.test(error.code)
+          ? error.code : error instanceof TypeError ? "INVALID_SHAPE" : "UNCLASSIFIED";
+        console.warn("website_content_transaction_failed", { code });
+        throw error;
+      }
     });
   }
 
