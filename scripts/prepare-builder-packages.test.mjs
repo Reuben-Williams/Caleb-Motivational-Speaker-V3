@@ -26,6 +26,25 @@ afterEach(() => {
 });
 
 describe("builder package preparation", () => {
+  it("admits the declared post.editDraft capability without allowing arbitrary mixed-case capabilities", () => {
+    const { root } = fixture();
+    const directory = join(root, "next", "src", "database");
+    mkdirSync(directory, { recursive: true });
+    const file = join(directory, "contracts.ts");
+    writeFileSync(file, 'const CAPABILITY_PATTERN = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+){1,7}$/;\n');
+    prepareBuilderPackages(root);
+    const pattern = readFileSync(file, "utf8").match(/CAPABILITY_PATTERN = \/(.+)\/;/)[1];
+    const validator = new RegExp(pattern);
+    expect(validator.test("post.editDraft")).toBe(true);
+    expect(validator.test("preview.read")).toBe(true);
+    expect(validator.test("post.EditDraft")).toBe(false);
+    expect(validator.test("members.Manage")).toBe(false);
+    expect(validator.test("post.editDraft.extra")).toBe(false);
+    const first = readFileSync(file, "utf8");
+    prepareBuilderPackages(root);
+    expect(readFileSync(file, "utf8")).toBe(first);
+  });
+
   it("maps missing JavaScript specifiers to the shipped TypeScript source", () => {
     const { root, index } = fixture();
 

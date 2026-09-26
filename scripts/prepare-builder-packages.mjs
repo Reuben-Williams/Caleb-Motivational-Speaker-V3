@@ -16,7 +16,7 @@ function sourceFiles(directory) {
 function patchSourceFile(file) {
   const source = readFileSync(file, "utf8");
   let replacements = 0;
-  const patched = source.replace(
+  let patched = source.replace(
     /(["'])(\.\.?\/[^"'`\r\n]+)\.js\1/g,
     (match, quote, relativeTarget) => {
       const target = resolve(dirname(file), relativeTarget);
@@ -27,6 +27,18 @@ function patchSourceFile(file) {
       return `${quote}${relativeTarget}${extension}${quote}`;
     },
   );
+  // 0.5.0 declares post.editDraft but its data-plane validator omits it.
+  // Admit only that exact declared capability; retain all other validation.
+  if (file.replaceAll("\\", "/").endsWith("/next/src/database/contracts.ts")) {
+    const original = "const CAPABILITY_PATTERN = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+){1,7}$/;";
+    const corrected = "const CAPABILITY_PATTERN = /^(?:post\\.editDraft|[a-z][a-z0-9]*(?:[._-][a-z0-9]+){1,7})$/;";
+    if (patched.includes(original)) {
+      patched = patched.replace(original, corrected);
+      replacements += 1;
+    } else if (!patched.includes(corrected)) {
+      throw new Error("Unexpected 0.5.0 data-plane capability validator; refusing compatibility patch.");
+    }
+  }
   if (replacements > 0) writeFileSync(file, patched, "utf8");
   return replacements;
 }
