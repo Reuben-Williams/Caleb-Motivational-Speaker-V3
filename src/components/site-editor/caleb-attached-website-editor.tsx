@@ -44,11 +44,13 @@ export function CalebAttachedWebsiteEditor() {
   const [selected, setSelected] = useState<CalebSelectedRegion | null>(null);
   const [chosen, setChosen] = useState<MediaAsset | null>(null);
   const [alt, setAlt] = useState("");
+  const [confirmation, setConfirmation] = useState<null | { pagePath: string; action: "publish" | "rollback" | "undoRollback"; version?: VersionRecord }>(null);
   const [state, dispatch] = useReducer(calebEditorReducer, initialCalebEditorState);
   const busy = ["loading", "saving", "publishing", "restoring", "uploading"].includes(state.status);
   const revalidationTimer = useRef<number | null>(null);
   const previewFrame = useRef<HTMLIFrameElement | null>(null);
-  const frameKey = `${pagePath}:${content.draftVersionId}:${content.publishedVersionId}`;
+  const [previewGeneration, setPreviewGeneration] = useState(0);
+  const frameKey = `${pagePath}:${content.draftVersionId}:${content.publishedVersionId}:${previewGeneration}`;
   const [readyFrame, setReadyFrame] = useState<string | null>(null);
   const [failedFrame, setFailedFrame] = useState<string | null>(null);
   useEffect(() => {
@@ -148,7 +150,6 @@ export function CalebAttachedWebsiteEditor() {
   }
 
   async function publish() {
-    if (!window.confirm(`Publish the current draft for ${pagePath === "/" ? "Home" : pagePath}?`)) return;
     dispatch({ type: "publishing" });
     try {
       const result = await command("/api/builder/content", {
@@ -162,8 +163,6 @@ export function CalebAttachedWebsiteEditor() {
   }
 
   async function changePublishedVersion(version: VersionRecord, action: "rollback" | "undoRollback") {
-    const label = action === "rollback" ? "restore this version" : "undo this rollback";
-    if (!window.confirm(`Are you sure you want to ${label} for ${pagePath === "/" ? "Home" : pagePath}?`)) return;
     dispatch({ type: "restoring" });
     try {
       const result = await command("/api/builder/content", {
@@ -182,6 +181,7 @@ export function CalebAttachedWebsiteEditor() {
         }),
       });
       setContent({ draftVersionId: result.draftVersionId, publishedVersionId: result.publishedVersionId });
+      setSelected(null);
       dispatch({ type: "revalidation_pending", correlationId: result.correlationId });
       await loadHistory(pagePath);
       void pollRevalidation(result.correlationId);
@@ -229,10 +229,19 @@ export function CalebAttachedWebsiteEditor() {
   return (
     <StaffWorkspaceShell activeWorkspace={workspace} currentPath={pagePath} onWorkspaceChange={(next) => {
       if (next === "website.pages" || next === "website.media" || next === "website.history") {
+        setConfirmation(null);
+        setSelected(null);
+        setReadyFrame(null);
+        setFailedFrame(null);
+        setPreviewGeneration((current) => current + 1);
         setWorkspace(next);
         if (next === "website.history") void loadHistory(pagePath);
       }
     }} onPageChange={(path) => {
+      setConfirmation(null);
+      setReadyFrame(null);
+      setFailedFrame(null);
+      setPreviewGeneration((current) => current + 1);
       setPagePath(path);
       setSelected(null);
       if (workspace === "website.history") void loadHistory(path);
@@ -241,18 +250,34 @@ export function CalebAttachedWebsiteEditor() {
       <div className={styles.workspace}>
         <header className={styles.header}>
           <div><span className={styles.eyebrow}>Website editor</span><h1>Edit the live Caleb Jakes website</h1><p>Save private drafts, review them at three sizes, then publish one page at a time.</p></div>
-          <div className={styles.actions}><a href={pagePath} target="_blank">View public page</a><button type="button" className={styles.publish} onClick={publish} disabled={busy}>Publish page</button></div>
+          <div className={styles.actions}><a href={pagePath} target="_blank">View public page</a><button type="button" className={styles.publish} onClick={() => setConfirmation({ pagePath, action: "publish" })} disabled={busy}>Publish page</button></div>
         </header>
         <nav className={styles.pages} aria-label="Website pages">{CALEB_EDITOR_SITE_CONFIG.pages.map((page) => <button key={page.path} aria-current={page.path === pagePath ? "page" : undefined} onClick={() => {
+          setConfirmation(null);
+          setReadyFrame(null);
+          setFailedFrame(null);
+          setPreviewGeneration((current) => current + 1);
           setPagePath(page.path);
           setSelected(null);
           if (workspace === "website.history") void loadHistory(page.path);
           else void load(page.path);
         }}>{page.label}</button>)}</nav>
         {state.message ? <p className={styles.status} data-state={state.status} role="status">{state.message}</p> : null}
+        {confirmation?.pagePath === pagePath ? <section className={styles.status} role="alertdialog" aria-label="Confirm website change">
+          <p>{confirmation.action === "publish" ? "Publish the saved draft" : confirmation.action === "rollback" ? "Restore the selected version" : "Undo the selected restore"} for {pagePath === "/" ? "Home" : pagePath}? This changes the public page in this environment.</p>
+          <div className={styles.actions}>
+            <button type="button" onClick={() => setConfirmation(null)}>Cancel change</button>
+            <button type="button" className={styles.publish} disabled={busy} onClick={() => {
+              const pending = confirmation;
+              setConfirmation(null);
+              if (pending.action === "publish") void publish();
+              else if (pending.version) void changePublishedVersion(pending.version, pending.action);
+            }}>{confirmation.action === "publish" ? "Confirm publish" : "Confirm restore"}</button>
+          </div>
+        </section> : null}
         {state.status === "revalidation_failed" ? <div className={styles.retry}><button type="button" onClick={retryRevalidation}>Retry public refresh</button></div> : null}
         {workspace === "website.media" ? <CalebMediaWorkspace assets={media} busy={busy} onUpload={upload} /> : null}
-        {workspace === "website.history" ? <CalebHistoryWorkspace versions={history} busy={busy} onRestore={(version) => { void changePublishedVersion(version, "rollback"); }} onUndo={(version) => { void changePublishedVersion(version, "undoRollback"); }} /> : null}
+        {workspace === "website.history" ? <CalebHistoryWorkspace versions={history} busy={busy} onRestore={(version) => setConfirmation({ pagePath, action: "rollback", version })} onUndo={(version) => setConfirmation({ pagePath, action: "undoRollback", version })} /> : null}
         {workspace === "website.pages" ? <div className={styles.editorGrid}>
           <section className={styles.preview}>
             <p role="status">{readyFrame === frameKey

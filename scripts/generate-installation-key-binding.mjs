@@ -1,18 +1,21 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { open, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createServer } from "vite";
 
 const projectRoot = fileURLToPath(new URL("../", import.meta.url));
 
-function readBoundAt(args) {
-  if (args.length === 0) return new Date().toISOString();
-  if (args.length !== 2 || args[0] !== "--bound-at") {
-    throw new Error(
-      "Usage: npm run builder:generate-installation-key-binding -- [--bound-at <canonical-UTC-instant>]",
-    );
+function readOptions(args) {
+  if (args.length === 0) return { boundAt: new Date().toISOString() };
+  if (args.length === 2 && args[0] === "--bound-at") return { boundAt: args[1] };
+  if (args.length === 3 && args[0] === "--refresh" &&
+      args[1] === "--expected-manifest-sha256" && /^[a-f0-9]{64}$/.test(args[2])) {
+    return { expectedManifestSha256: args[2] };
   }
-  return args[1];
+  throw new Error(
+    "Usage: npm run builder:generate-installation-key-binding -- [--bound-at <canonical-UTC-instant> | --refresh --expected-manifest-sha256 <prior-sha256>]",
+  );
 }
 
 async function readJson(relativePath) {
@@ -21,6 +24,7 @@ async function readJson(relativePath) {
   return JSON.parse(text);
 }
 
+const options = readOptions(process.argv.slice(2));
 const vite = await createServer({
   root: projectRoot,
   configFile: false,
@@ -34,7 +38,7 @@ const vite = await createServer({
 });
 
 try {
-  const [{ createCalebInstallationKeyBinding }, { configurationPolicySha256 }] =
+  const [{ createCalebInstallationKeyBinding, refreshCalebInstallationKeyBinding }, { configurationPolicySha256 }] =
     await Promise.all([
       vite.ssrLoadModule("/src/lib/platform/installation/key-binding.ts"),
       vite.ssrLoadModule("/src/lib/platform/installation/configuration-policy.ts"),
@@ -47,7 +51,7 @@ try {
       readJson(".builder/site-runtime.json"),
       readJson(".builder/caleb-configuration-policy.json"),
     ]);
-  const binding = createCalebInstallationKeyBinding({
+  const input = {
     registration,
     privateJwk,
     artifacts: {
@@ -56,13 +60,30 @@ try {
       configurationPolicy,
       configurationPolicySha256: configurationPolicySha256(configurationPolicy),
     },
-    boundAt: readBoundAt(process.argv.slice(2)),
-  });
-  await writeFile(
-    resolve(projectRoot, ".builder/installation-key-binding.json"),
-    `${JSON.stringify(binding, null, 2)}\n`,
-    { encoding: "utf8", flag: "wx" },
-  );
+  };
+  const output = resolve(projectRoot, ".builder/installation-key-binding.json");
+  if (options.expectedManifestSha256) {
+    // Only release metadata is refreshed; accepted identity/key provenance stays fixed.
+    const lockPath = `${output}.refresh-lock`;
+    const temporaryPath = `${output}.${randomUUID()}.tmp`;
+    const lock = await open(lockPath, "wx");
+    try {
+      const binding = refreshCalebInstallationKeyBinding({
+        ...input,
+        existingBinding: await readJson(".builder/installation-key-binding.json"),
+        expectedManifestSha256: options.expectedManifestSha256,
+      });
+      await writeFile(temporaryPath, `${JSON.stringify(binding, null, 2)}\n`, { encoding: "utf8", flag: "wx" });
+      await rename(temporaryPath, output);
+    } finally {
+      await lock.close();
+      await unlink(temporaryPath).catch((error) => { if (error.code !== "ENOENT") throw error; });
+      await unlink(lockPath);
+    }
+  } else {
+    const binding = createCalebInstallationKeyBinding({ ...input, boundAt: options.boundAt });
+    await writeFile(output, `${JSON.stringify(binding, null, 2)}\n`, { encoding: "utf8", flag: "wx" });
+  }
 } finally {
   await vite.close();
 }

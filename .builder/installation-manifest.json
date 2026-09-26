@@ -7,17 +7,26 @@
     "@reuben-williams/growth-customers": "0.5.0",
     "@reuben-williams/growth-leads": "0.5.0",
     "@reuben-williams/growth-messaging": "0.5.0",
-    "@reuben-williams/next": "0.5.0"
+    "@reuben-williams/next": "0.5.0",
+    "@reuben-williams/editor": "0.5.0",
+    "@reuben-williams/content": "0.5.0"
   },
   "schemas": {
-    "builder": 1,
+    "builder": 2,
     "forms": 2,
     "growth": 1
   },
   "routes": [
     "/admin/editor",
     "/admin/editor/speaking-engagements",
-    "/api/builder/workers/installation"
+    "/admin/editor/website",
+    "/admin/editor/preview/[[...page]]",
+    "/api/builder/content",
+    "/api/builder/media",
+    "/api/builder/revalidation",
+    "/api/builder/workers/installation",
+    "/api/builder/workers/revalidation",
+    "/api/site-media/[mediaId]"
   ],
   "workerVersion": "0.5.0",
   "engagementDomainEventRegistryVersion": 2

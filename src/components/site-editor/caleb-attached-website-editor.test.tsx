@@ -7,6 +7,27 @@ import { createBuilderPreviewMessage } from "@reuben-williams/core";
 describe("Caleb attached website editor", () => {
   afterEach(() => vi.unstubAllGlobals());
 
+  it("requires an in-page confirmation before publishing and allows cancellation", async () => {
+    const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => Response.json(
+      String(input) === "/api/admin/csrf" ? { token: "test-csrf" }
+        : init?.method === "PUT" ? { publishedVersionId: "published-one", correlationId: "refresh-one" }
+          : String(input).includes("/revalidation") ? { revalidation: "complete" }
+            : String(input).includes("/media") ? { assets: [] } : { draftVersionId: "draft-one", publishedVersionId: null },
+    ));
+    vi.stubGlobal("fetch", fetch);
+    render(<CalebAttachedWebsiteEditor />);
+    await screen.findByText("Draft loaded.");
+    fireEvent.click(screen.getByRole("button", { name: /^Publish page$/ }));
+    expect(screen.getByRole("alertdialog", { name: "Confirm website change" })).toBeInTheDocument();
+    expect(fetch.mock.calls.some(([, init]) => init?.method === "PUT")).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "Cancel change" }));
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^Publish page$/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm publish" }));
+    await screen.findByText("Published and live.");
+    expect(fetch.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(1);
+  });
+
   it("waits for the trusted preview readiness and requires no authenticator panel", async () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => Response.json(
       String(input).includes("/media") ? { assets: [] } : { draftVersionId: null, publishedVersionId: null },
@@ -127,6 +148,7 @@ describe("Caleb attached website editor", () => {
     fireEvent.click(screen.getAllByText("History")[0]);
     expect(await screen.findByText("Published version")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Restore this version" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm restore" }));
     await waitFor(() => expect(fetch).toHaveBeenCalledWith(
       "/api/builder/content",
       expect.objectContaining({ method: "PATCH" }),

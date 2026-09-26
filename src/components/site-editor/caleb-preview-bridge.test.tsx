@@ -10,6 +10,19 @@ import {
 const siteId = "ce607bf6-2959-4d7e-b52a-31a8d21b1db2";
 
 describe("CalebPreviewBridge", () => {
+  it("prevents preview navigation and form submission outside the editable page wrapper", () => {
+    const { getByText, unmount } = render(<>
+      <a href="/about">Preview header link</a>
+      <form aria-label="Preview form"><button>Submit preview</button></form>
+      <CalebPreviewBridge pagePath="/"><p>Preview content</p></CalebPreviewBridge>
+    </>);
+    expect(fireEvent.click(getByText("Preview header link"))).toBe(false);
+    expect(fireEvent.submit(document.querySelector('form')!)).toBe(false);
+    unmount();
+    const event = new Event("submit", { bubbles: true, cancelable: true });
+    document.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
+  });
   it("decorates only declared regions and supports keyboard selection", () => {
     const postMessage = vi.spyOn(window.parent, "postMessage");
     const { getByText } = render(<CalebPreviewBridge pagePath="/">

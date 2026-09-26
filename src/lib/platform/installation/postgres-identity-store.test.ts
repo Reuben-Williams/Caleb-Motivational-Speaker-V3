@@ -27,6 +27,7 @@ describe("Postgres installation identity store", () => {
     const store = createPostgresInstallationIdentityStore({ rpc }, {
       expectedSiteKey: "caleb-jakes-v3",
       installationId,
+      expectedBinding: binding,
     });
 
     await expect(store.getSiteIdentity(siteId as never)).resolves.toEqual({
@@ -49,11 +50,25 @@ describe("Postgres installation identity store", () => {
     ]) {
       const store = createPostgresInstallationIdentityStore(
         { rpc: vi.fn().mockResolvedValue({ data, error: null }) },
-        { expectedSiteKey: "caleb-jakes-v3", installationId },
+        { expectedSiteKey: "caleb-jakes-v3", installationId, expectedBinding: binding },
       );
       await expect(store.getInstallationBinding(siteId)).rejects.toBeInstanceOf(
         PostgresIdentityStoreError,
       );
     }
+  });
+
+  it.each([
+    ["acceptedKeyId", "another-key"],
+    ["installationManifestSha256", "5".repeat(64)],
+    ["handlerRegistrySha256", "5".repeat(64)],
+    ["configurationPolicySha256", "5".repeat(64)],
+    ["publicJwkSha256", "5".repeat(64)],
+    ["workerVersion", "0.6.0"],
+  ])("rejects validly formatted remote %s drift", async (field, value) => {
+    const store = createPostgresInstallationIdentityStore({
+      rpc: vi.fn().mockResolvedValue({ data: { ...binding, [field]: value }, error: null }),
+    }, { expectedSiteKey: "caleb-jakes-v3", installationId, expectedBinding: binding });
+    await expect(store.getSiteIdentity(siteId as never)).rejects.toBeInstanceOf(PostgresIdentityStoreError);
   });
 });

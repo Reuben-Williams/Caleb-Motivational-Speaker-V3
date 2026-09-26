@@ -7,6 +7,7 @@ import {
   CalebInstallationKeyBindingError,
   createCalebInstallationKeyBinding,
   parseCalebInstallationKeyBinding,
+  refreshCalebInstallationKeyBinding,
 } from "./key-binding";
 import { createCalebInstallationArtifacts } from "./manifest";
 
@@ -118,5 +119,41 @@ describe("Caleb installation key binding", () => {
     expect(packageJson.scripts?.["builder:generate-installation-key-binding"]).toBe(
       "node scripts/generate-installation-key-binding.mjs",
     );
+  });
+
+  it("refreshes only the manifest digest while preserving all accepted identity fields", () => {
+    const artifacts = createCalebInstallationArtifacts({ reachabilityEvidenceRevision: "dpl_verified_candidate" });
+    const key = privateJwk();
+    const current = createCalebInstallationKeyBinding({ registration, privateJwk: key, artifacts, boundAt });
+    const previous = { ...current, installationManifestSha256: "1".repeat(64) };
+    expect(refreshCalebInstallationKeyBinding({ existingBinding: previous,
+      expectedManifestSha256: previous.installationManifestSha256,
+      registration, privateJwk: key, artifacts })).toEqual(current);
+  });
+
+  it.each([
+    ["installationId", "37f36e13-1b43-4f01-b51a-46dbdf749783"],
+    ["acceptedKeyId", "another-key"],
+    ["handlerRegistrySha256", "2".repeat(64)],
+    ["configurationPolicySha256", "2".repeat(64)],
+    ["publicJwkSha256", "2".repeat(64)],
+  ])("refuses a manifest refresh when %s changed", (field, value) => {
+    const artifacts = createCalebInstallationArtifacts({ reachabilityEvidenceRevision: "dpl_verified_candidate" });
+    const key = privateJwk();
+    const current = createCalebInstallationKeyBinding({ registration, privateJwk: key, artifacts, boundAt });
+    expect(() => refreshCalebInstallationKeyBinding({
+      existingBinding: { ...current, [field]: value },
+      expectedManifestSha256: current.installationManifestSha256,
+      registration, privateJwk: key, artifacts,
+    })).toThrowError(CalebInstallationKeyBindingError);
+  });
+
+  it("refuses a stale expected manifest digest", () => {
+    const artifacts = createCalebInstallationArtifacts({ reachabilityEvidenceRevision: "dpl_verified_candidate" });
+    const key = privateJwk();
+    const current = createCalebInstallationKeyBinding({ registration, privateJwk: key, artifacts, boundAt });
+    expect(() => refreshCalebInstallationKeyBinding({ existingBinding: current,
+      expectedManifestSha256: "1".repeat(64), registration, privateJwk: key, artifacts,
+    })).toThrowError(CalebInstallationKeyBindingError);
   });
 });

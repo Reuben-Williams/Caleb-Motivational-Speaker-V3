@@ -13,6 +13,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 const KEY_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 const SHA256 = /^[a-f0-9]{64}$/;
 const VERSION = /^[0-9]+\.[0-9]+\.[0-9]+$/;
+const BINDING_FIELDS = [
+  "acceptedKeyId", "installationManifestSha256", "handlerRegistrySha256",
+  "configurationPolicySha256", "publicJwkSha256", "workerVersion",
+] as const;
 
 export interface InstallationBinding {
   version: 1;
@@ -31,6 +35,8 @@ export interface InstallationBinding {
 export interface PostgresInstallationIdentityStore extends SiteDataPlaneIdentityStore {
   getInstallationBinding(siteId: string): Promise<InstallationBinding>;
 }
+
+type ExpectedBinding = Pick<InstallationBinding, typeof BINDING_FIELDS[number]>;
 
 export class PostgresIdentityStoreError extends Error {
   readonly code = "installation_identity_mismatch";
@@ -80,7 +86,7 @@ function parseBinding(value: unknown, expected: {
 
 export function createPostgresInstallationIdentityStore(
   client: InstallationPostgresRpcClient,
-  options: { expectedSiteKey: string; installationId: string },
+  options: { expectedSiteKey: string; installationId: string; expectedBinding: ExpectedBinding },
 ): PostgresInstallationIdentityStore {
   const expectedSiteKey = parseExpectedSiteKey(options.expectedSiteKey);
   if (!UUID.test(options.installationId)) return failed();
@@ -94,7 +100,10 @@ export function createPostgresInstallationIdentityStore(
         p_expected_site_key: expectedSiteKey,
         p_installation_id: installationId,
       });
-      return parseBinding(response.data, { siteId, expectedSiteKey, installationId });
+      const binding = parseBinding(response.data, { siteId, expectedSiteKey, installationId });
+      if (!options.expectedBinding || BINDING_FIELDS.some((field) =>
+        binding[field] !== options.expectedBinding[field])) return failed();
+      return binding;
     } catch (error) {
       if (error instanceof PostgresIdentityStoreError) throw error;
       return failed();

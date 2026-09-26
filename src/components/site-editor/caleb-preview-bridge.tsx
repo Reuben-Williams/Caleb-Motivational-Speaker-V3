@@ -74,8 +74,18 @@ export function CalebPreviewBridge({
       onMessage?.(event.data);
     };
     window.addEventListener("message", receive);
+    // Header/footer are outside this wrapper, but the entire private iframe
+    // must stay a non-submitting preview rather than navigate to public pages.
+    const preventNavigation = (event: MouseEvent) => {
+      if (event.target instanceof Element && event.target.closest("a")) event.preventDefault();
+    };
+    const preventSubmission = (event: Event) => event.preventDefault();
+    document.addEventListener("click", preventNavigation, true);
+    document.addEventListener("submit", preventSubmission, true);
     return () => {
       window.removeEventListener("message", receive);
+      document.removeEventListener("click", preventNavigation, true);
+      document.removeEventListener("submit", preventSubmission, true);
       window.clearInterval(retry);
       originals.forEach(({ element, tab, title }) => {
         delete element.dataset.calebEditable;

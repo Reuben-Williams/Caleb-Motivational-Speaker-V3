@@ -80,6 +80,29 @@ describe("Caleb embedded installation runtime", () => {
     }
   });
 
+  it("rejects database binding drift before acquiring a lease or contacting the control plane", async () => {
+    const values = fixture();
+    const rpc = vi.fn().mockResolvedValue({ data: {
+      version: 1,
+      siteId: "ce607bf6-2959-4d7e-b52a-31a8d21b1db2",
+      installationId: values.registration.installationId,
+      stableSiteKey: "caleb-jakes-v3",
+      acceptedKeyId: values.binding.acceptedKeyId,
+      installationManifestSha256: "0".repeat(64),
+      handlerRegistrySha256: values.binding.handlerRegistrySha256,
+      configurationPolicySha256: values.binding.configurationPolicySha256,
+      publicJwkSha256: values.binding.publicJwkSha256,
+      workerVersion: "0.5.0",
+      status: "active",
+    }, error: null });
+    const clientFactory = vi.fn();
+    const runtime = createCalebInstallationRuntime({ ...values, postgresClient: { rpc },
+      installationClientFactory: clientFactory });
+    await expect(runtime.runScheduled()).rejects.toThrow("installation_identity_mismatch");
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(clientFactory).not.toHaveBeenCalled();
+  });
+
   it("runs one bounded idle cycle and reports sanitized health", async () => {
     const values = fixture();
     const pullCommands = vi.fn().mockResolvedValue([]);

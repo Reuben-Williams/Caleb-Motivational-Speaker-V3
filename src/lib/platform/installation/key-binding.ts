@@ -141,3 +141,22 @@ export function createCalebInstallationKeyBinding(input: {
     input.artifacts,
   );
 }
+
+export function refreshCalebInstallationKeyBinding(input: {
+  existingBinding: unknown;
+  expectedManifestSha256: string;
+  registration: { installationId: string; acceptedKeyId: string };
+  privateJwk: unknown;
+  artifacts: CalebInstallationArtifacts;
+}): CalebInstallationKeyBinding {
+  const previous = parseCalebInstallationKeyBinding(input.existingBinding);
+  if (previous.installationManifestSha256 !== input.expectedManifestSha256) return invalid();
+  const refreshed = createCalebInstallationKeyBinding({
+    ...input,
+    boundAt: previous.boundAt,
+  });
+  // Refreshing release evidence must never become an implicit key rotation.
+  if (BINDING_KEYS.some((field) => field !== "installationManifestSha256" &&
+    previous[field] !== refreshed[field])) return invalid();
+  return refreshed;
+}

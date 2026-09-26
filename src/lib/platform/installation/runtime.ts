@@ -100,6 +100,7 @@ export function createCalebInstallationRuntime(input: {
       identityStore: createPostgresInstallationIdentityStore(input.postgresClient, {
         expectedSiteKey: CALEB_STABLE_SITE_KEY,
         installationId: registration.installationId,
+        expectedBinding: { ...binding, workerVersion: CALEB_WORKER_VERSION },
       }),
       handlers,
       healthSource: createCalebInstallationHealthSource(input.postgresClient, {
