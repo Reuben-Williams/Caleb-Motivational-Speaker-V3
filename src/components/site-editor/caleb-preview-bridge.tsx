@@ -5,10 +5,11 @@ import {
   isBuilderPreviewMessage,
   type BuilderPreviewMessage,
 } from "@reuben-williams/core";
-import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
-import { useEffect } from "react";
+import type { ReactNode } from "react";
+import { useEffect, useRef } from "react";
 
 import { CALEB_EDITOR_SITE_CONFIG, findCalebEditorRegion } from "@/lib/site-editor/site-config";
+import styles from "./caleb-preview-bridge.module.css";
 
 interface MessageBoundary {
   origin: string;
@@ -41,30 +42,60 @@ export function CalebPreviewBridge({
   children: ReactNode;
   onMessage?: (message: BuilderPreviewMessage) => void;
 }>) {
+  const root = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (!declaredPage(pagePath)) return;
     const origin = window.location.origin;
-    window.parent.postMessage(createBuilderPreviewMessage(CALEB_EDITOR_SITE_CONFIG.siteId, {
+    const ready = () => window.parent.postMessage(createBuilderPreviewMessage(CALEB_EDITOR_SITE_CONFIG.siteId, {
       type: "builder:ready",
       pagePath,
     }), origin);
+    const decorated = Array.from(root.current?.querySelectorAll<HTMLElement>("[data-builder-region-id]") ?? [])
+      .filter((element) => {
+        const region = findCalebEditorRegion(pagePath, element.dataset.builderRegionId ?? "");
+        return region && region.kind === element.dataset.builderRegionKind;
+      });
+    const originals = decorated.map((element) => ({ element, tab: element.getAttribute("tabindex"), title: element.getAttribute("title") }));
+    decorated.forEach((element) => {
+      element.dataset.calebEditable = "true";
+      if (!element.hasAttribute("tabindex")) element.tabIndex = 0;
+      element.title = `Edit ${element.dataset.builderRegionKind === "image" ? "image" : "text"}`;
+    });
+    ready();
+    // Hydration ordering can put the first message before the parent's listener.
+    let attempts = 0;
+    const retry = window.setInterval(() => {
+      ready();
+      if (++attempts >= 30) window.clearInterval(retry);
+    }, 500);
     const receive = (event: MessageEvent) => {
       if (!isAllowedCalebPreviewMessage(event.data, { origin: event.origin, expectedOrigin: origin, pagePath }) ||
         event.source !== window.parent) return;
       onMessage?.(event.data);
     };
     window.addEventListener("message", receive);
-    return () => window.removeEventListener("message", receive);
+    return () => {
+      window.removeEventListener("message", receive);
+      window.clearInterval(retry);
+      originals.forEach(({ element, tab, title }) => {
+        delete element.dataset.calebEditable;
+        delete element.dataset.calebSelected;
+        if (tab === null) element.removeAttribute("tabindex"); else element.setAttribute("tabindex", tab);
+        if (title === null) element.removeAttribute("title"); else element.title = title;
+      });
+    };
   }, [onMessage, pagePath]);
 
-  const select = (event: ReactMouseEvent<HTMLElement>) => {
-    const target = (event.target as HTMLElement).closest<HTMLElement>("[data-builder-region-id]");
+  const select = (element: HTMLElement) => {
+    const target = element.closest<HTMLElement>("[data-builder-region-id]");
     if (!target) return;
     const regionId = target.dataset.builderRegionId;
     const kind = target.dataset.builderRegionKind;
     if (!regionId || (kind !== "text" && kind !== "image")) return;
     const region = findCalebEditorRegion(pagePath, regionId);
     if (!region || region.kind !== kind) return;
+    root.current?.querySelectorAll<HTMLElement>("[data-caleb-selected]").forEach((current) => delete current.dataset.calebSelected);
+    target.dataset.calebSelected = "true";
     window.parent.postMessage(createBuilderPreviewMessage(CALEB_EDITOR_SITE_CONFIG.siteId, {
       type: "builder:select-region",
       pagePath,
@@ -80,11 +111,19 @@ export function CalebPreviewBridge({
   };
 
   return <div
+    ref={root}
+    className={styles.preview}
     onClickCapture={(event) => {
       const target = event.target as HTMLElement;
       if (target.closest("a,button,input,select,textarea")) event.preventDefault();
     }}
-    onClick={select}
+    onClick={(event) => select(event.target as HTMLElement)}
+    onKeyDown={(event) => {
+      if ((event.key === "Enter" || event.key === " ") && (event.target as HTMLElement).closest('[data-caleb-editable="true"]')) {
+        event.preventDefault();
+        select(event.target as HTMLElement);
+      }
+    }}
     onSubmit={(event) => event.preventDefault()}
     data-caleb-preview-page={pagePath}
   >{children}</div>;

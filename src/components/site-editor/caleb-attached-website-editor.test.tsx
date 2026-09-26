@@ -7,6 +7,22 @@ import { createBuilderPreviewMessage } from "@reuben-williams/core";
 describe("Caleb attached website editor", () => {
   afterEach(() => vi.unstubAllGlobals());
 
+  it("waits for the trusted preview readiness and requires no authenticator panel", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => Response.json(
+      String(input).includes("/media") ? { assets: [] } : { draftVersionId: null, publishedVersionId: null },
+    )));
+    render(<CalebAttachedWebsiteEditor />);
+    await screen.findByText("Draft loaded.");
+    expect(screen.queryByText("Verify publishing access")).not.toBeInTheDocument();
+    expect(screen.getByText("Loading interactive preview…")).toBeInTheDocument();
+    const frame = screen.getByTitle("/ draft preview") as HTMLIFrameElement;
+    const data = createBuilderPreviewMessage("ce607bf6-2959-4d7e-b52a-31a8d21b1db2", { type: "builder:ready", pagePath: "/" });
+    fireEvent(window, new MessageEvent("message", { origin: window.location.origin, source: window, data }));
+    expect(screen.queryByText("Preview ready. Select outlined text or an image to edit.")).not.toBeInTheDocument();
+    fireEvent(window, new MessageEvent("message", { origin: window.location.origin, source: frame.contentWindow, data }));
+    expect(screen.getByText("Preview ready. Select outlined text or an image to edit.")).toBeInTheDocument();
+  });
+
   it("obtains a CSRF token and refreshes the private preview after saving a draft", async () => {
     document.cookie = "builder_csrf=; max-age=0; path=/";
     const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {

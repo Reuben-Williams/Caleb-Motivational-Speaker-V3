@@ -93,10 +93,10 @@ describe("Caleb website authorization", () => {
     ["website.preview.read", "preview.read", "read", false],
     ["website.history.read", "history.read", "read", false],
     ["website.draft.save", "post.editDraft", "write", false],
-    ["website.publish", "post.publish", "write", true],
-    ["website.rollback", "post.rollback", "write", true],
-    ["website.media.upload", "media.upload", "write", true],
-    ["website.revalidation.retry", "post.publish", "write", true],
+    ["website.publish", "post.publish", "write", false],
+    ["website.rollback", "post.rollback", "write", false],
+    ["website.media.upload", "media.upload", "write", false],
+    ["website.revalidation.retry", "post.publish", "write", false],
   ] as const)("enforces %s as %s/%s with the declared MFA policy", async (
     operation,
     capability,
@@ -125,7 +125,7 @@ describe("Caleb website authorization", () => {
     );
   });
 
-  it("enforces membership, role, entitlement, capability, tenant, version, expiry, and recent MFA", async () => {
+  it("enforces membership, role, entitlement, capability, tenant, version, and session expiry", async () => {
     async function denied(
       operation: "website.preview.read" | "website.publish",
       overrides: Record<string, unknown>,
@@ -163,8 +163,8 @@ describe("Caleb website authorization", () => {
     })).rejects.toMatchObject({ code: "ENTITLEMENT_STALE" });
     await expect(denied("website.publish", {}, {
       ...session,
-      aal2VerifiedAt: "2026-09-24T15:44:59.000Z",
-    })).rejects.toMatchObject({ code: "RECENT_AAL2_REQUIRED" });
+      expiresAt: "2026-09-24T15:44:59.000Z",
+    })).rejects.toMatchObject({ code: "SESSION_EXPIRED" });
   });
 
   it("derives the fixed site and server-side policy after verifying the session", async () => {

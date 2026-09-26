@@ -1,0 +1,15 @@
+.preview [data-caleb-editable="true"] {
+  outline: 2px dashed #38bdf8;
+  outline-offset: 3px;
+  cursor: pointer;
+}
+
+.preview [data-caleb-editable="true"]:hover,
+.preview [data-caleb-editable="true"]:focus-visible {
+  outline: 3px solid #38bdf8;
+}
+
+.preview [data-caleb-selected="true"] {
+  outline: 3px solid #facc15;
+  outline-offset: 4px;
+}

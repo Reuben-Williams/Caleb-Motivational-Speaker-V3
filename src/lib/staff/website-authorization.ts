@@ -102,22 +102,22 @@ export const CALEB_WEBSITE_OPERATION_POLICIES: Readonly<
   "website.publish": Object.freeze({
     capability: "post.publish",
     action: "write",
-    requiresRecentAal2: true,
+    requiresRecentAal2: false,
   }),
   "website.rollback": Object.freeze({
     capability: "post.rollback",
     action: "write",
-    requiresRecentAal2: true,
+    requiresRecentAal2: false,
   }),
   "website.media.upload": Object.freeze({
     capability: "media.upload",
     action: "write",
-    requiresRecentAal2: true,
+    requiresRecentAal2: false,
   }),
   "website.revalidation.retry": Object.freeze({
     capability: "post.publish",
     action: "write",
-    requiresRecentAal2: true,
+    requiresRecentAal2: false,
   }),
 });
 

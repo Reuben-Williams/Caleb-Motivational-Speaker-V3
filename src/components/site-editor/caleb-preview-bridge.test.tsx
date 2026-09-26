@@ -10,6 +10,24 @@ import {
 const siteId = "ce607bf6-2959-4d7e-b52a-31a8d21b1db2";
 
 describe("CalebPreviewBridge", () => {
+  it("decorates only declared regions and supports keyboard selection", () => {
+    const postMessage = vi.spyOn(window.parent, "postMessage");
+    const { getByText } = render(<CalebPreviewBridge pagePath="/">
+      <h1 data-builder-region-id="home.hero.title.line1" data-builder-region-kind="text">Editable title</h1>
+      <p data-builder-region-id="locked.contact.email" data-builder-region-kind="text">Locked text</p>
+    </CalebPreviewBridge>);
+    const title = getByText("Editable title");
+    expect(title).toHaveAttribute("data-caleb-editable", "true");
+    expect(title).toHaveAttribute("tabindex", "0");
+    expect(title).toHaveAttribute("title", expect.stringContaining("Edit"));
+    expect(getByText("Locked text")).not.toHaveAttribute("data-caleb-editable");
+    fireEvent.keyDown(title, { key: "Enter" });
+    expect(title).toHaveAttribute("data-caleb-selected", "true");
+    expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({
+      type: "builder:select-region", regionId: "home.hero.title.line1",
+    }), window.location.origin);
+    postMessage.mockRestore();
+  });
   it("accepts only the exact origin, site, page, declared region, protocol, and version", () => {
     const message = createBuilderPreviewMessage(siteId, {
       type: "builder:select-region",

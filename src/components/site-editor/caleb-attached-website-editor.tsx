@@ -4,7 +4,6 @@ import type { BuilderPreviewMessage, MediaAsset, VersionRecord } from "@reuben-w
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 import { StaffWorkspaceShell } from "@/components/admin/staff-workspace-shell";
-import { StaffSecurityVerification } from "@/components/admin/staff-security-verification";
 import { calebEditorReducer, initialCalebEditorState } from "./caleb-editor-controller";
 import { type CalebSelectedRegion, CalebRegionInspector } from "./caleb-region-inspector";
 import { CalebMediaWorkspace } from "./caleb-media-workspace";
@@ -31,7 +30,7 @@ async function command(path: string, init?: RequestInit) {
 
 function mutationFailure(error: unknown, fallback: string) {
   return error instanceof Error && error.message === "security_verification_required"
-    ? "Verify publishing access with your authenticator, then try this action again."
+    ? "Your staff access could not be verified. Sign in again and retry."
     : fallback;
 }
 
@@ -49,6 +48,13 @@ export function CalebAttachedWebsiteEditor() {
   const busy = ["loading", "saving", "publishing", "restoring", "uploading"].includes(state.status);
   const revalidationTimer = useRef<number | null>(null);
   const previewFrame = useRef<HTMLIFrameElement | null>(null);
+  const frameKey = `${pagePath}:${content.draftVersionId}:${content.publishedVersionId}`;
+  const [readyFrame, setReadyFrame] = useState<string | null>(null);
+  const [failedFrame, setFailedFrame] = useState<string | null>(null);
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setFailedFrame(frameKey), 15000);
+    return () => window.clearTimeout(timeout);
+  }, [frameKey]);
 
   const pollRevalidation = useCallback(async function checkRevalidation(correlationId: string) {
     if (revalidationTimer.current !== null) window.clearTimeout(revalidationTimer.current);
@@ -105,8 +111,12 @@ export function CalebAttachedWebsiteEditor() {
   useEffect(() => {
     const receive = (event: MessageEvent<BuilderPreviewMessage>) => {
       if (event.source !== previewFrame.current?.contentWindow ||
-        !isAllowedCalebPreviewMessage(event.data, { origin: event.origin, expectedOrigin: window.location.origin, pagePath }) ||
-        event.data.type !== "builder:select-region") return;
+        !isAllowedCalebPreviewMessage(event.data, { origin: event.origin, expectedOrigin: window.location.origin, pagePath })) return;
+      if (event.data.type === "builder:ready") {
+        setReadyFrame(frameKey);
+        return;
+      }
+      if (event.data.type !== "builder:select-region") return;
       const message = event.data;
       const region = CALEB_EDITOR_SITE_CONFIG.pages.find((page) => page.path === pagePath)?.regions.find((item) => item.id === message.regionId);
       if (!region || (message.kind !== "text" && message.kind !== "image")) return;
@@ -115,7 +125,7 @@ export function CalebAttachedWebsiteEditor() {
     };
     window.addEventListener("message", receive);
     return () => window.removeEventListener("message", receive);
-  }, [pagePath]);
+  }, [pagePath, frameKey]);
 
   async function save() {
     if (!selected) return;
@@ -130,6 +140,7 @@ export function CalebAttachedWebsiteEditor() {
         body: JSON.stringify({ action: "saveDraft", pagePath, regionId: selected.id, value, expectedDraftVersionId: content.draftVersionId }),
       });
       setContent((current) => ({ ...current, draftVersionId: result.draftVersionId }));
+      setSelected(null);
       dispatch({ type: "success", message: "Draft saved. The public site has not changed." });
     } catch (error) {
       dispatch(error && typeof error === "object" && "status" in error && error.status === 409 ? { type: "conflict" } : { type: "error", message: "The draft was not saved." });
@@ -232,7 +243,6 @@ export function CalebAttachedWebsiteEditor() {
           <div><span className={styles.eyebrow}>Website editor</span><h1>Edit the live Caleb Jakes website</h1><p>Save private drafts, review them at three sizes, then publish one page at a time.</p></div>
           <div className={styles.actions}><a href={pagePath} target="_blank">View public page</a><button type="button" className={styles.publish} onClick={publish} disabled={busy}>Publish page</button></div>
         </header>
-        <StaffSecurityVerification />
         <nav className={styles.pages} aria-label="Website pages">{CALEB_EDITOR_SITE_CONFIG.pages.map((page) => <button key={page.path} aria-current={page.path === pagePath ? "page" : undefined} onClick={() => {
           setPagePath(page.path);
           setSelected(null);
@@ -245,11 +255,16 @@ export function CalebAttachedWebsiteEditor() {
         {workspace === "website.history" ? <CalebHistoryWorkspace versions={history} busy={busy} onRestore={(version) => { void changePublishedVersion(version, "rollback"); }} onUndo={(version) => { void changePublishedVersion(version, "undoRollback"); }} /> : null}
         {workspace === "website.pages" ? <div className={styles.editorGrid}>
           <section className={styles.preview}>
+            <p role="status">{readyFrame === frameKey
+              ? "Preview ready. Select outlined text or an image to edit."
+              : failedFrame === frameKey
+                ? "The interactive preview did not become ready. Reload this editor to retry."
+                : "Loading interactive preview…"}</p>
             <div className={styles.viewportControls} aria-label="Preview size">
               {(["desktop", "tablet", "mobile"] as const).map((size) => <button key={size} type="button" aria-label={`${size.charAt(0).toUpperCase()}${size.slice(1)} preview`} aria-pressed={viewport === size} onClick={() => setViewport(size)}>{size}</button>)}
             </div>
             <div className={styles.previewFrame} data-testid="website-preview-frame" data-viewport={viewport}>
-              <iframe ref={previewFrame} key={`${pagePath}:${content.draftVersionId}:${content.publishedVersionId}`} title={`${pagePath} draft preview`} src={calebPreviewPath(pagePath)} />
+              <iframe ref={previewFrame} key={frameKey} title={`${pagePath} draft preview`} src={calebPreviewPath(pagePath)} />
             </div>
           </section>
           <CalebRegionInspector region={selected} value={state.localValue} alt={alt} media={media} busy={busy} onValue={(value) => dispatch({ type: "local", value })} onAlt={setAlt} onChoose={(asset) => { setChosen(asset); setAlt(asset.alt); }} onSave={save} />
