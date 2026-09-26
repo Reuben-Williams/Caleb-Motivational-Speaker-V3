@@ -203,7 +203,7 @@ export function CalebAttachedWebsiteEditor() {
       });
       void pollRevalidation(state.correlationId);
     } catch (error) {
-      dispatch({ type: "revalidation_failed", correlationId: state.correlationId, message: mutationFailure(error, "The public refresh retry failed. Verify security and try again.") });
+      dispatch({ type: "revalidation_failed", correlationId: state.correlationId, message: mutationFailure(error, "The public refresh retry failed. Please try again.") });
     }
   }
 

@@ -4,7 +4,7 @@ import { createCalebRevalidationRouteHandler } from "./revalidation-route-handle
 
 const CORRELATION_ID = "11111111-1111-4111-8111-111111111111";
 
-function fixture(status: "pending" | "complete" | "failed" | null = "pending") {
+function fixture(status: "pending" | "complete" | "failed" | null = "pending", onCommitted = vi.fn()) {
   const revalidation = {
     status: vi.fn().mockResolvedValue(status),
     retryFailedCommand: vi.fn().mockResolvedValue({
@@ -26,7 +26,8 @@ function fixture(status: "pending" | "complete" | "failed" | null = "pending") {
   return {
     revalidation,
     runtime,
-    handler: createCalebRevalidationRouteHandler({ resolveRuntime: async () => runtime }),
+    onCommitted,
+    handler: createCalebRevalidationRouteHandler({ resolveRuntime: async () => runtime, onCommitted }),
   };
 }
 
@@ -37,6 +38,7 @@ describe("Caleb revalidation route", () => {
       `https://calebjakes.com/api/builder/revalidation?correlationId=${CORRELATION_ID}`,
     ));
     expect(await response.json()).toEqual({ revalidation: "complete" });
+    expect(current.onCommitted).not.toHaveBeenCalled();
     expect(current.runtime.authorizeRead).toHaveBeenCalledWith(
       expect.any(Request),
       "website.preview.read",
@@ -61,6 +63,7 @@ describe("Caleb revalidation route", () => {
       },
     ));
     expect(response.status).toBe(200);
+    expect(current.onCommitted).toHaveBeenCalledOnce();
     expect(await response.json()).toEqual({
       status: "applied",
       revalidation: "pending",
@@ -78,6 +81,29 @@ describe("Caleb revalidation route", () => {
     });
   });
 
+  it("keeps the committed retry response when background scheduling throws", async () => {
+    const current = fixture("failed", vi.fn(() => { throw new Error("private scheduler detail"); }));
+    const response = await current.handler(new Request("https://calebjakes.com/api/builder/revalidation", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "retry", correlationId: CORRELATION_ID }),
+    }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ revalidation: "pending" });
+    expect(current.onCommitted).toHaveBeenCalledOnce();
+  });
+
+  it("never starts background work for an unauthorized retry", async () => {
+    const current = fixture("failed");
+    current.runtime.authorizeMutation.mockRejectedValueOnce({ status: 403 });
+    const response = await current.handler(new Request("https://calebjakes.com/api/builder/revalidation", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "retry", correlationId: CORRELATION_ID }),
+    }));
+    expect(response.status).toBe(403);
+    expect(current.revalidation.retryFailedCommand).not.toHaveBeenCalled();
+    expect(current.onCommitted).not.toHaveBeenCalled();
+  });
+
   it("returns not found without exposing worker details", async () => {
     const missing = fixture(null);
     const response = await missing.handler(new Request(
@@ -87,4 +113,3 @@ describe("Caleb revalidation route", () => {
     expect(await response.json()).toEqual({ code: "not_found" });
   });
 });
-

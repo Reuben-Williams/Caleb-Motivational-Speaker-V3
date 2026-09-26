@@ -4,6 +4,7 @@ import type { CalebPostgresContentAdapter } from "./postgres-content-adapter";
 import type { PostgresMediaStore } from "./media-store";
 import { getCalebSeedMedia } from "./media-seed-catalog";
 import { websiteSecurityErrorCode } from "./security-error";
+import { notifyCalebContentCommitted } from "./revalidation-kickoff";
 
 const PRIVATE_HEADERS = Object.freeze({ "Cache-Control": "private, no-store" });
 const MAX_JSON_BYTES = 64 * 1024;
@@ -122,6 +123,7 @@ function exactSearch(url: URL, keys: readonly string[]): boolean {
 
 export function createCalebContentRouteHandler(input: {
   resolveRuntime(): Promise<ContentRuntime | null>;
+  onCommitted?: () => void;
 }) {
   return async function calebContentRoute(request: Request): Promise<Response> {
     const runtime = await input.resolveRuntime();
@@ -183,13 +185,15 @@ export function createCalebContentRouteHandler(input: {
           return response({ code: "invalid_request" }, 400);
         }
         const authorized = await runtime.authorizeMutation(request, "website.publish", body);
-        return response(await authorized.adapter.publishCommand({
+        const result = await authorized.adapter.publishCommand({
           pagePath: body.pagePath,
           expectedDraftVersionId: body.expectedDraftVersionId,
           expectedPublishedVersionId: body.expectedPublishedVersionId,
           idempotencyKey: authorized.idempotencyKey,
           correlationId: authorized.grant.correlationId,
-        }));
+        });
+        notifyCalebContentCommitted(input.onCommitted);
+        return response(result);
       }
 
       if (body.action === "rollback") {
@@ -199,13 +203,15 @@ export function createCalebContentRouteHandler(input: {
           return response({ code: "invalid_request" }, 400);
         }
         const authorized = await runtime.authorizeMutation(request, "website.rollback", body);
-        return response(await authorized.adapter.rollbackCommand({
+        const result = await authorized.adapter.rollbackCommand({
           pagePath: body.pagePath,
           versionId: body.versionId,
           expectedPublishedVersionId: body.expectedPublishedVersionId,
           idempotencyKey: authorized.idempotencyKey,
           correlationId: authorized.grant.correlationId,
-        }));
+        });
+        notifyCalebContentCommitted(input.onCommitted);
+        return response(result);
       }
       if (body.action === "undoRollback") {
         if (!exactKeys(body, ["action", "pagePath", "rollbackVersionId", "expectedPublishedVersionId"]) ||
@@ -214,13 +220,15 @@ export function createCalebContentRouteHandler(input: {
           return response({ code: "invalid_request" }, 400);
         }
         const authorized = await runtime.authorizeMutation(request, "website.rollback", body);
-        return response(await authorized.adapter.undoRollbackCommand({
+        const result = await authorized.adapter.undoRollbackCommand({
           pagePath: body.pagePath,
           rollbackVersionId: body.rollbackVersionId,
           expectedPublishedVersionId: body.expectedPublishedVersionId,
           idempotencyKey: authorized.idempotencyKey,
           correlationId: authorized.grant.correlationId,
-        }));
+        });
+        notifyCalebContentCommitted(input.onCommitted);
+        return response(result);
       }
       return response({ code: "invalid_request" }, 400);
     } catch (error) {

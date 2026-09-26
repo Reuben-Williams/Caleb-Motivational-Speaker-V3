@@ -12,7 +12,7 @@ const VERSION = {
   createdAt: "2026-09-24T16:00:00.000Z",
 } as const;
 
-function fixture() {
+function fixture(onCommitted = vi.fn()) {
   const adapter = {
     getContentState: vi.fn().mockResolvedValue({
       content: { path: "/", regions: {} },
@@ -36,8 +36,8 @@ function fixture() {
       correlationId: "33333333-3333-4333-8333-333333333333",
       revalidation: "pending",
     }),
-    rollbackCommand: vi.fn().mockResolvedValue({ status: "applied", version: VERSION }),
-    undoRollbackCommand: vi.fn().mockResolvedValue({ status: "applied", version: VERSION }),
+    rollbackCommand: vi.fn().mockResolvedValue({ status: "applied", version: VERSION, revalidation: "pending" }),
+    undoRollbackCommand: vi.fn().mockResolvedValue({ status: "applied", version: VERSION, revalidation: "pending" }),
   };
   const grant = {
     siteId: VERSION.siteId,
@@ -54,8 +54,9 @@ function fixture() {
       replay: false,
     }),
   };
-  return { adapter, runtime, handler: createCalebContentRouteHandler({
+  return { adapter, runtime, onCommitted, handler: createCalebContentRouteHandler({
     resolveRuntime: async () => runtime,
+    onCommitted,
   }) };
 }
 
@@ -129,6 +130,7 @@ describe("Caleb content route", () => {
       idempotencyKey: "command-a",
       correlationId: "33333333-3333-4333-8333-333333333333",
     }));
+    expect(save.onCommitted).not.toHaveBeenCalled();
 
     const publish = fixture();
     const published = await publish.handler(mutation("PUT", {
@@ -138,6 +140,7 @@ describe("Caleb content route", () => {
     }));
     expect(published.status).toBe(200);
     expect(await published.json()).toMatchObject({ revalidation: "pending" });
+    expect(publish.onCommitted).toHaveBeenCalledOnce();
     expect(publish.runtime.authorizeMutation).toHaveBeenCalledWith(
       expect.any(Request),
       "website.publish",
@@ -157,6 +160,7 @@ describe("Caleb content route", () => {
       expect.any(Object),
     );
     expect(rollback.adapter.rollbackCommand).toHaveBeenCalledOnce();
+    expect(rollback.onCommitted).toHaveBeenCalledOnce();
 
     const undo = fixture();
     await undo.handler(mutation("PATCH", {
@@ -166,6 +170,36 @@ describe("Caleb content route", () => {
       expectedPublishedVersionId: null,
     }));
     expect(undo.adapter.undoRollbackCommand).toHaveBeenCalledOnce();
+    expect(undo.onCommitted).toHaveBeenCalledOnce();
+  });
+
+  it("never turns an already committed publish into failure when scheduling fails", async () => {
+    const current = fixture(vi.fn(() => { throw new Error("private scheduler failure"); }));
+    const response = await current.handler(mutation("PUT", {
+      pagePath: "/", expectedDraftVersionId: VERSION.id, expectedPublishedVersionId: null,
+    }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ status: "applied", revalidation: "pending" });
+    expect(current.onCommitted).toHaveBeenCalledOnce();
+  });
+
+  it("does not wait for refresh work or rewrite the immutable replay response", async () => {
+    const current = fixture(vi.fn(() => new Promise(() => {})));
+    current.adapter.publishCommand.mockResolvedValueOnce({ status: "replayed", revalidation: "pending" });
+    const response = await current.handler(mutation("PUT", {
+      pagePath: "/", expectedDraftVersionId: VERSION.id, expectedPublishedVersionId: null,
+    }));
+    expect(await response.json()).toEqual({ status: "replayed", revalidation: "pending" });
+    expect(current.onCommitted).toHaveBeenCalledOnce();
+  });
+
+  it("contains rejected scheduling promises without altering the committed result", async () => {
+    const current = fixture(vi.fn(() => Promise.reject(new Error("private scheduler failure"))));
+    const response = await current.handler(mutation("PUT", {
+      pagePath: "/", expectedDraftVersionId: VERSION.id, expectedPublishedVersionId: null,
+    }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ status: "applied", revalidation: "pending" });
   });
 
   it("rejects undeclared fields, wrong methods, oversized JSON, and stale versions safely", async () => {
@@ -202,6 +236,7 @@ describe("Caleb content route", () => {
       expectedPublishedVersionId: null,
     }));
     expect(response.status).toBe(409);
+    expect(stale.onCommitted).not.toHaveBeenCalled();
     expect(await response.json()).toEqual({ code: "CONTENT_VERSION_CONFLICT" });
   });
 });

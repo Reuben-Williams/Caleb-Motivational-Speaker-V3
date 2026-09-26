@@ -28,13 +28,56 @@ function json(body: unknown, status = 200): Response {
   return Response.json(body, { status, headers: PRIVATE_HEADERS });
 }
 
-export function createCalebRevalidationWorkerHandler(input: {
-  secret(): string | undefined;
+interface WorkerInput {
   resolveStore(): Promise<WorkerStore | PostgresRevalidationStore>;
   refresh(path: string): Promise<void> | void;
   workerId?: () => string;
   simulateCrashAfterRefreshFailure?: boolean;
   reportFailure?: (code: string) => void;
+}
+
+// Trusted server-only entry point. Both post-commit kickoff and authenticated cron
+// use these same durable claims and leases; neither can refresh an arbitrary input path.
+export async function runCalebRevalidationJobs(input: WorkerInput): Promise<
+  { claimed: number; completed: number; failed: number } | { code: string }
+> {
+  let store: WorkerStore;
+  try {
+    store = await input.resolveStore();
+  } catch {
+    input.reportFailure?.("revalidation_configuration_invalid");
+    return { code: "revalidation_configuration_invalid" };
+  }
+  const workerId = input.workerId?.() ?? randomUUID();
+  let jobs: readonly ClaimedCalebRevalidationJob[];
+  try {
+    jobs = await store.claimDue({ workerId, limit: 10, leaseSeconds: 120 });
+  } catch {
+    input.reportFailure?.("revalidation_claim_failed");
+    return { code: "revalidation_claim_failed" };
+  }
+  let completed = 0;
+  let failed = 0;
+  for (const job of jobs) {
+    try {
+      await input.refresh(job.pagePath);
+      if (await store.complete({ jobId: job.id, workerId, succeeded: true })) completed += 1;
+    } catch (error) {
+      if (input.simulateCrashAfterRefreshFailure) throw error;
+      failed += 1;
+      await store.complete({
+        jobId: job.id,
+        workerId,
+        succeeded: false,
+        safeErrorCode: "CONTENT_REFRESH_FAILED",
+      });
+    }
+  }
+  return { claimed: jobs.length, completed, failed };
+}
+
+export function createCalebRevalidationWorkerHandler(input: WorkerInput & {
+  secret(): string | undefined;
 }) {
   return async function calebRevalidationWorker(request: Request): Promise<Response> {
     if (request.method !== "GET") return json({ code: "method_not_allowed" }, 405);
@@ -46,39 +89,7 @@ export function createCalebRevalidationWorkerHandler(input: {
       request.headers.has("transfer-encoding") || (await request.text()).length > 0) {
       return json({ code: "parameters_not_allowed" }, 400);
     }
-    let store: WorkerStore;
-    try {
-      store = await input.resolveStore();
-    } catch {
-      input.reportFailure?.("revalidation_configuration_invalid");
-      return json({ code: "revalidation_configuration_invalid" }, 503);
-    }
-    const workerId = input.workerId?.() ?? randomUUID();
-    let jobs: readonly ClaimedCalebRevalidationJob[];
-    try {
-      jobs = await store.claimDue({ workerId, limit: 10, leaseSeconds: 120 });
-    } catch {
-      input.reportFailure?.("revalidation_claim_failed");
-      return json({ code: "revalidation_claim_failed" }, 503);
-    }
-    let completed = 0;
-    let failed = 0;
-    for (const job of jobs) {
-      try {
-        await input.refresh(job.pagePath);
-        if (await store.complete({ jobId: job.id, workerId, succeeded: true })) completed += 1;
-      } catch (error) {
-        if (input.simulateCrashAfterRefreshFailure) throw error;
-        failed += 1;
-        await store.complete({
-          jobId: job.id,
-          workerId,
-          succeeded: false,
-          safeErrorCode: "CONTENT_REFRESH_FAILED",
-        });
-      }
-    }
-    return json({ claimed: jobs.length, completed, failed });
+    const result = await runCalebRevalidationJobs(input);
+    return json(result, "code" in result ? 503 : 200);
   };
 }
-

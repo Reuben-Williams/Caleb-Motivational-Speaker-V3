@@ -1,5 +1,6 @@
 import "server-only";
 import { websiteSecurityErrorCode } from "./security-error";
+import { notifyCalebContentCommitted } from "./revalidation-kickoff";
 
 const PRIVATE_HEADERS = Object.freeze({ "Cache-Control": "private, no-store" });
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -51,6 +52,7 @@ function safeError(error: unknown): Response {
 
 export function createCalebRevalidationRouteHandler(input: {
   resolveRuntime(): Promise<Runtime | null>;
+  onCommitted?: () => void;
 }) {
   return async function calebRevalidationRoute(request: Request): Promise<Response> {
     const runtime = await input.resolveRuntime();
@@ -83,11 +85,13 @@ export function createCalebRevalidationRouteHandler(input: {
         "website.revalidation.retry",
         typed,
       );
-      return json(await authorized.revalidation.retryFailedCommand({
+      const result = await authorized.revalidation.retryFailedCommand({
         targetCorrelationId: typed.correlationId,
         idempotencyKey: authorized.idempotencyKey,
         commandCorrelationId: authorized.grant.correlationId,
-      }));
+      });
+      notifyCalebContentCommitted(input.onCommitted);
+      return json(result);
     } catch (error) {
       return safeError(error);
     }

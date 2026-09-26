@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createCalebRevalidationWorkerHandler } from "./revalidation-worker";
+import { createCalebRevalidationWorkerHandler, runCalebRevalidationJobs } from "./revalidation-worker";
 
 const JOB = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -20,6 +20,15 @@ function authorized() {
 }
 
 describe("Caleb revalidation worker", () => {
+  it("runs trusted internal work through the same durable claims without a synthetic HTTP request", async () => {
+    const store = { claimDue: vi.fn().mockResolvedValue([JOB]), complete: vi.fn().mockResolvedValue(true) };
+    const refresh = vi.fn();
+    const result = await runCalebRevalidationJobs({ resolveStore: async () => store, refresh,
+      workerId: () => "44444444-4444-4444-8444-444444444444" });
+    expect(result).toEqual({ claimed: 1, completed: 1, failed: 0 });
+    expect(store.claimDue).toHaveBeenCalledWith({ workerId: "44444444-4444-4444-8444-444444444444", limit: 10, leaseSeconds: 120 });
+    expect(refresh).toHaveBeenCalledWith(JOB.pagePath);
+  });
   it("claims bounded work, refreshes canonical paths, and completes the lease", async () => {
     const store = {
       claimDue: vi.fn().mockResolvedValue([JOB]),
