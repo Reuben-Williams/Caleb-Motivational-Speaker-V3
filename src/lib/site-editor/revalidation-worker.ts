@@ -30,7 +30,7 @@ function json(body: unknown, status = 200): Response {
 
 interface WorkerInput {
   resolveStore(): Promise<WorkerStore | PostgresRevalidationStore>;
-  refresh(path: string): Promise<void> | void;
+  refresh(path: string, job: ClaimedCalebRevalidationJob): Promise<void> | void;
   workerId?: () => string;
   simulateCrashAfterRefreshFailure?: boolean;
   reportFailure?: (code: string) => void;
@@ -60,7 +60,7 @@ export async function runCalebRevalidationJobs(input: WorkerInput): Promise<
   let failed = 0;
   for (const job of jobs) {
     try {
-      await input.refresh(job.pagePath);
+      await input.refresh(job.pagePath, job);
       if (await store.complete({ jobId: job.id, workerId, succeeded: true })) completed += 1;
     } catch (error) {
       if (input.simulateCrashAfterRefreshFailure) throw error;

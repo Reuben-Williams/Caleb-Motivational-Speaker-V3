@@ -68,6 +68,50 @@ function defaultHandler(sql: string): QueryResult {
 }
 
 describe("CalebPostgresContentAdapter", () => {
+  it("reads only the published pointer for public pages, never private drafts", async () => {
+    const { adapter, query } = createAdapter((sql) => {
+      if (sql.includes("from public.builder_published_pages")) return { rows: [{
+        published_regions: { "home.hero.title.line1": { type: "text", value: "PUBLIC ONLY" } },
+        published_version_id: publishedVersionId, published_updated_at: now,
+      }], rowCount: 1 };
+      return { rows: [], rowCount: 0 };
+    });
+    const content = await adapter.getPublishedContent(siteId, "/");
+    expect(content.regions["home.hero.title.line1"]).toEqual({ type: "text", value: "PUBLIC ONLY" });
+    expect(query.mock.calls.every(([sql]) => !sql.includes("builder_draft_pages"))).toBe(true);
+  });
+
+  it.each([publishedVersionId, nextVersionId])("strictly verifies a current or legitimately superseding publication %s", async (currentId) => {
+    const { adapter, query } = createAdapter((sql) => {
+      if (sql.includes("from public.builder_published_pages")) return { rows: [{
+        published_regions: { "home.hero.title.line1": { type: "text", value: "VERIFIED" } },
+        published_version_id: currentId, published_updated_at: now,
+        expected_in_lineage: true, snapshot_matches: true,
+      }], rowCount: 1 };
+      return { rows: [], rowCount: 0 };
+    });
+    const content = await adapter.verifyPublishedContent(siteId, "/", publishedVersionId);
+    expect(content.versionId).toBe(currentId);
+    expect(query.mock.calls.find(([sql]) => sql.includes("with recursive"))?.[1]).toEqual([siteId, "/", publishedVersionId]);
+    expect(query.mock.calls.find(([sql]) => sql.includes("with recursive"))?.[0]).toContain("child.depth<256");
+    expect(query.mock.calls.every(([sql]) => !sql.includes("builder_draft_pages"))).toBe(true);
+  });
+
+  it.each([
+    null,
+    { expected_in_lineage: false, snapshot_matches: true, published_regions: {} },
+    { expected_in_lineage: true, snapshot_matches: false, published_regions: {} },
+    { expected_in_lineage: true, snapshot_matches: true, published_regions: { "not.declared": { type: "text", value: "bad" } } },
+  ])("fails strict readback instead of reporting fallback content as refreshed", async (override) => {
+    const { adapter } = createAdapter((sql) => {
+      if (sql.includes("from public.builder_published_pages")) return { rows: override ? [{
+        published_version_id: publishedVersionId, published_updated_at: now, ...override,
+      }] : [], rowCount: override ? 1 : 0 };
+      return { rows: [], rowCount: 0 };
+    });
+    await expect(adapter.verifyPublishedContent(siteId, "/", publishedVersionId)).rejects.toBeDefined();
+  });
+
   it("maps an empty store to complete fallback content and separate null tokens", async () => {
     const { adapter, query } = createAdapter(defaultHandler);
 
@@ -379,6 +423,20 @@ describe("CalebPostgresContentAdapter", () => {
         correlationId,
       },
     ]);
+  });
+
+  it("keeps history readable after media uploads and excludes operational refresh retries", async () => {
+    const { adapter, query } = createAdapter((sql) => {
+      if (sql.includes("from public.builder_audit_log")) return {
+        rows: [{ id: correlationId, page_path: "/", action: "uploadMedia", actor_id: actorId,
+          region_id: "uploaded-image", created_at: now }], rowCount: 1,
+      };
+      return { rows: [], rowCount: 0 };
+    });
+    await expect(adapter.listAuditLog(siteId, "/")).resolves.toMatchObject([
+      { action: "media.uploaded", summary: "Uploaded website image", userId: actorId },
+    ]);
+    expect(query.mock.calls.some(([sql]) => sql.includes("action <> 'retryRevalidation'"))).toBe(true);
   });
 
   it("leaves the transaction uncommitted when a later atomic write fails", async () => {

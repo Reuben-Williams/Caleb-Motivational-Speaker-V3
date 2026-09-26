@@ -1,10 +1,10 @@
 import "server-only";
 
-import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 
 import { createCalebRevalidationWorkerStore } from "@/lib/staff/website-runtime";
 import { runCalebRevalidationJobs } from "./revalidation-worker";
+import { refreshCalebPublishedPage } from "./published-page-refresh";
 
 export function scheduleCalebContentRevalidation(): void {
   after(async () => {
@@ -15,7 +15,7 @@ export function scheduleCalebContentRevalidation(): void {
           if (!store) throw new Error("revalidation_configuration_invalid");
           return store;
         },
-        refresh: (path) => revalidatePath(path),
+        refresh: refreshCalebPublishedPage,
         reportFailure: (code) => console.error(code),
       });
     } catch {

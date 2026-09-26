@@ -1,6 +1,5 @@
-import { revalidatePath } from "next/cache";
-
 import { createCalebRevalidationWorkerHandler } from "@/lib/site-editor/revalidation-worker";
+import { refreshCalebPublishedPage } from "@/lib/site-editor/published-page-refresh";
 import { createCalebRevalidationWorkerStore } from "@/lib/staff/website-runtime";
 
 export const runtime = "nodejs";
@@ -14,7 +13,6 @@ export const GET = createCalebRevalidationWorkerHandler({
     if (!store) throw new Error("revalidation_configuration_invalid");
     return store;
   },
-  refresh: async (path) => revalidatePath(path),
+  refresh: refreshCalebPublishedPage,
   reportFailure: (code) => console.error(code),
 });
-

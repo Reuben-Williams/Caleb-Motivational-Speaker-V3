@@ -1,7 +1,7 @@
 # Caleb editor access and editing affordances
 
 Date: 2026-09-26
-Status: user approved the proposed design; written specification awaiting review.
+Status: approved for implementation and Production deployment after verification.
 This amendment supersedes the authenticator requirements in the September 24
 attached-editor specification for Caleb V3 only. All other constraints remain.
 
@@ -54,6 +54,23 @@ region and version checks, reports errors honestly, and refreshes the private
 preview after success. Publishing stays explicit and page-specific. Report public
 refresh failure separately from durable publication success. Image upload retains
 private storage, approved file validation, alt text, and same-site metadata checks.
+
+### Publication visibility and history reliability
+
+Render editable public pages per request from the published-only database reader.
+This costs a published-content database read per page request, but avoids serving
+an old build-time page after an editor publication. Drafts remain excluded. The
+visitor outage fallback stays available and is not accepted as proof of a
+successful publication. Durable background confirmation strictly reads back the
+committed public version (or proves a later public descendant superseded it)
+before marking completion. Immediate post-commit work and scheduled recovery
+share the same durable claims and leases. Do not equate calling Next's deferred
+cache invalidation API with completed invalidation.
+
+Publish and restore confirmations are in-page accessible dialogs, not blocking
+native browser dialogs. Page history includes media-upload events; operational
+refresh-retry events remain in the durable audit store without being cast as a
+different content action in the version-history response.
 
 ## Verification and Production release
 

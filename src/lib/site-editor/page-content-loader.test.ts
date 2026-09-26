@@ -1,10 +1,19 @@
 import { describe, expect, it, vi } from "vitest";
+const connection = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+vi.mock("next/server", () => ({ connection }));
 
 import {
   loadCalebPublishedPageContent,
 } from "./page-content-loader";
 
 describe("public Caleb page content loading", () => {
+  it("waits for the request before querying and never swallows a rendering bailout", async () => {
+    const loadPublished = vi.fn();
+    const bailout = new Error("rendering bailout");
+    connection.mockRejectedValueOnce(bailout);
+    await expect(loadCalebPublishedPageContent("/", { loadPublished })).rejects.toBe(bailout);
+    expect(loadPublished).not.toHaveBeenCalled();
+  });
   it("uses the exact code fallback when the published store is unavailable", async () => {
     const diagnostic = vi.fn();
     const content = await loadCalebPublishedPageContent("/about", {

@@ -310,12 +310,69 @@ export class CalebPostgresContentAdapter implements BuilderContentAdapter {
 
   async getPublishedContent(siteId: string, pagePath: string): Promise<PageContent> {
     this.assertSite(siteId);
-    return this.run(async (transaction) => {
-      const state = await this.rawState(transaction, pagePath, false);
-      return resolveCalebPublishedContent(pagePath, state.published, {
-        resolveMedia: this.input.resolveMedia,
-      });
-    });
+    return this.run((transaction) => this.publishedContent(transaction, pagePath));
+  }
+
+  async verifyPublishedContent(siteId: string, pagePath: string, expectedVersionId: string): Promise<PageContent> {
+    this.assertSite(siteId);
+    if (!expectedVersionId) throw new CalebContentStoreError("CONTENT_STORE_INVALID");
+    return this.run((transaction) => this.publishedContent(transaction, pagePath, expectedVersionId));
+  }
+
+  private async publishedContent(
+    transaction: DataPlaneTransaction,
+    pagePath: string,
+    expectedVersionId?: string,
+  ): Promise<PageContent> {
+    page(pagePath);
+    // This is the public read path: never query drafts. For worker readback,
+    // prove that the expected immutable public version is the current pointer
+    // or an ancestor of it (a later publish/rollback can legitimately supersede it).
+    const lineage = expectedVersionId ? `with recursive public_lineage as (
+      select version.id,version.parent_version_id,1 as depth
+      from public.builder_published_pages published
+      join public.builder_versions version
+        on version.site_id=published.site_id and version.id=published.source_version_id
+      where published.site_id=$1::uuid and published.page_path=$2
+        and version.page_path=$2 and version.version_kind in ('published','rollback','undoRollback')
+      union all
+      select version.id,version.parent_version_id,child.depth+1
+      from public.builder_versions version
+      join public_lineage child on child.parent_version_id=version.id
+      where version.site_id=$1::uuid and version.page_path=$2
+        and version.version_kind in ('published','rollback','undoRollback')
+        and child.id<>$3::uuid and child.depth<256
+    )` : "";
+    const result = await transaction.query<Record<string, unknown>>(
+      `${lineage}
+      select published.region_values as published_regions,
+        published.source_version_id as published_version_id,
+        published.updated_at as published_updated_at
+        ${expectedVersionId ? `,exists(select 1 from public_lineage where id=$3::uuid) as expected_in_lineage,
+          exists(select 1 from public.builder_versions version
+            where version.site_id=published.site_id and version.id=published.source_version_id
+              and version.page_path=published.page_path
+              and version.snapshot->'regions'=published.region_values) as snapshot_matches` : ""}
+      from public.builder_published_pages published
+      where published.site_id=$1::uuid and published.page_path=$2`,
+      expectedVersionId ? [this.input.session.siteId, pagePath, expectedVersionId] : [this.input.session.siteId, pagePath],
+    );
+    const row = result.rows[0];
+    if (expectedVersionId && (!row || row.expected_in_lineage !== true || row.snapshot_matches !== true)) {
+      throw new CalebContentStoreError("CONTENT_STORE_INVALID");
+    }
+    if (!row) return resolveCalebPublishedContent(pagePath, null);
+    const versionId = nullableText(row.published_version_id);
+    if (!versionId) throw new CalebContentStoreError("CONTENT_STORE_INVALID");
+    const storedRegions = regions(row.published_regions);
+    if (expectedVersionId) {
+      // Unlike the visitor outage fallback, completion must not hide invalid data.
+      validateCalebPageOverrides(pagePath, storedRegions, { resolveMedia: this.input.resolveMedia });
+    }
+    return resolveCalebPublishedContent(pagePath, {
+      path: pagePath, regions: storedRegions, versionId,
+      updatedAt: timestamp(row.published_updated_at),
+    }, { resolveMedia: this.input.resolveMedia });
   }
 
   async getDraftContent(siteId: string, pagePath: string): Promise<PageContent> {
@@ -866,6 +923,7 @@ export class CalebPostgresContentAdapter implements BuilderContentAdapter {
           correlation_id,source_version_id,result_version_id,created_at
          from public.builder_audit_log
          where site_id=$1::uuid and ($2::text is null or page_path=$2)
+           and action <> 'retryRevalidation'
          order by created_at desc,id`,
         [this.input.session.siteId, pagePath ?? null],
       );
@@ -878,7 +936,9 @@ export class CalebPostgresContentAdapter implements BuilderContentAdapter {
               ? "version.rolled_back"
               : row.action === "undoRollback"
                 ? "rollback.undone"
-                : null;
+                : row.action === "uploadMedia"
+                  ? "media.uploaded"
+                  : null;
         if (
           !action ||
           typeof row.id !== "string" ||
@@ -900,7 +960,9 @@ export class CalebPostgresContentAdapter implements BuilderContentAdapter {
               ? `Published ${row.page_path}`
               : action === "version.rolled_back"
                 ? `Restored ${row.page_path}`
-                : `Undid restore for ${row.page_path}`,
+                : action === "media.uploaded"
+                  ? "Uploaded website image"
+                  : `Undid restore for ${row.page_path}`,
           ...(typeof row.region_id === "string" ? { regionId: row.region_id } : {}),
           ...(isRecord(row.safe_before) ? { before: row.safe_before as EditableValue } : {}),
           ...(isRecord(row.safe_after) ? { after: row.safe_after as EditableValue } : {}),

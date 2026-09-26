@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { PageContent } from "@reuben-williams/core";
+import { connection } from "next/server";
 
 import { createCalebPublicContentAdapter } from "@/lib/staff/website-runtime";
 
@@ -23,6 +24,9 @@ export async function loadCalebPublishedPageContent(
     reportDiagnostic?: (diagnostic: LoaderDiagnostic) => void;
   }> = {},
 ): Promise<PageContent> {
+  // Published content must be read for each request, not frozen at build time.
+  // Keep Next's prerender bailout outside the availability-fallback catch.
+  await connection();
   const fallback = () => resolveCalebPublishedContent(pagePath, null);
   try {
     const loadPublished = options.loadPublished ?? (async (path) => {

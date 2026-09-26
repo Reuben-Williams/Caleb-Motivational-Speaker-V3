@@ -27,7 +27,7 @@ describe("Caleb revalidation worker", () => {
       workerId: () => "44444444-4444-4444-8444-444444444444" });
     expect(result).toEqual({ claimed: 1, completed: 1, failed: 0 });
     expect(store.claimDue).toHaveBeenCalledWith({ workerId: "44444444-4444-4444-8444-444444444444", limit: 10, leaseSeconds: 120 });
-    expect(refresh).toHaveBeenCalledWith(JOB.pagePath);
+    expect(refresh).toHaveBeenCalledWith(JOB.pagePath, JOB);
   });
   it("claims bounded work, refreshes canonical paths, and completes the lease", async () => {
     const store = {
@@ -43,7 +43,7 @@ describe("Caleb revalidation worker", () => {
     })(authorized());
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ claimed: 1, completed: 1, failed: 0 });
-    expect(refresh).toHaveBeenCalledWith("/about-caleb");
+    expect(refresh).toHaveBeenCalledWith("/about-caleb", JOB);
     expect(store.claimDue).toHaveBeenCalledWith({
       workerId: "44444444-4444-4444-8444-444444444444",
       limit: 10,
