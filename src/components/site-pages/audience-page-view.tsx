@@ -1,13 +1,14 @@
 import { AudiencePage } from "@/components/audience-page";
 import type { CalebResolvedPageContent } from "@/components/site-content/site-page-content";
 import { routeCopy } from "@/content/site";
+import { educationCopy } from "@/content/education";
 
 const audiences = {
   "/schools-colleges": {
     accent: "cobalt", current: "Schools & Colleges", prefix: "schools",
-    eyebrow: "FOR STUDENTS AND CAMPUS COMMUNITIES", image: "/media/photos/caleb-speaking-mobile.webp", imageAlt: "Caleb Jakes speaking", formatIndexes: [1, 0, 4, 7],
-    challenges: ["Pressure to perform without a grounded sense of identity", "Setbacks that can feel bigger than the future", "Disconnection between goals, discipline, and purpose", "The need to be seen, challenged, and encouraged honestly"],
-    outcomes: ["A more practical view of resilience and growth mindset", "Language for connecting struggle with forward movement", "Reflection on identity, choices, and purpose", "A next step that feels possible after the applause ends"],
+    eyebrow: educationCopy.eyebrow, image: "/media/photos/caleb-speaking-mobile.webp", imageAlt: "Caleb Jakes speaking", formatIndexes: [1, 0, 4, 7],
+    challenges: educationCopy.challenges,
+    outcomes: educationCopy.outcomes,
   },
   "/faith-events": {
     accent: "gold", current: "Faith Events", prefix: "faith",

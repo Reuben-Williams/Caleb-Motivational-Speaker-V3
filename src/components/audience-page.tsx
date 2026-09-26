@@ -6,6 +6,7 @@ import { SectionHeading } from "@/components/section-heading";
 import { EditableText } from "@/components/site-content/editable-text";
 import type { CalebResolvedPageContent } from "@/components/site-content/site-page-content";
 import { engagementFormats, organizerOutcomes } from "@/content/site";
+import { educationCopy } from "@/content/education";
 
 export type AudiencePageProps = {
   current: string;
@@ -38,6 +39,13 @@ export function AudiencePage({
   content,
   regionPrefix,
 }: AudiencePageProps) {
+  const education = regionPrefix === "schools";
+  const educationText = (id: string, fallback: string) => content
+    ? <EditableText as="span" content={content} regionId={`schools.${id}`} />
+    : fallback;
+  const audienceChallenges = education ? educationCopy.challenges : challenges;
+  const audienceOutcomes = education ? educationCopy.outcomes : outcomes;
+  const expectedOutcomes = education ? educationCopy.organizerOutcomes : organizerOutcomes.slice(0, 4);
   return (
     <>
       <PageHero
@@ -48,6 +56,8 @@ export function AudiencePage({
         intro={intro}
         title={title}
         content={content}
+        ctaLabel={education ? educationText("hero.button", educationCopy.heroButton) : undefined}
+        imageLabel={education ? educationText("hero.imageLabel", educationCopy.imageLabel) : undefined}
         regions={content && regionPrefix ? {
           eyebrow: `${regionPrefix}.hero.eyebrow`,
           title: `${regionPrefix}.hero.title`,
@@ -59,28 +69,29 @@ export function AudiencePage({
         <div className="container audience-detail__intro">
           <Reveal>
             <p className="eyebrow">BUILT AROUND THE ROOM</p>
-            <h2>THE CHALLENGE IS PERSONAL. THE PATH FORWARD CAN BE SHARED.</h2>
+            <h2>{education ? educationText("audience.title", educationCopy.detailTitle) : "THE CHALLENGE IS PERSONAL. THE PATH FORWARD CAN BE SHARED."}</h2>
           </Reveal>
           <Reveal className="audience-detail__note" delay={0.08}>
             {content && regionPrefix
               ? <EditableText as="p" content={content} regionId={`${regionPrefix}.audience.note`} />
               : <p>{note}</p>}
+            {education ? <p>{educationText("audience.noteSecond", educationCopy.noteSecond)}</p> : null}
           </Reveal>
         </div>
         <div className="container two-column-lists">
           <div>
             <h3>What the audience may be carrying</h3>
             <ul>
-              {challenges.map((item) => (
-                <li key={item}>{item}</li>
+              {audienceChallenges.map((item, index) => (
+                <li key={item}>{education ? educationText(`audience.challenge.${index + 1}`, item) : item}</li>
               ))}
             </ul>
           </div>
           <div>
             <h3>What the experience can invite</h3>
             <ul>
-              {outcomes.map((item) => (
-                <li key={item}>{item}</li>
+              {audienceOutcomes.map((item, index) => (
+                <li key={item}>{education ? educationText(`audience.outcome.${index + 1}`, item) : item}</li>
               ))}
             </ul>
           </div>
@@ -112,20 +123,22 @@ export function AudiencePage({
       <section className="shared-outcomes">
         <div className="container">
           <SectionHeading
-            eyebrow="A PURPOSE-CENTERED APPROACH"
+            eyebrow={education ? educationText("approach.eyebrow", educationCopy.approachEyebrow) : "A PURPOSE-CENTERED APPROACH"}
             title="WHAT ORGANIZERS CAN EXPECT."
           />
           <div className="shared-outcomes__grid">
-            {organizerOutcomes.slice(0, 4).map((item, index) => (
+            {expectedOutcomes.map((item, index) => (
               <Reveal className="shared-outcomes__item" key={item}>
                 <span>0{index + 1}</span>
-                <p>{item}</p>
+                {education && content
+                  ? <EditableText as="p" content={content} regionId={`schools.approach.item.${index + 1}`} />
+                  : <p>{item}</p>}
               </Reveal>
             ))}
           </div>
         </div>
       </section>
-      <FinalCta />
+      <FinalCta body={education ? educationText("final.body", educationCopy.finalBody) : undefined} />
     </>
   );
 }

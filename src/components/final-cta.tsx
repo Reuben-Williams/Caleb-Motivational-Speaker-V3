@@ -1,11 +1,12 @@
 import Image from "next/image";
+import type { ReactNode } from "react";
 
 import { LinkButton } from "@/components/link-button";
 import { Reveal } from "@/components/reveal";
 import { contact } from "@/content/site";
 import { withBasePath } from "@/lib/base-path";
 
-export function FinalCta() {
+export function FinalCta({ body = "Bring Caleb Jakes to your school, church, conference, campus, or organization for an experience built around resilience, purpose, faith, and practical transformation." }: { body?: ReactNode }) {
   return (
     <section className="final-cta">
       <Image
@@ -22,11 +23,7 @@ export function FinalCta() {
             YOUR AUDIENCE DOESN’T NEED ANOTHER SPEECH.
             <span> THEY NEED A MESSAGE THEY CAN CARRY HOME.</span>
           </h2>
-          <p>
-            Bring Caleb Jakes to your school, church, conference, campus, or
-            organization for an experience built around resilience, purpose,
-            faith, and practical transformation.
-          </p>
+          <p>{body}</p>
           <div className="button-row">
             <LinkButton href="/book-caleb">Book Caleb</LinkButton>
             <LinkButton href={contact.phoneHref} variant="outline">

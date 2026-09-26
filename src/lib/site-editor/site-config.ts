@@ -13,6 +13,7 @@ import {
 } from "@/content/site";
 
 import { getCalebSeedMedia } from "./media-seed-catalog";
+import { educationCopy } from "@/content/education";
 
 export const CALEB_EDITOR_MIGRATION = "0015_caleb_attached_site_editor.sql";
 export const CALEB_EDITOR_SCHEMA_CONTRACT = {
@@ -256,11 +257,20 @@ export const CALEB_EDITOR_SITE_CONFIG = {
       path: "/schools-colleges",
       label: "Schools & Colleges",
       regions: [
-        eyebrow("schools.hero.eyebrow", "Hero eyebrow", "FOR STUDENTS AND CAMPUS COMMUNITIES"),
+        eyebrow("schools.hero.eyebrow", "Hero eyebrow", educationCopy.eyebrow),
         title("schools.hero.title", "Hero title", routeCopy.schools.title),
-        body("schools.hero.intro", "Hero introduction", routeCopy.schools.intro),
+        body("schools.hero.intro", "Hero introduction", educationCopy.intro),
         image("schools.hero.image", "Hero image", "seed-schools-hero-v1"),
-        body("schools.audience.note", "Audience note", routeCopy.schools.note),
+        body("schools.audience.note", "Audience note", educationCopy.note),
+        eyebrow("schools.hero.button", "Hero booking button", educationCopy.heroButton),
+        eyebrow("schools.hero.imageLabel", "Numbered image label", educationCopy.imageLabel),
+        title("schools.audience.title", "Audience headline", educationCopy.detailTitle),
+        body("schools.audience.noteSecond", "Audience explanation", educationCopy.noteSecond),
+        ...educationCopy.challenges.map((value, index) => body(`schools.audience.challenge.${index + 1}`, `Audience challenge ${index + 1}`, value)),
+        ...educationCopy.outcomes.map((value, index) => body(`schools.audience.outcome.${index + 1}`, `Experience outcome ${index + 1}`, value)),
+        eyebrow("schools.approach.eyebrow", "Organizer approach eyebrow", educationCopy.approachEyebrow),
+        ...educationCopy.organizerOutcomes.map((value, index) => body(`schools.approach.item.${index + 1}`, `Organizer expectation ${index + 1}`, value)),
+        body("schools.final.body", "Closing invitation", educationCopy.finalBody),
       ],
     },
     {

@@ -2,6 +2,7 @@ import {
   evidenceRegistry,
   type EvidenceId,
 } from "@/content/evidence";
+import { educationCopy } from "@/content/education";
 
 export { evidenceRegistry };
 
@@ -373,10 +374,8 @@ export const routeCopy = {
   },
   schools: {
     title: "HELP STUDENTS TURN PRESSURE INTO PURPOSE.",
-    intro:
-      "Caleb brings a practical message about resilience, identity, growth mindset, and purpose to school and college communities.",
-    note:
-      "Use the inquiry to describe the age group, setting, event goals, preferred format, and any faith-content requirements.",
+    intro: educationCopy.intro,
+    note: educationCopy.note,
   },
   faith: {
     title: "FAITH THAT MEETS PEOPLE IN REAL LIFE.",

@@ -68,6 +68,15 @@ const expectedPageRegions = {
     "schools.hero.intro",
     "schools.hero.image",
     "schools.audience.note",
+    "schools.hero.button",
+    "schools.hero.imageLabel",
+    "schools.audience.title",
+    "schools.audience.noteSecond",
+    ...[1, 2, 3, 4].map((index) => `schools.audience.challenge.${index}`),
+    ...[1, 2, 3, 4].map((index) => `schools.audience.outcome.${index}`),
+    "schools.approach.eyebrow",
+    ...[1, 2, 3, 4].map((index) => `schools.approach.item.${index}`),
+    "schools.final.body",
   ],
   "/faith-events": [
     "faith.hero.eyebrow",
@@ -155,7 +164,7 @@ describe("Caleb editor site configuration", () => {
     const observedIds = CALEB_EDITOR_SITE_CONFIG.pages.flatMap((page) =>
       page.regions.map((region) => region.id),
     );
-    expect(observedIds).toHaveLength(110);
+    expect(observedIds).toHaveLength(128);
     expect(new Set(observedIds).size).toBe(observedIds.length);
 
     for (const [path, expectedIds] of Object.entries(expectedPageRegions)) {

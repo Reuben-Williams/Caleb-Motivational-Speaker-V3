@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { ReactNode } from "react";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { EditableImage } from "@/components/site-content/editable-image";
@@ -16,6 +17,8 @@ export function PageHero({
   image = "/media/photos/caleb-speaking-wide.webp",
   imageAlt = "Caleb Jakes speaking with a microphone",
   cta = true,
+  ctaLabel = "Book Caleb",
+  imageLabel = "PAIN → PURPOSE",
   content,
   regions,
 }: {
@@ -26,6 +29,8 @@ export function PageHero({
   image?: string;
   imageAlt?: string;
   cta?: boolean;
+  ctaLabel?: ReactNode;
+  imageLabel?: ReactNode;
   content?: CalebResolvedPageContent;
   regions?: Readonly<{
     eyebrow: string;
@@ -48,7 +53,7 @@ export function PageHero({
           {content && regions
             ? <EditableText as="p" className="page-hero__intro" content={content} regionId={regions.intro} />
             : <p className="page-hero__intro">{intro}</p>}
-          {cta ? <LinkButton href="/book-caleb">Book Caleb</LinkButton> : null}
+          {cta ? <LinkButton href="/book-caleb">{ctaLabel}</LinkButton> : null}
         </Reveal>
         <Reveal className="page-hero__media" delay={0.08}>
           {content && regions?.image
@@ -68,7 +73,7 @@ export function PageHero({
               />}
           <div className="image-label">
             <span>01</span>
-            <span>PAIN → PURPOSE</span>
+            <span>{imageLabel}</span>
           </div>
         </Reveal>
       </div>

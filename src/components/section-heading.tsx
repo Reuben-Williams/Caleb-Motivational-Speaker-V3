@@ -1,10 +1,12 @@
+import type { ReactNode } from "react";
+
 export function SectionHeading({
   eyebrow,
   title,
   body,
   align = "left",
 }: {
-  eyebrow: string;
+  eyebrow: ReactNode;
   title: string;
   body?: string;
   align?: "left" | "center";
@@ -17,4 +19,3 @@ export function SectionHeading({
     </div>
   );
 }
-
